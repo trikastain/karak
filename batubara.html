@@ -1,0 +1,2715 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DED Operasional Tambang Batu Bara - PT Minas Morgul Coal (Lengkap + Peta D3)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f0f2f5;color:#1a1a2e;line-height:1.65}
+  .header{background:linear-gradient(135deg,#0a1628 0%,#1a3a5c 50%,#0d2137 100%);color:#fff;padding:70px 40px;text-align:center;position:relative;overflow:hidden}
+  .header::before{content:'';position:absolute;inset:0;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="0,100 25,60 50,80 75,40 100,70 100,100" fill="rgba(255,255,255,0.03)"/></svg>');background-size:cover}
+  .header h1{font-size:2.6rem;font-weight:700;letter-spacing:3px;position:relative;z-index:1;text-transform:uppercase}
+  .header .subtitle{font-size:1.15rem;margin-top:12px;color:#7ec8e3;position:relative;z-index:1;letter-spacing:5px;font-weight:300}
+  .header .meta{margin-top:22px;font-size:.92rem;color:#a0b4c8;position:relative;z-index:1;line-height:1.9}
+  .container{max-width:1500px;margin:0 auto;padding:25px}
+  .section{background:#fff;border-radius:12px;box-shadow:0 2px 20px rgba(0,0,0,.08);margin-bottom:32px;overflow:hidden}
+  .section-header{background:linear-gradient(90deg,#1a3a5c,#2a5a8c);color:#fff;padding:18px 30px;font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:12px}
+  .section-header .num{background:rgba(255,255,255,.2);min-width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;padding:0 8px}
+  .section-body{padding:30px}
+  .sub-header{font-size:1.05rem;color:#1a3a5c;font-weight:700;margin:25px 0 12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0;display:flex;align-items:center;gap:8px}
+  .sub-header::before{content:'▸';color:#2a5a8c;font-size:1.3rem}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+  .card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px}
+  .card h4{color:#1a3a5c;font-size:1rem;margin-bottom:12px;border-bottom:2px solid #e2e8f0;padding-bottom:8px}
+  .stat-box{background:linear-gradient(135deg,#f8fafc,#eef2f7);border:1px solid #d1dbe8;border-radius:10px;padding:18px;text-align:center}
+  .stat-box .value{font-size:1.85rem;font-weight:700;color:#1a3a5c;line-height:1.2}
+  .stat-box .label{font-size:.78rem;color:#64748b;margin-top:5px;text-transform:uppercase;letter-spacing:1px}
+  .stat-box .unit{font-size:.85rem;color:#94a3b8}
+  table{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:10px}
+  table thead{background:#1a3a5c;color:#fff}
+  table th{padding:11px 12px;text-align:left;font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.4px}
+  table td{padding:9px 12px;border-bottom:1px solid #e2e8f0}
+  table tbody tr:hover{background:#f1f5f9}
+  table tbody tr:nth-child(even){background:#f8fafc}
+  .chart-container{position:relative;height:360px;margin-top:15px}
+  .chart-container-sm{height:290px}
+  .chart-container-lg{height:420px}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600;text-transform:uppercase}
+  .badge-green{background:#dcfce7;color:#166534}
+  .badge-yellow{background:#fef9c3;color:#854d0e}
+  .badge-red{background:#fee2e2;color:#991b1b}
+  .badge-blue{background:#dbeafe;color:#1e40af}
+  .badge-gray{background:#e5e7eb;color:#374151}
+  .note{background:#fffbeb;border-left:4px solid #f59e0b;padding:15px 20px;border-radius:0 8px 8px 0;margin-top:15px;font-size:.9rem;color:#92400e}
+  .note-info{background:#eff6ff;border-left:4px solid #3b82f6;color:#1e3a8a}
+  .note-success{background:#f0fdf4;border-left:4px solid #22c55e;color:#14532d}
+  .note-danger{background:#fef2f2;border-left:4px solid #ef4444;color:#7f1d1d}
+  .footer{background:#0a1628;color:#94a3b8;text-align:center;padding:45px 20px;font-size:.85rem}
+  .toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  .toc a{display:block;padding:10px 15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:#1a3a5c;text-decoration:none;font-size:.88rem;transition:all .2s}
+  .toc a:hover{background:#1a3a5c;color:#fff;transform:translateX(4px)}
+  .toc a .toc-num{font-weight:700;margin-right:8px;color:#2a5a8c}
+  .toc a:hover .toc-num{color:#7ec8e3}
+  .toc a.toc-map{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac}
+  .toc a.toc-map:hover{background:#10b981;color:#fff}
+  .toc a.toc-map .toc-num{color:#059669}
+  .toc a.toc-map:hover .toc-num{color:#fff}
+  .formula{background:#f1f5f9;border-left:3px solid #2a5a8c;padding:12px 18px;border-radius:0 6px 6px 0;font-family:'Courier New',monospace;font-size:.88rem;color:#1e293b;margin:12px 0;overflow-x:auto}
+  .two-col-list{display:grid;grid-template-columns:1fr 1fr;gap:8px 30px;font-size:.9rem}
+  .two-col-list li{list-style:none;padding:4px 0;border-bottom:1px dashed #e2e8f0}
+  .two-col-list li::before{content:'✓ ';color:#10b981;font-weight:700}
+  @media(max-width:768px){
+    .grid-2,.grid-3,.grid-4,.grid-5{grid-template-columns:1fr}
+    .header h1{font-size:1.6rem}
+    .section-body{padding:20px}
+    .header{padding:40px 20px}
+  }
+  .timeline{position:relative;padding-left:30px;margin-top:15px}
+  .timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:#e2e8f0}
+  .timeline-item{position:relative;margin-bottom:20px}
+  .timeline-item::before{content:'';position:absolute;left:-24px;top:5px;width:14px;height:14px;border-radius:50%;background:#2a5a8c;border:3px solid #fff;box-shadow:0 0 0 2px #2a5a8c}
+  .timeline-item h5{font-size:.95rem;color:#1a3a5c;margin-bottom:4px}
+  .timeline-item p{font-size:.85rem;color:#64748b}
+
+  /* D3 Map-specific */
+  .map-container{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:15px;margin-top:15px;position:relative;overflow:hidden}
+  .map-container svg{display:block;width:100%;height:auto;max-height:600px}
+  .map-title{font-size:1.05rem;font-weight:700;color:#1a3a5c;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .map-title::before{content:'🗺';font-size:1.2rem}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:.8rem}
+  .legend-item{display:flex;align-items:center;gap:6px}
+  .legend-box{width:16px;height:16px;border-radius:4px;border:1px solid #cbd5e1;flex-shrink:0}
+  .map-tooltip{position:absolute;background:#1a3a5c;color:#fff;padding:8px 12px;border-radius:6px;font-size:.78rem;pointer-events:none;opacity:0;transition:opacity .15s;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:220px;line-height:1.5}
+  .map-tooltip.show{opacity:1}
+  .coords{font-family:'Courier New',monospace;font-size:.78rem;color:#64748b;margin-top:8px}
+  .yearBtn{transition:all .2s;cursor:pointer;font-weight:600}
+  .yearBtn:hover{background:#e2e8f0!important}
+  .section-header.map-header{background:linear-gradient(90deg,#059669,#10b981)}
+  .map-section-divider{background:linear-gradient(135deg,#ecfdf5,#d1fae5);padding:25px;border-radius:12px;margin-bottom:25px;border-left:6px solid #10b981}
+  .map-section-divider h3{color:#065f46;font-size:1.4rem;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .map-section-divider p{color:#047857;font-size:.95rem}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Detail Engineering Design (DED)</h1>
+  <div class="subtitle">Operasional Tambang Batu Bara — Edisi Lengkap</div>
+  <div class="meta">
+    <strong>PT MINAS MORGUL COAL</strong><br>
+    Kecamatan Sesayap, Kabupaten Tanah Tidung, Provinsi Kalimantan Utara<br>
+    Luas Konsesi: 4.590 Hektar &nbsp;|&nbsp; Sistem: Open Pit (Truck & Shovel) &nbsp;|&nbsp; Target: 3.000.000 Ton/Tahun &nbsp;|&nbsp; Umur Tambang: 14,2 Tahun
+  </div>
+</div>
+
+<div class="container">
+
+<!-- TOC -->
+<div class="section">
+  <div class="section-header"><span class="num">📋</span> Daftar Isi Dokumen</div>
+  <div class="section-body">
+    <div class="toc">
+      <a href="#s1"><span class="toc-num">1.</span> Executive Summary & KPI</a>
+      <a href="#s2"><span class="toc-num">2.</span> Profil Perusahaan & Legalitas</a>
+      <a href="#s3"><span class="toc-num">3.</span> Kondisi Regional & Lokasi</a>
+      <a href="#s4"><span class="toc-num">4.</span> Geologi & Model Cadangan</a>
+      <a href="#s5"><span class="toc-num">5.</span> Kualitas Batu Bara & Blending</a>
+      <a href="#s6"><span class="toc-num">6.</span> Metode & Desain Pit</a>
+      <a href="#s7"><span class="toc-num">7.</span> Pengeboran & Peledakan</a>
+      <a href="#s8"><span class="toc-num">8.</span> Peralatan Tambang & Fleet</a>
+      <a href="#s9"><span class="toc-num">9.</span> Jalan Angkut & Drainase</a>
+      <a href="#s10"><span class="toc-num">10.</span> Jadwal Produksi & Sequence</a>
+      <a href="#s11"><span class="toc-num">11.</span> Infrastruktur & Fasilitas</a>
+      <a href="#s12"><span class="toc-num">12.</span> Sistem Dewatering & Settling Pond</a>
+      <a href="#s13"><span class="toc-num">13.</span> Pengelolaan Lingkungan</a>
+      <a href="#s14"><span class="toc-num">14.</span> Reklamasi & Pascatambang</a>
+      <a href="#s15"><span class="toc-num">15.</span> Organisasi & SDM</a>
+      <a href="#s16"><span class="toc-num">16.</span> Logistik & Supply Chain</a>
+      <a href="#s17"><span class="toc-num">17.</span> K3 & Keselamatan Operasi</a>
+      <a href="#s18"><span class="toc-num">18.</span> Analisis Finansial</a>
+      <a href="#s19"><span class="toc-num">19.</span> Manajemen Risiko</a>
+      <a href="#s20"><span class="toc-num">20.</span> CSR & Community Relations</a>
+      <a href="#s21"><span class="toc-num">21.</span> Mine Closure Plan</a>
+      <a href="#s22"><span class="toc-num">22.</span> Kesimpulan & Rekomendasi</a>
+      <a href="#maps" class="toc-map"><span class="toc-num">★</span> MODUL PETA & DENAH (D3.js)</a>
+      <a href="#m1" class="toc-map"><span class="toc-num">M1.</span> Peta Konsesi & Blok A–F</a>
+      <a href="#m2" class="toc-map"><span class="toc-num">M2.</span> Peta Kontur Topografi</a>
+      <a href="#m3" class="toc-map"><span class="toc-num">M3.</span> Denah Pit & Cross-Section</a>
+      <a href="#m4" class="toc-map"><span class="toc-num">M4.</span> Layout Fasilitas Tambang</a>
+      <a href="#m5" class="toc-map"><span class="toc-num">M5.</span> Layout Jalan Angkut</a>
+      <a href="#m6" class="toc-map"><span class="toc-num">M6.</span> Denah Settling Pond</a>
+      <a href="#m7" class="toc-map"><span class="toc-num">M7.</span> Peta Sebaran Seam (Isopach)</a>
+      <a href="#m8" class="toc-map"><span class="toc-num">M8.</span> Peta Progres Penambangan</a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 1 ================= -->
+<div class="section" id="s1">
+  <div class="section-header"><span class="num">1</span> Executive Summary & Key Performance Indicators</div>
+  <div class="section-body">
+    <div class="grid-5">
+      <div class="stat-box"><div class="value">4.590</div><div class="label">Luas Konsesi</div><div class="unit">Hektar</div></div>
+      <div class="stat-box"><div class="value">42,5</div><div class="label">Total Sumber Daya</div><div class="unit">Juta Ton</div></div>
+      <div class="stat-box"><div class="value">38,3</div><div class="label">Cadangan Tertambang</div><div class="unit">Juta Ton</div></div>
+      <div class="stat-box"><div class="value">3,0</div><div class="label">Target Produksi</div><div class="unit">Juta Ton/Tahun</div></div>
+      <div class="stat-box"><div class="value">14,2</div><div class="label">Umur Tambang</div><div class="unit">Tahun</div></div>
+    </div>
+
+    <div class="grid-4" style="margin-top:20px">
+      <div class="stat-box"><div class="value">6,8:1</div><div class="label">Strip Ratio Rata-rata</div><div class="unit">BCM:Ton</div></div>
+      <div class="stat-box"><div class="value">Rp 1,85 T</div><div class="label">CAPEX Awal</div><div class="unit">Triliun Rupiah</div></div>
+      <div class="stat-box"><div class="value">18,5%</div><div class="label">IRR Proyek</div><div class="unit">Nilai Internal</div></div>
+      <div class="stat-box"><div class="value">4,2 Th</div><div class="label">Payback Period</div><div class="unit">Tahun</div></div>
+    </div>
+
+    <div class="sub-header">Ringkasan Eksekutif</div>
+    <p style="text-align:justify;color:#334155;font-size:.95rem">
+      PT Minas Morgul Coal merencanakan operasi penambangan batu bara dengan sistem <em>open pit mining</em> metode <em>truck & shovel</em> di area konsesi seluas <strong>4.590 hektar</strong> di Kecamatan Sesayap, Kabupaten Tanah Tidung, Provinsi Kalimantan Utara. Sumber daya terukur hasil eksplorasi mencapai <strong>42,5 juta ton</strong>, dengan cadangan tertambang sebesar <strong>38,3 juta ton</strong> setelah memperhitungkan <em>recovery factor</em> dan <em>dilution</em>. Rencana produksi tahunan puncak sebesar <strong>3,0 juta ton</strong> dengan <em>stripping ratio</em> rata-rata 6,8 BCM per ton batu bara.
+    </p>
+    <p style="text-align:justify;color:#334155;font-size:.95rem;margin-top:10px">
+      Desain teknis mencakup geometri pit (bench height 10 m, width 8 m, single slope 45°–55°), jalan angkut lebar 15–20 m dengan grade maksimum 8%, sistem drainase terintegrasi 6 kompartemen <em>settling pond</em> berkapasitas 69.552 m³, serta fasilitas pendukung lengkap. Operasi didukung oleh 8 fleet gali-muat dan 64 unit dump truck dengan target <em>availability</em> 85% dan <em>utilization</em> 78%.
+    </p>
+    <p style="text-align:justify;color:#334155;font-size:.95rem;margin-top:10px">
+      Total investasi (CAPEX) Rp 1,85 triliun dengan OPEX tahunan Rp 1,25 triliun. Proyeksi arus kas menunjukkan NPV positif pada diskonto 10%, IRR 18,5%, payback period 4,2 tahun, dan <em>profitability index</em> 1,42. Jaminan reklamasi dialokasikan Rp 337,7 juta per hektar (total Rp 1,55 triliun).
+    </p>
+
+    <div class="sub-header">Dashboard KPI Utama</div>
+    <div class="chart-container-lg"><canvas id="chartKPI"></canvas></div>
+  </div>
+</div>
+
+<!-- ================= SECTION 2 ================= -->
+<div class="section" id="s2">
+  <div class="section-header"><span class="num">2</span> Profil Perusahaan & Legalitas</div>
+  <div class="section-body">
+    <div class="grid-2">
+      <div class="card">
+        <h4>Identitas Korporat</h4>
+        <table>
+          <tr><td><strong>Nama Perusahaan</strong></td><td>PT Minas Morgul Coal</td></tr>
+          <tr><td><strong>Bidang Usaha</strong></td><td>Pertambangan Batu Bara & Aktivitas Pendukung</td></tr>
+          <tr><td><strong>Status Izin</strong></td><td>IUP Operasi Produksi</td></tr>
+          <tr><td><strong>Nomor SK IUP</strong></td><td>540/XX/IUP-OP/ESDM/2024</td></tr>
+          <tr><td><strong>Tanggal Terbit</strong></td><td>15 Maret 2024</td></tr>
+          <tr><td><strong>Masa Berlaku</strong></td><td>20 Tahun (dapat diperpanjang 2×10 tahun)</td></tr>
+          <tr><td><strong>Luas Konsesi</strong></td><td>4.590 Hektar (SK Kehutanan: 4.590 Ha)</td></tr>
+          <tr><td><strong>NPWP</strong></td><td>XX.XXX.XXX.X-XXX.000</td></tr>
+          <tr><td><strong>Akta Pendirian</strong></td><td>No. 15/AP/2023, Notaris di Jakarta</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Perizinan & Sertifikasi</h4>
+        <table>
+          <thead><tr><th>Jenis Izin</th><th>Nomor</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>IUP Operasi Produksi</td><td>540/XX/IUP-OP/2024</td><td><span class="badge badge-green">Aktif</span></td></tr>
+            <tr><td>Izin Lingkungan (AMDAL)</td><td>660/AMDAL/2024</td><td><span class="badge badge-green">Disetujui</span></td></tr>
+            <tr><td>Pinjam Pakai Kawasan Hutan</td><td>SK.XXX/MENLHK/2024</td><td><span class="badge badge-green">Disetujui</span></td></tr>
+            <tr><td>Persetujuan RKAB</td><td>RKAB-XX/ESDM/2025</td><td><span class="badge badge-green">Disetujui</span></td></tr>
+            <tr><td>Sertifikat SMK3</td><td>SMK3-XX/2024</td><td><span class="badge badge-yellow">Proses</span></td></tr>
+            <tr><td>Sertifikat ISO 14001</td><td>—</td><td><span class="badge badge-yellow">Dalam Proses</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-header">Struktur Organisasi</div>
+    <div class="card">
+      <div style="text-align:center;font-size:.92rem;color:#334155">
+        <div style="background:#1a3a5c;color:#fff;padding:12px 30px;border-radius:8px;display:inline-block;font-weight:700">Direktur Utama</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:20px">
+          <div style="background:#2a5a8c;color:#fff;padding:10px;border-radius:6px;font-size:.85rem">Direktur Operasi</div>
+          <div style="background:#2a5a8c;color:#fff;padding:10px;border-radius:6px;font-size:.85rem">Direktur Keuangan</div>
+          <div style="background:#2a5a8c;color:#fff;padding:10px;border-radius:6px;font-size:.85rem">Direktur Teknik</div>
+          <div style="background:#2a5a8c;color:#fff;padding:10px;border-radius:6px;font-size:.85rem">Direktur HSE & CSR</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:15px">
+          <div style="background:#e2e8f0;color:#1a3a5c;padding:8px;border-radius:6px;font-size:.78rem">Mine Manager</div>
+          <div style="background:#e2e8f0;color:#1a3a5c;padding:8px;border-radius:6px;font-size:.78rem">Plant Manager</div>
+          <div style="background:#e2e8f0;color:#1a3a5c;padding:8px;border-radius:6px;font-size:.78rem">Engineering</div>
+          <div style="background:#e2e8f0;color:#1a3a5c;padding:8px;border-radius:6px;font-size:.78rem">Geologi</div>
+          <div style="background:#e2e8f0;color:#1a3a5c;padding:8px;border-radius:6px;font-size:.78rem">QA/QC</div>
+          <div style="background:#e2e8f0;color:#1a3a5c;padding:8px;border-radius:6px;font-size:.78rem">Logistik</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-header">Komposisi Saham & Karyawan</div>
+    <div class="grid-2">
+      <div class="card"><h4>Komposisi Saham</h4><div class="chart-container chart-container-sm"><canvas id="chartSaham"></canvas></div></div>
+      <div class="card"><h4>Struktur Karyawan (Rencana Puncak)</h4><div class="chart-container chart-container-sm"><canvas id="chartKaryawan"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 3 ================= -->
+<div class="section" id="s3">
+  <div class="section-header"><span class="num">3</span> Kondisi Regional & Lokasi</div>
+  <div class="section-body">
+    <div class="grid-2">
+      <div class="card">
+        <h4>Karakteristik Wilayah</h4>
+        <table>
+          <tr><td><strong>Kecamatan</strong></td><td>Sesayap</td></tr>
+          <tr><td><strong>Kabupaten</strong></td><td>Tanah Tidung</td></tr>
+          <tr><td><strong>Provinsi</strong></td><td>Kalimantan Utara</td></tr>
+          <tr><td><strong>Koordinat Pusat</strong></td><td>3°25' LU, 116°55' BT</td></tr>
+          <tr><td><strong>Elevasi</strong></td><td>25 – 185 mdpl</td></tr>
+          <tr><td><strong>Topografi</strong></td><td>Bergelombang hingga berbukit (0–35%)</td></tr>
+          <tr><td><strong>Jenis Tanah</strong></td><td>Podsolik Merah Kuning, Latosol</td></tr>
+          <tr><td><strong>Curah Hujan</strong></td><td>3.200 mm/tahun</td></tr>
+          <tr><td><strong>Hari Hujan</strong></td><td>165 hari/tahun</td></tr>
+          <tr><td><strong>Suhu</strong></td><td>26°C – 32°C</td></tr>
+          <tr><td><strong>Jarak ke Pelabuhan</strong></td><td>± 85 km (Pelabuhan Malinau)</td></tr>
+          <tr><td><strong>Jarak ke Ibu Kota Kab.</strong></td><td>± 45 km (Tideng Pale)</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Curah Hujan Bulanan Rata-rata (mm)</h4>
+        <div class="chart-container chart-container-sm"><canvas id="chartHujan"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sub-header">Tata Guna Lahan Konsesi</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Peruntukan</th><th>Luas (Ha)</th><th>Persentase</th><th>Keterangan</th></tr></thead>
+        <tbody>
+          <tr><td>Area Pit (Rencana Final)</td><td>1.720</td><td>37,5%</td><td>Termasuk blok A–F</td></tr>
+          <tr><td>Area Disposal / Overburden</td><td>980</td><td>21,4%</td><td>Out-of-pit & in-pit</td></tr>
+          <tr><td>Stockpile & Fasilitas</td><td>145</td><td>3,2%</td><td>Termasuk ROM pad</td></tr>
+          <tr><td>Jalan Angkut & Hauling</td><td>85</td><td>1,9%</td><td>Panjang 12,5 km</td></tr>
+          <tr><td>Infrastruktur & Kantor</td><td>62</td><td>1,4%</td><td>Workshop, mess, lab</td></tr>
+          <tr><td>Kawasan Konservasi/Buffer</td><td>318</td><td>6,9%</td><td>Zona penyangga</td></tr>
+          <tr><td>Area Belum Terbuka</td><td>1.280</td><td>27,9%</td><td>Untuk sequence berikutnya</td></tr>
+          <tr style="font-weight:700;background:#dbeafe"><td>Total</td><td>4.590</td><td>100%</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Peta Tata Guna Lahan (Ilustrasi Chart)</div>
+    <div class="grid-2">
+      <div class="chart-container chart-container-sm"><canvas id="chartLandUse"></canvas></div>
+      <div class="chart-container chart-container-sm"><canvas id="chartLandUseBar"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 4 ================= -->
+<div class="section" id="s4">
+  <div class="section-header"><span class="num">4</span> Geologi & Model Cadangan</div>
+  <div class="section-body">
+    <div class="sub-header">Stratigrafi Regional</div>
+    <div class="card">
+      <p style="font-size:.92rem;color:#334155;text-align:justify">
+        Formasi pembawa batu bara termasuk <strong>Formasi Tarakan</strong> (Miosen Akhir–Pliosen) dan <strong>Formasi Bunyu</strong> (Miosen Tengah). Litologi didominasi batupasir kuarsa, batulempung, serpih, dan sisipan batubara. Struktur utama berupa lipatan antiklin-sinklin berarah barat-timur, serta sesar normal berarah barat daya–timur laut. Terdapat 4 seam utama: Seam A, B, C, dan D.
+      </p>
+    </div>
+
+    <div class="sub-header">Detail Seam Batu Bara</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Parameter</th><th>Seam A</th><th>Seam B</th><th>Seam C</th><th>Seam D</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Ketebalan rata-rata (m)</strong></td><td>5,4</td><td>4,6</td><td>3,2</td><td>2,5</td></tr>
+          <tr><td><strong>Kedalaman (m)</strong></td><td>15–45</td><td>40–80</td><td>75–120</td><td>110–160</td></tr>
+          <tr><td><strong>Kemiringan (°)</strong></td><td>5–12</td><td>8–18</td><td>10–22</td><td>12–25</td></tr>
+          <tr><td><strong>Total Moisture (%)</strong></td><td>26,0</td><td>28,0</td><td>30,0</td><td>32,0</td></tr>
+          <tr><td><strong>Ash (%)</strong></td><td>4,8</td><td>5,5</td><td>6,2</td><td>7,0</td></tr>
+          <tr><td><strong>Total Sulfur (%)</strong></td><td>0,30</td><td>0,40</td><td>0,50</td><td>0,60</td></tr>
+          <tr><td><strong>CV (kkal/kg, GAR)</strong></td><td>5.600</td><td>5.300</td><td>5.000</td><td>4.700</td></tr>
+          <tr><td><strong>Cadangan (juta ton)</strong></td><td>15,2</td><td>13,8</td><td>7,8</td><td>5,7</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Analisis Kualitas Batu Bara</div>
+    <div class="grid-2">
+      <div class="chart-container chart-container-sm"><canvas id="chartQualityBar"></canvas></div>
+      <div class="chart-container chart-container-sm"><canvas id="chartQualityRadar"></canvas></div>
+    </div>
+
+    <div class="sub-header">Rekapitulasi Sumber Daya & Cadangan</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Kategori</th><th>Volume (Juta Ton)</th><th>SR (BCM:Ton)</th><th>Recovery (%)</th><th>Dilution (%)</th><th>Cadangan Tertambang (Juta Ton)</th></tr></thead>
+        <tbody>
+          <tr><td>Terukur (Measured)</td><td>25,80</td><td>6,2:1</td><td>92</td><td>3</td><td>23,74</td></tr>
+          <tr><td>Terunjuk (Indicated)</td><td>12,40</td><td>7,1:1</td><td>88</td><td>4</td><td>10,91</td></tr>
+          <tr><td>Tereka (Inferred)</td><td>4,30</td><td>8,5:1</td><td>85</td><td>5</td><td>3,66</td></tr>
+          <tr style="font-weight:700;background:#dbeafe"><td>Total</td><td>42,50</td><td>6,8:1</td><td>90</td><td>—</td><td>38,31</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Distribusi Cadangan</div>
+    <div class="grid-3">
+      <div class="chart-container chart-container-sm"><canvas id="chartReserveByBlock"></canvas></div>
+      <div class="chart-container chart-container-sm"><canvas id="chartReserveBySeam"></canvas></div>
+      <div class="chart-container chart-container-sm"><canvas id="chartReserveByCategory"></canvas></div>
+    </div>
+
+    <div class="sub-header">Model 3D Blok (Konseptual)</div>
+    <div class="card">
+      <div class="chart-container-lg"><canvas id="chartBlockModel"></canvas></div>
+      <div class="note-info note">
+        <strong>Estimasi Model Blok:</strong> Ukuran blok 25 m × 25 m × 10 m. Total blok: ± 38.500. Metode: <em>Ordinary Kriging</em> (variogram spherical). Software: Surpac / MineSight.
+      </div>
+    </div>
+
+    <div class="sub-header">Program Eksplorasi Lanjutan</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Tahun</th><th>Jenis</th><th>Lubang</th><th>Total Meter</th><th>Spacing</th><th>Tujuan</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Infill Drilling</td><td>45</td><td>4.500</td><td>100 m</td><td>Upgrade Indicated → Measured</td></tr>
+          <tr><td>2</td><td>Infill Drilling</td><td>38</td><td>3.800</td><td>100 m</td><td>Upgrade Inferred → Indicated</td></tr>
+          <tr><td>3</td><td>Geoteknik</td><td>12</td><td>1.200</td><td>—</td><td>Slope stability</td></tr>
+          <tr><td>4</td><td>Hidrogeologi</td><td>8</td><td>800</td><td>—</td><td>Dewatering study</td></tr>
+          <tr><td>5</td><td>Geofisika</td><td>—</td><td>15 km</td><td>25 m</td><td>Struktur & seam continuity</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 5 ================= -->
+<div class="section" id="s5">
+  <div class="section-header"><span class="num">5</span> Kualitas Batu Bara & Blending Strategy</div>
+  <div class="section-body">
+    <div class="grid-2">
+      <div class="card">
+        <h4>Target Spesifikasi Produk</h4>
+        <table>
+          <tr><td><strong>Total Moisture (AR)</strong></td><td>≤ 28%</td></tr>
+          <tr><td><strong>Ash (AR)</strong></td><td>≤ 6,0%</td></tr>
+          <tr><td><strong>Total Sulfur (AR)</strong></td><td>≤ 0,5%</td></tr>
+          <tr><td><strong>Calorific Value (GAR)</strong></td><td>≥ 5.200 kkal/kg</td></tr>
+          <tr><td><strong>Volatile Matter</strong></td><td>36% – 40%</td></tr>
+          <tr><td><strong>Fixed Carbon</strong></td><td>28% – 33%</td></tr>
+          <tr><td><strong>Ukuran</strong></td><td>0 – 50 mm (crushed)</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Strategi Blending</h4>
+        <p style="font-size:.9rem;color:#334155;text-align:justify">
+          Blending dilakukan di <em>stockpile</em> dan <em>ROM pad</em> dengan mengombinasikan batu bara dari Seam A (high CV), Seam B (medium), dan Seam C/D (lower CV).
+        </p>
+        <div class="formula">
+          Blend = 50% Seam A + 30% Seam B + 20% Seam C/D<br>
+          Hasil: CV ≈ 5.300 kkal/kg, Ash ≈ 5,5%, S ≈ 0,38%
+        </div>
+        <div class="note-info note">
+          <strong>Quality Control:</strong> Sampling di front penambangan, ROM, dan product stockpile. Frekuensi: 1 sampel per 5.000 ton. Analisis internal + verifikasi pihak ketiga (SGS/Intertek).
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-header">Proyeksi Kualitas Produk Akhir per Tahun</div>
+    <div class="chart-container"><canvas id="chartQualityProj"></canvas></div>
+
+    <div class="sub-header">Diagram Blending & Coal Flow</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-around;flex-wrap:wrap;gap:15px;font-size:.85rem;color:#1a3a5c;padding:20px;background:#f8fafc;border-radius:10px">
+        <div style="background:#1a3a5c;color:#fff;padding:15px 20px;border-radius:8px;text-align:center">Pit A<br><small>Seam A</small></div>
+        <div style="font-size:1.5rem;color:#2a5a8c">➜</div>
+        <div style="background:#2a5a8c;color:#fff;padding:15px 20px;border-radius:8px;text-align:center">ROM Pad<br><small>CV 5.600</small></div>
+        <div style="font-size:1.5rem;color:#2a5a8c">➜</div>
+        <div style="background:#3a7aac;color:#fff;padding:15px 20px;border-radius:8px;text-align:center">Crushing<br><small>-50 mm</small></div>
+        <div style="font-size:1.5rem;color:#2a5a8c">➜</div>
+        <div style="background:#4a9acc;color:#fff;padding:15px 20px;border-radius:8px;text-align:center">Blending<br><small>Yard</small></div>
+        <div style="font-size:1.5rem;color:#2a5a8c">➜</div>
+        <div style="background:#10b981;color:#fff;padding:15px 20px;border-radius:8px;text-align:center">Product<br><small>5.300 kkal</small></div>
+        <div style="font-size:1.5rem;color:#2a5a8c">➜</div>
+        <div style="background:#f59e0b;color:#fff;padding:15px 20px;border-radius:8px;text-align:center">Jetty<br><small>Barge 8.000 T</small></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 6 ================= -->
+<div class="section" id="s6">
+  <div class="section-header"><span class="num">6</span> Metode & Desain Pit</div>
+  <div class="section-body">
+    <div class="sub-header">Parameter Geometri Pit</div>
+    <div class="grid-2">
+      <div class="card">
+        <h4>Parameter Bench & Slope</h4>
+        <table>
+          <tr><td><strong>Bench Height</strong></td><td>10 m</td></tr>
+          <tr><td><strong>Bench Width (min)</strong></td><td>8 m</td></tr>
+          <tr><td><strong>Berm Width</strong></td><td>5 m</td></tr>
+          <tr><td><strong>Single Slope Angle</strong></td><td>45° – 55°</td></tr>
+          <tr><td><strong>Overall Slope Angle</strong></td><td>30° – 35°</td></tr>
+          <tr><td><strong>Safety Berm Height</strong></td><td>≥ 66% diameter roda truk (≥ 2,1 m)</td></tr>
+          <tr><td><strong>Haul Road Width (straight)</strong></td><td>15 m</td></tr>
+          <tr><td><strong>Haul Road Width (curve)</strong></td><td>20 m</td></tr>
+          <tr><td><strong>Max Grade</strong></td><td>8%</td></tr>
+          <tr><td><strong>Cross Slope</strong></td><td>2%</td></tr>
+          <tr><td><strong>Superelevasi</strong></td><td>0,04 m/m</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Dimensi Pit Final</h4>
+        <table>
+          <tr><td><strong>Panjang Pit (rata-rata)</strong></td><td>2.400 m</td></tr>
+          <tr><td><strong>Lebar Pit (rata-rata)</strong></td><td>720 m</td></tr>
+          <tr><td><strong>Kedalaman Maksimum</strong></td><td>165 m (dari permukaan)</td></tr>
+          <tr><td><strong>Jumlah Jenjang</strong></td><td>16 jenjang (10 m)</td></tr>
+          <tr><td><strong>Volume Pit (total)</strong></td><td>± 260,3 juta BCM</td></tr>
+          <tr><td><strong>Volume Batu Bara</strong></td><td>38,3 juta ton (in-situ)</td></tr>
+          <tr><td><strong>Area Pit Final</strong></td><td>1.720 Ha</td></tr>
+          <tr><td><strong>SR Rata-rata (LOM)</strong></td><td>6,8 BCM:Ton</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-header">Faktor Keamanan Lereng (FoS)</div>
+    <div class="chart-container chart-container-sm"><canvas id="chartFoS"></canvas></div>
+
+    <div class="sub-header">Rencana Tahapan Penambangan (Sequence)</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Tahun</th><th>Blok</th><th>Fokus Kegiatan</th><th>Elevasi Pit (m)</th><th>Catatan</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>A</td><td>Land Clearing, Box Cut, Access</td><td>185 → 155</td><td>Ramp up</td></tr>
+          <tr><td>2</td><td>A</td><td>OB Stripping, Coal Getting Awal</td><td>155 → 125</td><td>Transisi</td></tr>
+          <tr><td>3</td><td>A & B</td><td>Steady State Mulai</td><td>125 → 95</td><td>Full Fleet</td></tr>
+          <tr><td>4</td><td>B</td><td>Deepening Pit B</td><td>95 → 65</td><td>—</td></tr>
+          <tr><td>5</td><td>B</td><td>Bottom Pit B</td><td>65 → 45</td><td>—</td></tr>
+          <tr><td>6</td><td>B & C</td><td>Transisi ke C</td><td>45 → 25</td><td>—</td></tr>
+          <tr><td>7</td><td>C</td><td>Full Pit C</td><td>—</td><td>—</td></tr>
+          <tr><td>8</td><td>C</td><td>Deepening C</td><td>—</td><td>—</td></tr>
+          <tr><td>9</td><td>C & D</td><td>Transisi ke D</td><td>—</td><td>—</td></tr>
+          <tr><td>10</td><td>D</td><td>Full Pit D</td><td>—</td><td>—</td></tr>
+          <tr><td>11–13</td><td>D & E</td><td>Pit E</td><td>—</td><td>Declining</td></tr>
+          <tr><td>14</td><td>F</td><td>Final Mining & Closure</td><td>—</td><td>Closure</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Visualisasi Progres Pit (Volume Kumulatif)</div>
+    <div class="chart-container"><canvas id="chartPitProgress"></canvas></div>
+
+    <div class="sub-header">Geometri Jenjang & Lereng (Ilustrasi)</div>
+    <div class="card">
+      <div style="background:linear-gradient(180deg,#87CEEB 0%,#87CEEB 20%,#8B7355 20%,#8B7355 100%);border-radius:8px;padding:20px;position:relative;height:320px;overflow:hidden">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:20px">
+          <div style="display:flex;align-items:flex-end;gap:2px;height:100%">
+            <div style="flex:1;background:#A0522D;height:100%;border-top-right-radius:4px"></div>
+            <div style="width:8px;background:#8B7355;height:100%"></div>
+            <div style="flex:1;background:#A0522D;height:85%;border-top-right-radius:4px"></div>
+            <div style="width:8px;background:#8B7355;height:85%"></div>
+            <div style="flex:1;background:#A0522D;height:70%;border-top-right-radius:4px"></div>
+            <div style="width:8px;background:#8B7355;height:70%"></div>
+            <div style="flex:1;background:#A0522D;height:55%;border-top-right-radius:4px"></div>
+            <div style="width:8px;background:#8B7355;height:55%"></div>
+            <div style="flex:1;background:#A0522D;height:40%;border-top-right-radius:4px"></div>
+            <div style="width:8px;background:#8B7355;height:40%"></div>
+            <div style="flex:1;background:#333;height:25%;border-top-right-radius:4px"></div>
+          </div>
+        </div>
+        <div style="position:absolute;top:12px;left:12px;background:rgba(26,58,92,.9);color:#fff;padding:8px 14px;border-radius:6px;font-size:.8rem">Bench 10 m • Slope 45°-55° • Berm 8 m</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 7 ================= -->
+<div class="section" id="s7">
+  <div class="section-header"><span class="num">7</span> Pengeboran & Peledakan</div>
+  <div class="section-body">
+    <div class="grid-2">
+      <div class="card">
+        <h4>Desain Pengeboran</h4>
+        <table>
+          <tr><td><strong>Diameter Lubang</strong></td><td>152 mm (6")</td></tr>
+          <tr><td><strong>Kedalaman Lubang</strong></td><td>11,5 m (subdrill 1,5 m)</td></tr>
+          <tr><td><strong>Pola Spacing</strong></td><td>5,0 m</td></tr>
+          <tr><td><strong>Pola Burden</strong></td><td>4,0 m</td></tr>
+          <tr><td><strong>Stemming</strong></td><td>2,5 m</td></tr>
+          <tr><td><strong>Subdrill</strong></td><td>1,5 m</td></tr>
+          <tr><td><strong>Powder Factor</strong></td><td>0,25 – 0,35 kg/BCM</td></tr>
+          <tr><td><strong>Jenis ANFO</strong></td><td>Emulsion & ANFO</td></tr>
+          <tr><td><strong>Frekuensi Peledakan</strong></td><td>2× per hari</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Peralatan Pengeboran & Peledakan</h4>
+        <table>
+          <thead><tr><th>Alat</th><th>Model</th><th>Jumlah</th><th>Kapasitas</th></tr></thead>
+          <tbody>
+            <tr><td>Drill Rig</td><td>Atlas Copco DM45</td><td>3</td><td>152 mm, 30 m/jam</td></tr>
+            <tr><td>Drill Rig</td><td>Sandvik D45KS</td><td>2</td><td>152 mm, 32 m/jam</td></tr>
+            <tr><td>Bulldozer</td><td>CAT D10T2</td><td>2</td><td>—</td></tr>
+            <tr><td>Wheel Loader</td><td>CAT 966M</td><td>2</td><td>3,2 m³</td></tr>
+            <tr><td>Blast Truck</td><td>MMU</td><td>2</td><td>15 ton ANFO</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-header">Konsumsi Bahan Peledak & Biaya</div>
+    <div class="grid-2">
+      <div class="chart-container chart-container-sm"><canvas id="chartBlast"></canvas></div>
+      <div class="chart-container chart-container-sm"><canvas id="chartBlastCost"></canvas></div>
+    </div>
+
+    <div class="sub-header">Parameter Fragmentasi & Getaran</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Parameter</th><th>Target</th><th>Standar</th><th>Metode Verifikasi</th></tr></thead>
+        <tbody>
+          <tr><td>Fragmentasi P80</td><td>≤ 300 mm</td><td>Internal</td><td>Image Analysis</td></tr>
+          <tr><td>Getaran (PPV)</td><td>≤ 5 mm/s</td><td>Kepmen ESDM</td><td>Seismograph</td></tr>
+          <tr><td>Overpressure</td><td>≤ 120 dB</td><td>USBM</td><td>Seismograph</td></tr>
+          <tr><td>Flyrock</td><td>Nol</td><td>SMKP</td><td>Observasi</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 8 ================= -->
+<div class="section" id="s8">
+  <div class="section-header"><span class="num">8</span> Peralatan Tambang & Fleet Management</div>
+  <div class="section-body">
+    <div class="grid-4">
+      <div class="stat-box"><div class="value">8</div><div class="label">Fleet Gali-Muat</div><div class="unit">Excavator + Loader</div></div>
+      <div class="stat-box"><div class="value">64</div><div class="label">Dump Truck</div><div class="unit">Unit Operasional</div></div>
+      <div class="stat-box"><div class="value">85%</div><div class="label">Target Availability</div><div class="unit">Mekanis</div></div>
+      <div class="stat-box"><div class="value">78%</div><div class="label">Target Utilization</div><div class="unit">Operasional</div></div>
+    </div>
+
+    <div class="sub-header">Spesifikasi Alat Gali-Muat</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>No</th><th>Jenis</th><th>Model</th><th>Bucket (m³)</th><th>Power (kW/HP)</th><th>Berat (ton)</th><th>Cycle Time</th><th>Produktivitas (BCM/jam)</th><th>Jumlah</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Excavator</td><td>Liebherr R 9200 G7</td><td>12,5</td><td>810 / 1.086</td><td>205</td><td>30 s</td><td>1.275</td><td>4</td></tr>
+          <tr><td>2</td><td>Excavator</td><td>Hitachi ZX 870-5G</td><td>6,0</td><td>390 / 523</td><td>87</td><td>28 s</td><td>680</td><td>2</td></tr>
+          <tr><td>3</td><td>Wheel Loader</td><td>CAT 992K</td><td>10,7</td><td>597 / 800</td><td>94</td><td>32 s</td><td>975</td><td>2</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Spesifikasi Alat Angkut</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>No</th><th>Jenis</th><th>Model</th><th>Payload (ton)</th><th>Power (kW/HP)</th><th>Heaped Cap (m³)</th><th>Jumlah</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Dump Truck</td><td>Komatsu HD785-7</td><td>91</td><td>879 / 1.180</td><td>60</td><td>24</td></tr>
+          <tr><td>2</td><td>Dump Truck</td><td>CAT 777E</td><td>100</td><td>765 / 1.026</td><td>60</td><td>16</td></tr>
+          <tr><td>3</td><td>Dump Truck</td><td>Volvo FMX 540</td><td>40</td><td>397 / 540</td><td>24</td><td>24</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Alat Pendukung</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Jenis</th><th>Model</th><th>Fungsi</th><th>Jumlah</th></tr></thead>
+        <tbody>
+          <tr><td>Bulldozer</td><td>CAT D8R / D9R</td><td>Dozing, spreading</td><td>6</td></tr>
+          <tr><td>Motor Grader</td><td>CAT 140K</td><td>Road maintenance</td><td>4</td></tr>
+          <tr><td>Water Truck</td><td>Hino 500</td><td>Dust suppression</td><td>6</td></tr>
+          <tr><td>Fuel Truck</td><td>Hino 500</td><td>Refueling</td><td>4</td></tr>
+          <tr><td>Service Truck</td><td>Isuzu Giga</td><td>Field service</td><td>4</td></tr>
+          <tr><td>Crane</td><td>Tadano 25 ton</td><td>Heavy lift</td><td>1</td></tr>
+          <tr><td>Ambulans</td><td>Toyota Hiace</td><td>Emergency</td><td>2</td></tr>
+          <tr><td>Bus Karyawan</td><td>Hino RK</td><td>Transport</td><td>8</td></tr>
+          <tr><td>Pick Up</td><td>Toyota Hilux</td><td>Supervisi</td><td>12</td></tr>
+          <tr><td>Excavator (support)</td><td>Komatsu PC200</td><td>Drainase</td><td>4</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Match Factor Analysis per Fleet</div>
+    <div class="chart-container"><canvas id="chartMatchFactor"></canvas></div>
+
+    <div class="sub-header">Produktivitas Teoritis vs Aktual</div>
+    <div class="chart-container"><canvas id="chartProduktivitas"></canvas></div>
+
+    <div class="sub-header">Perhitungan Match Factor</div>
+    <div class="card">
+      <div class="formula">
+        MF = (Nt × Ct) / (Ne × Ce)<br><br>
+        Nt = 8 (jumlah truck per fleet)<br>
+        Ct = 24 menit (cycle time truck)<br>
+        Ne = 1 (jumlah excavator)<br>
+        Ce = 30 detik × 8 = 4 menit<br><br>
+        MF = (8 × 24) / (1 × 4) = 1,02 ✓ (Optimal)
+      </div>
+      <div class="note-success note">
+        <strong>Kesimpulan:</strong> MF 1,02 = keseimbangan ideal. Target: 0,95 – 1,10.
+      </div>
+    </div>
+
+    <div class="sub-header">Jadwal Operasional Harian</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Shift</th><th>Waktu</th><th>Durasi</th><th>Kegiatan</th><th>Efisiensi</th></tr></thead>
+        <tbody>
+          <tr><td>Shift 1</td><td>07:00 – 19:00</td><td>12 jam</td><td>Produksi</td><td>85%</td></tr>
+          <tr><td>Shift 2</td><td>19:00 – 07:00</td><td>12 jam</td><td>Produksi</td><td>85%</td></tr>
+          <tr><td>Break</td><td>12:00 – 13:00</td><td>1 jam</td><td>Istirahat</td><td>—</td></tr>
+          <tr><td>Maintenance</td><td>07:00 – 09:00</td><td>2 jam</td><td>PM & Repair</td><td>—</td></tr>
+          <tr style="font-weight:700;background:#dbeafe"><td colspan="2">Total Jam Operasi</td><td>20 jam/hari</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 9 ================= -->
+<div class="section" id="s9">
+  <div class="section-header"><span class="num">9</span> Jalan Angkut & Sistem Drainase</div>
+  <div class="section-body">
+    <div class="grid-2">
+      <div class="card">
+        <h4>Spesifikasi Jalan Angkut</h4>
+        <table>
+          <tr><td><strong>Panjang Total</strong></td><td>12,5 km</td></tr>
+          <tr><td><strong>Lebar (Lurus)</strong></td><td>15 m</td></tr>
+          <tr><td><strong>Lebar (Tikungan)</strong></td><td>20 m</td></tr>
+          <tr><td><strong>Kemiringan Maks</strong></td><td>8%</td></tr>
+          <tr><td><strong>Jari-jari Tikungan Min</strong></td><td>25 m</td></tr>
+          <tr><td><strong>Superelevasi</strong></td><td>0,04 m/m</td></tr>
+          <tr><td><strong>Cross Slope</strong></td><td>2%</td></tr>
+          <tr><td><strong>Material Permukaan</strong></td><td>Compacted Laterite (CBR ≥ 80%)</td></tr>
+          <tr><td><strong>Drainase Samping</strong></td><td>0,8 m × 0,6 m</td></tr>
+          <tr><td><strong>Drainase Melintang</strong></td><td>Setiap 200 m</td></tr>
+          <tr><td><strong>Kecepatan Maks</strong></td><td>40 km/jam (lurus), 20 km/jam (tikungan)</td></tr>
+          <tr><td><strong>Safety Berm</strong></td><td>2,1 m × 1,5 m</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Perhitungan Lebar Jalan</h4>
+        <div class="formula">
+          W = 2 × (Wt + L) + C<br><br>
+          Wt = 6,2 m (lebar truk)<br>
+          L = 1,5 m (side clearance)<br>
+          C = 2,4 m (jarak antar truk)<br><br>
+          W = 2 × (6,2 + 1,5) + 2,4 = 17,8 m ≈ 18 m (2 lajur)<br><br>
+          <em>Untuk efisiensi, digunakan 15 m (1,5 lajur) di area tertentu.</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-header">Analisis Kemiringan Jalan (Grade) & Rimpull</div>
+    <div class="chart-container"><canvas id="chartGrade"></canvas></div>
+
+    <div class="sub-header">Sistem Drainase Terpadu</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Komponen</th><th>Dimensi</th><th>Jumlah</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td>Saluran Terbuka</td><td>Trapesium, dasar 1,5 m, tinggi 1 m</td><td>12.500 m</td><td>Mengalirkan air hujan</td></tr>
+          <tr><td>Cross Drain</td><td>Ø 1,2 m</td><td>62 unit</td><td>Melintasi jalan</td></tr>
+          <tr><td>Culvert</td><td>Ø 0,8 m</td><td>85 unit</td><td>Bawah jalan</td></tr>
+          <tr><td>Settling Pond</td><td>46 × 36 × 7 m</td><td>6 kompartemen</td><td>Penjernihan air</td></tr>
+          <tr><td>Sump Pit</td><td>15 × 10 × 5 m</td><td>8 unit</td><td>Penampung sementara</td></tr>
+          <tr><td>Pompa Air</td><td>6 unit × 500 m³/jam</td><td>6</td><td>Dewatering</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Perhitungan Debit Drainase</div>
+    <div class="card">
+      <div class="formula">
+        Q = 0,278 × C × I × A<br><br>
+        C = 0,7 (area terbuka)<br>
+        I = 100 mm/jam (hujan ekstrem)<br>
+        A = 4,59 km²<br><br>
+        Q = 0,278 × 0,7 × 100 × 4,59 = 89,3 m³/detik (ekstrem)<br>
+        Q rata-rata = 2,96 m³/detik<br><br>
+        Kapasitas settling pond = 69.552 m³, cukup untuk retensi 6,5 jam hujan ekstrem.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 10 ================= -->
+<div class="section" id="s10">
+  <div class="section-header"><span class="num">10</span> Jadwal Produksi & Sequence</div>
+  <div class="section-body">
+    <div class="card">
+      <h4>Rencana Produksi Tahunan (14 Tahun)</h4>
+      <table>
+        <thead><tr><th>Tahun</th><th>Blok</th><th>Overburden (Juta BCM)</th><th>Batu Bara (Juta Ton)</th><th>SR</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>A</td><td>12,5</td><td>1,8</td><td>6,9:1</td><td><span class="badge badge-yellow">Ramp Up</span></td></tr>
+          <tr><td>2</td><td>A</td><td>18,2</td><td>2,8</td><td>6,5:1</td><td><span class="badge badge-blue">Produksi</span></td></tr>
+          <tr><td>3</td><td>A & B</td><td>20,4</td><td>3,0</td><td>6,8:1</td><td><span class="badge badge-green">Steady</span></td></tr>
+          <tr><td>4</td><td>B</td><td>20,4</td><td>3,0</td><td>6,8:1</td><td><span class="badge badge-green">Steady</span></td></tr>
+          <tr><td>5</td><td>B</td><td>20,1</td><td>3,0</td><td>6,7:1</td><td><span class="badge badge-green">Steady</span></td></tr>
+          <tr><td>6</td><td>B & C</td><td>20,4</td><td>3,0</td><td>6,8:1</td><td><span class="badge badge-green">Steady</span></td></tr>
+          <tr><td>7</td><td>C</td><td>20,7</td><td>3,0</td><td>6,9:1</td><td><span class="badge badge-green">Steady</span></td></tr>
+          <tr><td>8</td><td>C</td><td>21,0</td><td>3,0</td><td>7,0:1</td><td><span class="badge badge-green">Steady</span></td></tr>
+          <tr><td>9</td><td>C & D</td><td>21,3</td><td>3,0</td><td>7,1:1</td><td><span class="badge badge-green">Steady</span></td></tr>
+          <tr><td>10</td><td>D</td><td>21,6</td><td>3,0</td><td>7,2:1</td><td><span class="badge badge-green">Steady</span></td></tr>
+          <tr><td>11</td><td>D & E</td><td>21,9</td><td>2,9</td><td>7,6:1</td><td><span class="badge badge-yellow">Declining</span></td></tr>
+          <tr><td>12</td><td>E</td><td>22,2</td><td>2,7</td><td>8,2:1</td><td><span class="badge badge-yellow">Declining</span></td></tr>
+          <tr><td>13</td><td>E & F</td><td>22,5</td><td>2,5</td><td>9,0:1</td><td><span class="badge badge-yellow">Declining</span></td></tr>
+          <tr><td>14</td><td>F</td><td>18,0</td><td>1,8</td><td>10,0:1</td><td><span class="badge badge-red">Closure</span></td></tr>
+          <tr style="font-weight:700;background:#dbeafe"><td>Total</td><td>—</td><td>281,2</td><td>38,3</td><td>7,3:1</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Kurva Produksi & Overburden</div>
+    <div class="chart-container"><canvas id="chartProdCurve"></canvas></div>
+
+    <div class="sub-header">Target Produksi Bulanan (Tahun Ke-3)</div>
+    <div class="chart-container"><canvas id="chartBulanan"></canvas></div>
+
+    <div class="sub-header">Gantt Chart Kegiatan Utama</div>
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table style="font-size:.8rem">
+          <thead><tr><th>Kegiatan</th><th>Th1</th><th>Th2</th><th>Th3</th><th>Th4</th><th>Th5</th><th>Th6</th><th>Th7</th><th>Th8</th><th>Th9</th><th>Th10</th><th>Th11</th><th>Th12</th><th>Th13</th><th>Th14</th></tr></thead>
+          <tbody>
+            <tr><td>Land Clearing</td><td style="background:#10b981"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td>Box Cut & Access</td><td style="background:#10b981"></td><td style="background:#10b981"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td>OB Stripping</td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td><td style="background:#3b82f6"></td></tr>
+            <tr><td>Coal Getting</td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td><td style="background:#f59e0b"></td></tr>
+            <tr><td>Hauling & Barging</td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td><td style="background:#8b5cf6"></td></tr>
+            <tr><td>Reklamasi</td><td></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td><td style="background:#22c55e"></td></tr>
+            <tr><td>Mine Closure</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td style="background:#ef4444"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 11 ================= -->
+<div class="section" id="s11">
+  <div class="section-header"><span class="num">11</span> Infrastruktur & Fasilitas Pendukung</div>
+  <div class="section-body">
+    <div class="grid-2">
+      <div class="card">
+        <h4>Fasilitas Utama</h4>
+        <table>
+          <thead><tr><th>Fasilitas</th><th>Kapasitas/Dimensi</th><th>Luas (Ha)</th></tr></thead>
+          <tbody>
+            <tr><td>Stockpile Batu Bara (ROM)</td><td>150.000 ton</td><td>8,5</td></tr>
+            <tr><td>Product Stockpile</td><td>80.000 ton</td><td>4,0</td></tr>
+            <tr><td>Crusher Plant</td><td>1.500 ton/jam</td><td>2,5</td></tr>
+            <tr><td>Workshop & Maintenance</td><td>8 bay</td><td>2,0</td></tr>
+            <tr><td>Fuel Storage</td><td>200.000 liter</td><td>0,8</td></tr>
+            <tr><td>Kantor & Mess</td><td>200 orang</td><td>1,5</td></tr>
+            <tr><td>Laboratorium</td><td>1 unit</td><td>0,3</td></tr>
+            <tr><td>Pos Keamanan</td><td>4 unit</td><td>0,2</td></tr>
+            <tr><td>Disposal / Landfill</td><td>—</td><td>15,0</td></tr>
+            <tr><td>Helipad</td><td>1 unit</td><td>0,5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Fasilitas Penunjang</h4>
+        <table>
+          <thead><tr><th>Jenis</th><th>Kapasitas</th></tr></thead>
+          <tbody>
+            <tr><td>Genset Utama</td><td>2 × 2.500 kVA</td></tr>
+            <tr><td>Genset Backup</td><td>1 × 1.000 kVA</td></tr>
+            <tr><td>Water Treatment</td><td>50 m³/jam</td></tr>
+            <tr><td>Waste Water Treatment</td><td>20 m³/jam</td></tr>
+            <tr><td>Internet & Komunikasi</td><td>Fiber + VSAT</td></tr>
+            <tr><td>Radio Komunikasi</td><td>2 repeater, 100 HT</td></tr>
+            <tr><td>Jalan Internal</td><td>25 km</td></tr>
+            <tr><td>Jetty (Dermaga Kecil)</td><td>Barge 8.000 DWT</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-header">Bill of Quantities (BOQ) Infrastruktur</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Item</th><th>Volume</th><th>Satuan</th><th>Estimasi Biaya (Rp Miliar)</th></tr></thead>
+        <tbody>
+          <tr><td>Land Clearing</td><td>1.720</td><td>Ha</td><td>25,8</td></tr>
+          <tr><td>Haul Road Construction</td><td>12,5</td><td>km</td><td>87,5</td></tr>
+          <tr><td>ROM Pad & Stockpile</td><td>12,5</td><td>Ha</td><td>45,0</td></tr>
+          <tr><td>Crusher Plant</td><td>1</td><td>unit</td><td>125,0</td></tr>
+          <tr><td>Settling Pond</td><td>6</td><td>unit</td><td>32,5</td></tr>
+          <tr><td>Workshop & Fasilitas</td><td>1</td><td>set</td><td>78,0</td></tr>
+          <tr><td>Fuel Station</td><td>1</td><td>set</td><td>15,5</td></tr>
+          <tr><td>Kantor, Mess, Lab</td><td>1</td><td>set</td><td>42,0</td></tr>
+          <tr><td>Jetty & Barging</td><td>1</td><td>set</td><td>125,0</td></tr>
+          <tr><td>Utilities & Power</td><td>1</td><td>set</td><td>68,5</td></tr>
+          <tr style="font-weight:700;background:#dbeafe"><td>Total</td><td>—</td><td>—</td><td>644,8</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 12 ================= -->
+<div class="section" id="s12">
+  <div class="section-header"><span class="num">12</span> Sistem Dewatering & Settling Pond</div>
+  <div class="section-body">
+    <div class="grid-2">
+      <div class="card">
+        <h4>Desain Settling Pond</h4>
+        <table>
+          <tr><td><strong>Dimensi Total</strong></td><td>46 m × 36 m × 7 m</td></tr>
+          <tr><td><strong>Jumlah Kompartemen</strong></td><td>6 unit</td></tr>
+          <tr><td><strong>Kapasitas Total</strong></td><td>69.552 m³</td></tr>
+          <tr><td><strong>Kapasitas per Kompartemen</strong></td><td>11.592 m³</td></tr>
+          <tr><td><strong>Debit Maksimum</strong></td><td>2,96 m³/detik</td></tr>
+          <tr><td><strong>Waktu Retensi</strong></td><td>≥ 6,5 jam (hujan ekstrem)</td></tr>
+          <tr><td><strong>Freeboard</strong></td><td>0,5 m</td></tr>
+          <tr><td><strong>Jumlah Pompa</strong></td><td>6 unit (500 m³/jam)</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Perhitungan Kapasitas Pompa</h4>
+        <div class="formula">
+          Q pompa = 6 × 500 m³/jam = 3.000 m³/jam<br>
+          = 0,83 m³/detik<br><br>
+          Debit hujan rata-rata = 2,96 m³/detik<br>
+          Debit hujan ekstrem = 89,3 m³/detik<br><br>
+          <em>Pompa hanya untuk maintenance level. Kapasitas pond menjadi buffer utama.</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-header">Struktur Kompartemen Settling Pond</div>
+    <div class="chart-container"><canvas id="chartPond"></canvas></div>
+
+    <div class="sub-header">Kualitas Air Sebelum & Sesudah Pengolahan</div>
+    <div class="chart-container"><canvas id="chartWaterQuality"></canvas></div>
+
+    <div class="sub-header">Program Monitoring Air</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Parameter</th><th>Titik Sampling</th><th>Frekuensi</th><th>Baku Mutu</th></tr></thead>
+        <tbody>
+          <tr><td>pH</td><td>Inlet, Outlet, Downstream</td><td>Harian</td><td>6,0–9,0</td></tr>
+          <tr><td>TSS</td><td>Inlet, Outlet</td><td>Mingguan</td><td>≤ 400 mg/L</td></tr>
+          <tr><td>Fe, Mn</td><td>Outlet, Downstream</td><td>Bulanan</td><td>Fe ≤ 7, Mn ≤ 4</td></tr>
+          <tr><td>BOD, COD</td><td>Outlet</td><td>Bulanan</td><td>BOD ≤ 30, COD ≤ 100</td></tr>
+          <tr><td>Heavy Metals</td><td>Outlet, Sedimen</td><td>Triwulan</td><td>PP 22/2021</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 13 ================= -->
+<div class="section" id="s13">
+  <div class="section-header"><span class="num">13</span> Pengelolaan Lingkungan</div>
+  <div class="section-body">
+    <div class="sub-header">Kualitas Udara & Emisi</div>
+    <div class="grid-2">
+      <div class="card">
+        <h4>Parameter Kualitas Udara</h4>
+        <table>
+          <thead><tr><th>Parameter</th><th>Baku Mutu</th><th>Target</th><th>Metode</th></tr></thead>
+          <tbody>
+            <tr><td>PM10</td><td>≤ 150 µg/m³</td><td>≤ 100 µg/m³</td><td>HVAS</td></tr>
+            <tr><td>PM2.5</td><td>≤ 65 µg/m³</td><td>≤ 45 µg/m³</td><td>HVAS</td></tr>
+            <tr><td>SO₂</td><td>≤ 900 µg/m³</td><td>≤ 400 µg/m³</td><td>Impingger</td></tr>
+            <tr><td>NO₂</td><td>≤ 400 µg/m³</td><td>≤ 200 µg/m³</td><td>Impingger</td></tr>
+            <tr><td>CO</td><td>≤ 30.000 µg/m³</td><td>≤ 10.000 µg/m³</td><td>CO Meter</td></tr>
+            <tr><td>Kebisingan</td><td>≤ 70 dB(A)</td><td>≤ 65 dB(A)</td><td>Sound Level Meter</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Peralatan Pengendalian Debu</h4>
+        <table>
+          <thead><tr><th>Jenis</th><th>Spesifikasi</th><th>Jumlah</th></tr></thead>
+          <tbody>
+            <tr><td>Water Truck</td><td>8.000 L</td><td>6 unit</td></tr>
+            <tr><td>Water Sprinkler</td><td>Fixed nozzle</td><td>25 titik</td></tr>
+            <tr><td>Dust Suppressant</td><td>Chemical</td><td>120 ton/tahun</td></tr>
+            <tr><td>Wind Fence</td><td>3 m tinggi</td><td>2.500 m</td></tr>
+            <tr><td>Green Buffer</td><td>Pohon pelindung</td><td>15.000 batang</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-header">Pengelolaan Limbah</div>
+    <div class="grid-2">
+      <div class="chart-container chart-container-sm"><canvas id="chartLimbah"></canvas></div>
+      <div class="card">
+        <h4>Jenis Limbah & Pengelolaan</h4>
+        <table>
+          <thead><tr><th>Jenis</th><th>Sumber</th><th>Pengelolaan</th></tr></thead>
+          <tbody>
+            <tr><td>Limbah B3</td><td>Workshop</td><td>Storage → Pihak ketiga berizin</td></tr>
+            <tr><td>Limbah Domestik</td><td>Kantor, Mess</td><td>TPST internal</td></tr>
+            <tr><td>Limbah Medis</td><td>Klinik</td><td>Incinerator + pihak ketiga</td></tr>
+            <tr><td>Limbah Cair</td><td>Domestik, Pit</td><td>WWTP + Settling Pond</td></tr>
+            <tr><td>Overburden</td><td>Pit</td><td>Disposal area</td></tr>
+            <tr><td>Top Soil</td><td>Land clearing</td><td>Stockpile untuk reklamasi</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-header">Program Pengelolaan Lingkungan (Capaian Target)</div>
+    <div class="chart-container"><canvas id="chartEnvProgram"></canvas></div>
+  </div>
+</div>
+
+<!-- ================= SECTION 14 ================= -->
+<div class="section" id="s14">
+  <div class="section-header"><span class="num">14</span> Reklamasi & Pascatambang</div>
+  <div class="section-body">
+    <div class="grid-4">
+      <div class="stat-box"><div class="value">4.590</div><div class="label">Luas Area</div><div class="unit">Hektar</div></div>
+      <div class="stat-box"><div class="value">337,7</div><div class="label">Biaya per Ha</div><div class="unit">Juta Rupiah</div></div>
+      <div class="stat-box"><div class="value">1,55</div><div class="label">Total Biaya</div><div class="unit">Triliun Rupiah</div></div>
+      <div class="stat-box"><div class="value">14,2</div><div class="label">Periode Reklamasi</div><div class="unit">Tahun</div></div>
+    </div>
+
+    <div class="sub-header">Tahapan Reklamasi</div>
+    <div class="timeline">
+      <div class="timeline-item"><h5>Tahap 1: Penataan Lahan (Regrading)</h5><p>Durasi 6 bulan • Bentuk lahan stabil • Slope akhir ≤ 25° • Drainase permanen</p></div>
+      <div class="timeline-item"><h5>Tahap 2: Penebaran Top Soil</h5><p>Durasi 3 bulan • Ketebalan 30 cm • Volume 1,38 juta m³</p></div>
+      <div class="timeline-item"><h5>Tahap 3: Revegetasi Fast Growing</h5><p>Durasi 12 bulan • Jenis: sengon, akasia, mahoni • Target coverage ≥ 80%</p></div>
+      <div class="timeline-item"><h5>Tahap 4: Revegetasi Local Species</h5><p>Durasi 24 bulan • Meranti, kapur, ulin, gaharu • Diversifikasi biodiversitas</p></div>
+      <div class="timeline-item"><h5>Tahap 5: Monitoring & Pemeliharaan</h5><p>Durasi 36 bulan • Monitoring kualitas air, tanah, vegetasi</p></div>
+    </div>
+
+    <div class="sub-header">Alokasi Biaya Reklamasi</div>
+    <div class="grid-2">
+      <div class="chart-container chart-container-sm"><canvas id="chartReklamasiCost"></canvas></div>
+      <div class="card">
+        <h4>Rincian Biaya Reklamasi</h4>
+        <table>
+          <thead><tr><th>Komponen</th><th>Biaya (Rp Miliar)</th><th>Persentase</th></tr></thead>
+          <tbody>
+            <tr><td>Penataan Lahan</td><td>380</td><td>24,5%</td></tr>
+            <tr><td>Top Soil & Media Tanam</td><td>220</td><td>14,2%</td></tr>
+            <tr><td>Revegetasi Fast Growing</td><td>350</td><td>22,6%</td></tr>
+            <tr><td>Revegetasi Local Species</td><td>400</td><td>25,8%</td></tr>
+            <tr><td>Monitoring & Pemeliharaan</td><td>200</td><td>12,9%</td></tr>
+            <tr style="font-weight:700;background:#dbeafe"><td>Total</td><td>1.550</td><td>100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-header">Target Kriteria Keberhasilan Pascatambang</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Indikator</th><th>Target</th><th>Metode Verifikasi</th><th>Frekuensi</th></tr></thead>
+        <tbody>
+          <tr><td>Tutupan Vegetasi</td><td>≥ 80%</td><td>Pengukuran lapangan</td><td>Semester</td></tr>
+          <tr><td>Erosi Tanah</td><td>≤ 10 ton/ha/tahun</td><td>USLE Method</td><td>Tahunan</td></tr>
+          <tr><td>Kualitas Air</td><td>Memenuhi baku mutu</td><td>Sampling & Lab</td><td>Bulanan</td></tr>
+          <tr><td>Stabilitas Lereng</td><td>FoS ≥ 1,3</td><td>Geoteknik monitoring</td><td>Semester</td></tr>
+          <tr><td>Produktivitas Lahan</td><td>≥ 60% lahan awal</td><td>Evaluasi agronomi</td><td>Tahunan</td></tr>
+          <tr><td>Biodiversitas</td><td>≥ 70% spesies asli</td><td>Survei flora-fauna</td><td>Tahunan</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 15 ================= -->
+<div class="section" id="s15">
+  <div class="section-header"><span class="num">15</span> Organisasi & Sumber Daya Manusia</div>
+  <div class="section-body">
+    <div class="grid-3">
+      <div class="stat-box"><div class="value">320</div><div class="label">Total Karyawan</div><div class="unit">Puncak Operasi</div></div>
+      <div class="stat-box"><div class="value">65%</div><div class="label">Lokal Kaltara</div><div class="unit">Komposisi</div></div>
+      <div class="stat-box"><div class="value">24</div><div class="label">Jam Pelatihan</div><div class="unit">per Karyawan/Tahun</div></div>
+    </div>
+
+    <div class="sub-header">Struktur Departemen</div>
+    <div class="grid-2">
+      <div class="chart-container chart-container-sm"><canvas id="chartDept"></canvas></div>
+      <div class="chart-container chart-container-sm"><canvas id="chartPendidikan"></canvas></div>
+    </div>
+
+    <div class="sub-header">Rencana Kebutuhan Tenaga Kerja</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Departemen</th><th>Th 1</th><th>Th 2</th><th>Th 3–10</th><th>Th 11–14</th><th>Kualifikasi</th></tr></thead>
+        <tbody>
+          <tr><td>Mining Operations</td><td>45</td><td>85</td><td>120</td><td>85</td><td>Operator, Supervisor</td></tr>
+          <tr><td>Engineering & Geology</td><td>12</td><td>18</td><td>25</td><td>18</td><td>S1 Teknik</td></tr>
+          <tr><td>Plant & Maintenance</td><td>25</td><td>45</td><td>65</td><td>45</td><td>Teknisi, Mekanik</td></tr>
+          <tr><td>HSE & Environment</td><td>8</td><td>12</td><td>18</td><td>12</td><td>S1 K3/Lingkungan</td></tr>
+          <tr><td>Logistics & Supply</td><td>12</td><td>20</td><td>30</td><td>22</td><td>SMK/S1</td></tr>
+          <tr><td>Finance & Admin</td><td>10</td><td>15</td><td>22</td><td>15</td><td>S1 Akuntansi</td></tr>
+          <tr><td>HR & CSR</td><td>6</td><td>10</td><td>15</td><td>10</td><td>S1 Manajemen</td></tr>
+          <tr><td>Security</td><td>15</td><td>22</td><td>25</td><td>18</td><td>SMK</td></tr>
+          <tr style="font-weight:700;background:#dbeafe"><td>Total</td><td>133</td><td>227</td><td>320</td><td>225</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Program Pelatihan & Sertifikasi</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Program</th><th>Target Peserta</th><th>Durasi</th><th>Sertifikasi</th></tr></thead>
+        <tbody>
+          <tr><td>POP (Pengawas Operasional Pertama)</td><td>Supervisor</td><td>5 hari</td><td>Kepmen ESDM</td></tr>
+          <tr><td>POM (Pengawas Operasional Madya)</td><td>Manager</td><td>7 hari</td><td>Kepmen ESDM</td></tr>
+          <tr><td>SIO Operator Alat Berat</td><td>Operator</td><td>5 tahun</td><td>Kepmen ESDM</td></tr>
+          <tr><td>SMK3</td><td>HSE & Manager</td><td>5 hari</td><td>Kemnaker</td></tr>
+          <tr><td>First Aid</td><td>Semua karyawan</td><td>2 hari</td><td>Internal</td></tr>
+          <tr><td>Drill & Blasting</td><td>Tim Peledakan</td><td>10 hari</td><td>Kepmen ESDM</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 16 ================= -->
+<div class="section" id="s16">
+  <div class="section-header"><span class="num">16</span> Logistik & Supply Chain</div>
+  <div class="section-body">
+    <div class="grid-2">
+      <div class="card">
+        <h4>Kebutuhan Utama</h4>
+        <table>
+          <thead><tr><th>Item</th><th>Konsumsi/Tahun</th><th>Satuan</th></tr></thead>
+          <tbody>
+            <tr><td>Solar (HSD)</td><td>75.000.000</td><td>Liter</td></tr>
+            <tr><td>Oli & Pelumas</td><td>1.250.000</td><td>Liter</td></tr>
+            <tr><td>Bahan Peledak</td><td>3.500</td><td>Ton</td></tr>
+            <tr><td>Ban Truk</td><td>240</td><td>Unit</td></tr>
+            <tr><td>Suku Cadang</td><td>Rp 185 M</td><td>—</td></tr>
+            <tr><td>Semen & Material</td><td>15.000</td><td>Ton</td></tr>
+            <tr><td>Dust Suppressant</td><td>120</td><td>Ton</td></tr>
+            <tr><td>Chemical (WWTP)</td><td>85</td><td>Ton</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Rute Logistik</h4>
+        <table>
+          <thead><tr><th>Rute</th><th>Jarak</th><th>Moda</th><th>Frekuensi</th></tr></thead>
+          <tbody>
+            <tr><td>Tambang → Jetty</td><td>85 km</td><td>Truk & Barge</td><td>Harian</td></tr>
+            <tr><td>Jetty → Buyer (Domestik)</td><td>—</td><td>Barge/Vessel</td><td>2×/bulan</td></tr>
+            <tr><td>Jetty → Buyer (Ekspor)</td><td>—</td><td>Vessel</td><td>1×/bulan</td></tr>
+            <tr><td>Fuel Supply</td><td>350 km</td><td>Truk Tangki</td><td>Mingguan</td></tr>
+            <tr><td>Spare Parts</td><td>Jakarta/Balikpapan</td><td>Kargo Udara</td><td>2×/minggu</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-header">Alokasi Biaya Logistik Tahunan</div>
+    <div class="chart-container"><canvas id="chartLogistik"></canvas></div>
+
+    <div class="sub-header">Alur Rantai Pasok</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:15px;background:#f8fafc;border-radius:10px;font-size:.85rem">
+        <div style="background:#1a3a5c;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Supplier<br><small>Lokal/Impor</small></div>
+        <div style="color:#2a5a8c;font-size:1.3rem">➜</div>
+        <div style="background:#2a5a8c;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Gudang<br><small>Site</small></div>
+        <div style="color:#2a5a8c;font-size:1.3rem">➜</div>
+        <div style="background:#3a7aac;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Distribusi<br><small>Ke Pit</small></div>
+        <div style="color:#2a5a8c;font-size:1.3rem">➜</div>
+        <div style="background:#4a9acc;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Operasi<br><small>Konsumsi</small></div>
+        <div style="color:#2a5a8c;font-size:1.3rem">➜</div>
+        <div style="background:#10b981;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Produk<br><small>Batu Bara</small></div>
+        <div style="color:#2a5a8c;font-size:1.3rem">➜</div>
+        <div style="background:#f59e0b;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Buyer<br><small>Domestik/Ekspor</small></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 17 ================= -->
+<div class="section" id="s17">
+  <div class="section-header"><span class="num">17</span> K3 & Keselamatan Operasi</div>
+  <div class="section-body">
+    <div class="grid-4">
+      <div class="stat-box"><div class="value">0,15</div><div class="label">Target LTIFR</div><div class="unit">per 1 Juta Jam</div></div>
+      <div class="stat-box"><div class="value">1,0</div><div class="label">Target TRIFR</div><div class="unit">per 1 Juta Jam</div></div>
+      <div class="stat-box"><div class="value">98%</div><div class="label">Kepatuhan APD</div><div class="unit">Target</div></div>
+      <div class="stat-box"><div class="value">24</div><div class="label">Jam Pelatihan K3</div><div class="unit">per Karyawan/Tahun</div></div>
+    </div>
+
+    <div class="sub-header">Program K3 Unggulan</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Program</th><th>Frekuensi</th><th>Peserta</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td>Safety Induction</td><td>Setiap karyawan baru</td><td>Semua</td><td>100%</td></tr>
+          <tr><td>Toolbox Meeting</td><td>Harian</td><td>Operator & Teknisi</td><td>100%</td></tr>
+          <tr><td>Safety Patrol</td><td>Mingguan</td><td>Supervisor</td><td>≥ 95% ditindaklanjuti</td></tr>
+          <tr><td>Emergency Drill</td><td>Triwulan</td><td>Semua Karyawan</td><td>Respons ≤ 5 menit</td></tr>
+          <tr><td>Pelatihan K3</td><td>Bulanan</td><td>Per Departemen</td><td>24 jam/karyawan/tahun</td></tr>
+          <tr><td>Audit K3</td><td>Semester</td><td>Internal & Eksternal</td><td>Skor ≥ 90%</td></tr>
+          <tr><td>Hazard Reporting</td><td>Kontinyu</td><td>Semua</td><td>≥ 5 laporan/orang/tahun</td></tr>
+          <tr><td>Behavior Based Safety</td><td>Mingguan</td><td>Observer</td><td>≥ 100 observasi/bulan</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Proyeksi Tren Insiden</div>
+    <div class="chart-container"><canvas id="chartInsidenTrend"></canvas></div>
+
+    <div class="sub-header">Penyebab Utama Insiden (Proyeksi)</div>
+    <div class="grid-2">
+      <div class="chart-container chart-container-sm"><canvas id="chartPenyebabInsiden"></canvas></div>
+      <div class="chart-container chart-container-sm"><canvas id="chartAPD"></canvas></div>
+    </div>
+
+    <div class="sub-header">Penggunaan APD Wajib</div>
+    <div class="card">
+      <ul class="two-col-list">
+        <li>Helm Safety (SNI)</li>
+        <li>Safety Shoes (Steel toe)</li>
+        <li>Kacamata Safety</li>
+        <li>Sarung Tangan</li>
+        <li>Rompi Reflektif</li>
+        <li>Masker Debu (N95)</li>
+        <li>Ear Plug / Muff</li>
+        <li>Full Body Harness</li>
+        <li>Face Shield (grinding)</li>
+        <li>Apron Kulit (welding)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 18 ================= -->
+<div class="section" id="s18">
+  <div class="section-header"><span class="num">18</span> Analisis Finansial</div>
+  <div class="section-body">
+    <div class="grid-5">
+      <div class="stat-box"><div class="value">1,85</div><div class="label">CAPEX</div><div class="unit">Triliun Rupiah</div></div>
+      <div class="stat-box"><div class="value">1,25</div><div class="label">OPEX Tahunan</div><div class="unit">Triliun Rupiah</div></div>
+      <div class="stat-box"><div class="value">18,5%</div><div class="label">IRR</div><div class="unit">Proyek</div></div>
+      <div class="stat-box"><div class="value">4,2 Th</div><div class="label">Payback</div><div class="unit">Tahun</div></div>
+      <div class="stat-box"><div class="value">1,42</div><div class="label">PI</div><div class="unit">Profitability Index</div></div>
+    </div>
+
+    <div class="sub-header">Struktur CAPEX</div>
+    <div class="grid-2">
+      <div class="chart-container chart-container-sm"><canvas id="chartCAPEX"></canvas></div>
+      <div class="card">
+        <h4>Rincian CAPEX</h4>
+        <table>
+          <thead><tr><th>Komponen</th><th>Biaya (Rp M)</th><th>%</th></tr></thead>
+          <tbody>
+            <tr><td>Peralatan Tambang</td><td>850.000</td><td>45,9%</td></tr>
+            <tr><td>Infrastruktur</td><td>320.000</td><td>17,3%</td></tr>
+            <tr><td>Land Acquisition</td><td>180.000</td><td>9,7%</td></tr>
+            <tr><td>Engineering & Design</td><td>95.000</td><td>5,1%</td></tr>
+            <tr><td>Pre-stripping</td><td>280.000</td><td>15,1%</td></tr>
+            <tr><td>Working Capital</td><td>125.000</td><td>6,8%</td></tr>
+            <tr style="font-weight:700;background:#dbeafe"><td>Total CAPEX</td><td>1.850.000</td><td>100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-header">Struktur OPEX Tahunan</div>
+    <div class="grid-2">
+      <div class="chart-container chart-container-sm"><canvas id="chartOPEX"></canvas></div>
+      <div class="card">
+        <h4>Rincian OPEX</h4>
+        <table>
+          <thead><tr><th>Komponen</th><th>Biaya (Rp M)</th><th>%</th></tr></thead>
+          <tbody>
+            <tr><td>BBM & Pelumas</td><td>420.000</td><td>33,6%</td></tr>
+            <tr><td>Gaji & Benefit</td><td>280.000</td><td>22,4%</td></tr>
+            <tr><td>Maintenance</td><td>195.000</td><td>15,6%</td></tr>
+            <tr><td>Kontraktor</td><td>180.000</td><td>14,4%</td></tr>
+            <tr><td>Lingkungan</td><td>95.000</td><td>7,6%</td></tr>
+            <tr><td>Overhead</td><td>80.000</td><td>6,4%</td></tr>
+            <tr style="font-weight:700;background:#dbeafe"><td>Total OPEX</td><td>1.250.000</td><td>100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-header">Proyeksi Arus Kas (14 Tahun)</div>
+    <div class="chart-container-lg"><canvas id="chartCashflow"></canvas></div>
+
+    <div class="sub-header">Analisis Sensitivitas NPV</div>
+    <div class="chart-container"><canvas id="chartSensitivitas"></canvas></div>
+
+    <div class="sub-header">Break-Even Analysis</div>
+    <div class="card">
+      <div class="formula">
+        BEP (ton) = Fixed Cost / (Harga Jual - Variable Cost per Ton)<br><br>
+        Fixed Cost = Rp 520 M/tahun<br>
+        Harga Jual = Rp 950.000/ton<br>
+        Variable Cost = Rp 420.000/ton<br>
+        Contribution Margin = Rp 530.000/ton<br><br>
+        BEP = 520.000.000.000 / 530.000 = 981.132 ton/tahun<br>
+        BEP Ratio = 981.132 / 3.000.000 = 32,7% dari kapasitas
+      </div>
+      <div class="note-success note">
+        <strong>Kesimpulan:</strong> Operasi mencapai BEP pada 32,7% kapasitas. Safety margin 67,3%.
+      </div>
+    </div>
+
+    <div class="sub-header">Asumsi Harga & Pendapatan</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Tahun</th><th>Harga (USD/Ton)</th><th>Produksi (Juta Ton)</th><th>Pendapatan (Rp T)</th><th>Laba Bersih (Rp T)</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>65</td><td>1,8</td><td>0,76</td><td>-0,12</td></tr>
+          <tr><td>2</td><td>68</td><td>2,8</td><td>1,23</td><td>0,18</td></tr>
+          <tr><td>3</td><td>70</td><td>3,0</td><td>1,36</td><td>0,32</td></tr>
+          <tr><td>4–10 (rata-rata)</td><td>72</td><td>3,0</td><td>1,40</td><td>0,38</td></tr>
+          <tr><td>11–14 (rata-rata)</td><td>75</td><td>2,5</td><td>1,22</td><td>0,25</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 19 ================= -->
+<div class="section" id="s19">
+  <div class="section-header"><span class="num">19</span> Manajemen Risiko</div>
+  <div class="section-body">
+    <div class="sub-header">Risk Register</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>No</th><th>Identifikasi Risiko</th><th>Prob</th><th>Dampak</th><th>Level</th><th>Mitigasi</th><th>Owner</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Fluktuasi harga batu bara global</td><td>Tinggi</td><td>Tinggi</td><td><span class="badge badge-red">Tinggi</span></td><td>Hedging, kontrak jangka panjang</td><td>Finance</td></tr>
+          <tr><td>2</td><td>Curah hujan ekstrem & banjir</td><td>Sedang</td><td>Tinggi</td><td><span class="badge badge-red">Tinggi</span></td><td>Drainase, pompa cadangan</td><td>Mine Eng</td></tr>
+          <tr><td>3</td><td>Kerusakan alat berat</td><td>Sedang</td><td>Sedang</td><td><span class="badge badge-yellow">Sedang</span></td><td>Preventive maintenance</td><td>Plant</td></tr>
+          <tr><td>4</td><td>Ketidakstabilan lereng</td><td>Rendah</td><td>Tinggi</td><td><span class="badge badge-yellow">Sedang</span></td><td>Monitoring geoteknik, radar</td><td>Geotech</td></tr>
+          <tr><td>5</td><td>Konflik sosial masyarakat</td><td>Sedang</td><td>Sedang</td><td><span class="badge badge-yellow">Sedang</span></td><td>CSR, komunikasi rutin</td><td>CSR</td></tr>
+          <tr><td>6</td><td>Regulasi lingkungan diperketat</td><td>Sedang</td><td>Tinggi</td><td><span class="badge badge-red">Tinggi</span></td><td>Compliance audit</td><td>HSE</td></tr>
+          <tr><td>7</td><td>Kekurangan tenaga kerja terampil</td><td>Rendah</td><td>Sedang</td><td><span class="badge badge-green">Rendah</span></td><td>Pelatihan, kerja sama vokasi</td><td>HR</td></tr>
+          <tr><td>8</td><td>Kecelakaan kerja</td><td>Rendah</td><td>Tinggi</td><td><span class="badge badge-yellow">Sedang</span></td><td>SMK3, safety induction</td><td>HSE</td></tr>
+          <tr><td>9</td><td>Keterlambatan suplai BBM</td><td>Sedang</td><td>Sedang</td><td><span class="badge badge-yellow">Sedang</span></td><td>Buffer stock 30 hari</td><td>Logistics</td></tr>
+          <tr><td>10</td><td>Force majeure</td><td>Rendah</td><td>Tinggi</td><td><span class="badge badge-yellow">Sedang</span></td><td>Asuransi, emergency plan</td><td>Mgmt</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Risk Heat Map</div>
+    <div class="chart-container"><canvas id="chartRiskMap"></canvas></div>
+
+    <div class="sub-header">Alokasi Biaya Mitigasi Risiko</div>
+    <div class="grid-2">
+      <div class="chart-container chart-container-sm"><canvas id="chartMitigasiCost"></canvas></div>
+      <div class="chart-container chart-container-sm"><canvas id="chartRiskLevel"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 20 ================= -->
+<div class="section" id="s20">
+  <div class="section-header"><span class="num">20</span> CSR & Community Relations</div>
+  <div class="section-body">
+    <div class="grid-3">
+      <div class="stat-box"><div class="value">Rp 25 M</div><div class="label">Anggaran CSR</div><div class="unit">per Tahun</div></div>
+      <div class="stat-box"><div class="value">65%</div><div class="label">Tenaga Kerja Lokal</div><div class="unit">Target</div></div>
+      <div class="stat-box"><div class="value">12</div><div class="label">Desa Terdampak</div><div class="unit">Binaan</div></div>
+    </div>
+
+    <div class="sub-header">Program CSR Unggulan</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Pilar</th><th>Program</th><th>Alokasi/Tahun</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td>Pendidikan</td><td>Beasiswa, renovasi sekolah</td><td>Rp 5,0 M</td><td>200 siswa/tahun</td></tr>
+          <tr><td>Kesehatan</td><td>Posyandu, penyuluhan, klinik</td><td>Rp 4,0 M</td><td>12 desa</td></tr>
+          <tr><td>Ekonomi</td><td>UMKM, pelatihan keterampilan</td><td>Rp 6,0 M</td><td>150 UMKM</td></tr>
+          <tr><td>Infrastruktur</td><td>Jalan desa, air bersih, listrik</td><td>Rp 5,0 M</td><td>12 desa</td></tr>
+          <tr><td>Lingkungan</td><td>Penghijauan, konservasi</td><td>Rp 3,0 M</td><td>50 Ha/tahun</td></tr>
+          <tr><td>Budaya</td><td>Festival adat, dokumentasi</td><td>Rp 2,0 M</td><td>4 event/tahun</td></tr>
+          <tr style="font-weight:700;background:#dbeafe"><td>Total</td><td>—</td><td>Rp 25,0 M</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Alokasi Anggaran CSR</div>
+    <div class="chart-container"><canvas id="chartCSR"></canvas></div>
+
+    <div class="sub-header">Program Pemberdayaan Masyarakat</div>
+    <div class="card">
+      <ul class="two-col-list">
+        <li>Pelatihan operator alat berat</li>
+        <li>Pelatihan menjahit & kerajinan</li>
+        <li>Pengembangan pertanian organik</li>
+        <li>Budidaya ikan & peternakan</li>
+        <li>Koperasi simpan pinjam</li>
+        <li>Digital marketing UMKM</li>
+        <li>Pendampingan sertifikasi halal</li>
+        <li>Kemitraan suplai lokal</li>
+        <li>Pelatihan safety driving</li>
+        <li>Program padat karya</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 21 ================= -->
+<div class="section" id="s21">
+  <div class="section-header"><span class="num">21</span> Mine Closure Plan</div>
+  <div class="section-body">
+    <div class="sub-header">Tahapan Penutupan Tambang</div>
+    <div class="timeline">
+      <div class="timeline-item"><h5>Tahap 1: Perencanaan (Th 12)</h5><p>Penyusunan dokumen rencana penutupan, konsultasi pemangku kepentingan, penyiapan dana jaminan.</p></div>
+      <div class="timeline-item"><h5>Tahap 2: Decommissioning (Th 13–14)</h5><p>Pembongkaran fasilitas, pembersihan lahan, penutupan pit, penataan lahan final.</p></div>
+      <div class="timeline-item"><h5>Tahap 3: Reklamasi Final (Th 14–16)</h5><p>Revegetasi menyeluruh, stabilisasi lereng, pengelolaan air pascatambang.</p></div>
+      <div class="timeline-item"><h5>Tahap 4: Monitoring Pascatambang (Th 16–21)</h5><p>Monitoring kualitas lingkungan, evaluasi keberhasilan, penyerahan lahan.</p></div>
+    </div>
+
+    <div class="sub-header">Rencana Penggunaan Lahan Pascatambang</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Peruntukan</th><th>Luas (Ha)</th><th>Persentase</th><th>Keterangan</th></tr></thead>
+        <tbody>
+          <tr><td>Hutan Produksi</td><td>1.850</td><td>40,3%</td><td>Revegetasi kayu komersial</td></tr>
+          <tr><td>Kawasan Konservasi</td><td>920</td><td>20,0%</td><td>Zona lindung biodiversitas</td></tr>
+          <tr><td>Perkebunan</td><td>690</td><td>15,0%</td><td>Sawit, karet, kopi</td></tr>
+          <tr><td>Kolam / Perairan</td><td>350</td><td>7,6%</td><td>Bekas pit, budidaya</td></tr>
+          <tr><td>Permukiman / Fasos</td><td>230</td><td>5,0%</td><td>Fasilitas umum</td></tr>
+          <tr><td>Lain-lain</td><td>550</td><td>12,1%</td><td>Buffer, jalan, dll</td></tr>
+          <tr style="font-weight:700;background:#dbeafe"><td>Total</td><td>4.590</td><td>100%</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Jaminan Reklamasi & Pascatambang</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Komponen</th><th>Nilai (Rp M)</th><th>Bentuk Jaminan</th><th>Penerima</th></tr></thead>
+        <tbody>
+          <tr><td>Jaminan Reklamasi</td><td>850</td><td>Deposito Berjangka</td><td>Pemerintah</td></tr>
+          <tr><td>Jaminan Pascatambang</td><td>700</td><td>Bank Garansi</td><td>Pemerintah</td></tr>
+          <tr><td>Dana Komunitas</td><td>50</td><td>Rekening Bersama</td><td>Masyarakat</td></tr>
+          <tr style="font-weight:700;background:#dbeafe"><td>Total</td><td>1.600</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-header">Alur Persetujuan Penutupan Tambang</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:15px;background:#f8fafc;border-radius:10px;font-size:.85rem">
+        <div style="background:#1a3a5c;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Rencana Penutupan</div>
+        <div style="color:#2a5a8c;font-size:1.3rem">➜</div>
+        <div style="background:#2a5a8c;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Review Internal</div>
+        <div style="color:#2a5a8c;font-size:1.3rem">➜</div>
+        <div style="background:#3a7aac;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Konsultasi Publik</div>
+        <div style="color:#2a5a8c;font-size:1.3rem">➜</div>
+        <div style="background:#4a9acc;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Verifikasi ESDM</div>
+        <div style="color:#2a5a8c;font-size:1.3rem">➜</div>
+        <div style="background:#10b981;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Persetujuan</div>
+        <div style="color:#2a5a8c;font-size:1.3rem">➜</div>
+        <div style="background:#f59e0b;color:#fff;padding:12px 18px;border-radius:8px;text-align:center">Pelaksanaan</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION 22 ================= -->
+<div class="section" id="s22">
+  <div class="section-header"><span class="num">22</span> Kesimpulan & Rekomendasi</div>
+  <div class="section-body">
+    <div class="card">
+      <h4>Kesimpulan</h4>
+      <ol style="padding-left:20px;color:#334155;font-size:.95rem;line-height:2">
+        <li>DED ini telah disusun sesuai kaidah <em>Good Mining Practice</em> (Kepmen ESDM 1827/2018).</li>
+        <li>Total sumber daya 42,5 juta ton dengan cadangan tertambang 38,3 juta ton, cukup untuk 14,2 tahun pada 3 juta ton/tahun.</li>
+        <li>Desain pit, jalan angkut, drainase, dan fasilitas pendukung telah memenuhi standar teknis dan keselamatan.</li>
+        <li>Kombinasi 8 fleet gali-muat dan 64 unit dump truck menghasilkan match factor 1,02 (optimal).</li>
+        <li>Analisis finansial: NPV positif, IRR 18,5%, payback 4,2 tahun, BEP pada 32,7% kapasitas.</li>
+        <li>Program reklamasi dan pascatambang dialokasikan Rp 1,55 triliun dengan jaminan Rp 1,6 triliun.</li>
+        <li>Manajemen risiko telah diidentifikasi dengan 10 risiko utama dan strategi mitigasi.</li>
+      </ol>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h4>Rekomendasi</h4>
+      <ol style="padding-left:20px;color:#334155;font-size:.95rem;line-height:2">
+        <li>Melakukan <em>infill drilling</em> tahun ke-1 untuk meningkatkan kategori cadangan.</li>
+        <li>Membangun kemitraan strategis dengan pembeli jangka panjang.</li>
+        <li>Investasi dalam teknologi <em>fleet management system</em> (FMS).</li>
+        <li>Mempercepat sertifikasi ISO 14001 dan SMK3.</li>
+        <li>Menyiapkan SDM lokal melalui program vokasi tambang.</li>
+        <li>Menerapkan prinsip <em>circular economy</em> dalam pengelolaan limbah.</li>
+        <li>Melakukan studi AMDAL lanjutan untuk perluasan konsesi potensial.</li>
+      </ol>
+    </div>
+
+    <div class="note-success note" style="margin-top:20px">
+      <strong>Status Dokumen:</strong> DED ini bersifat <em>living document</em> yang akan di-review setiap tahun bersamaan dengan penyusunan RKAB.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- MODUL PETA & DENAH D3.JS                      -->
+<!-- ============================================== -->
+<div class="map-section-divider" id="maps">
+  <h3>🗺 MODUL PETA & DENAH TEKNIK (Berbasis D3.js)</h3>
+  <p>Modul ini menggunakan <strong>D3.js</strong> untuk menghasilkan peta dan denah teknis interaktif. Semua peta berbasis <em>SVG vector</em>, dilengkapi tooltip, legenda, arah utara, dan skala batang. Koordinat menggunakan sistem UTM Zona 50N (WGS84).</p>
+</div>
+
+<!-- M1: PETA KONSESI -->
+<div class="section" id="m1">
+  <div class="section-header map-header"><span class="num">M1</span> Peta Konsesi & Pembagian Blok A–F</div>
+  <div class="section-body">
+    <div class="map-container">
+      <div class="map-title">Peta Blok Konsesi PT Minas Morgul Coal — 4.590 Hektar</div>
+      <div id="d3MapConsession" style="position:relative"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box" style="background:#1a3a5c"></div>Blok A (850 Ha)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#2a5a8c"></div>Blok B (920 Ha)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#3a7aac"></div>Blok C (780 Ha)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#4a9acc"></div>Blok D (690 Ha)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#6ab4dc"></div>Blok E (750 Ha)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#8accec"></div>Blok F (600 Ha)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#10b981"></div>Fasilitas</div>
+        <div class="legend-item"><div class="legend-box" style="background:#f59e0b"></div>Jalan Utama</div>
+        <div class="legend-item"><div class="legend-box" style="background:#8b5cf6"></div>Jetty</div>
+      </div>
+      <div class="coords" id="coordConsession">Koordinat: —</div>
+    </div>
+    <div class="note">
+      <strong>Keterangan:</strong> Peta menampilkan 6 blok operasional (A–F) dengan total 4.590 Ha, area fasilitas utama, dan jaringan jalan utama. Arahkan kursor untuk melihat detail cadangan.
+    </div>
+  </div>
+</div>
+
+<!-- M2: PETA KONTUR -->
+<div class="section" id="m2">
+  <div class="section-header map-header"><span class="num">M2</span> Peta Kontur Topografi & Elevasi</div>
+  <div class="section-body">
+    <div class="map-container">
+      <div class="map-title">Peta Kontur Topografi Konsesi (Interval 20 m)</div>
+      <div id="d3MapContour" style="position:relative"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box" style="background:#fef3c7"></div>Elevasi &lt; 50 m</div>
+        <div class="legend-item"><div class="legend-box" style="background:#fde68a"></div>50–100 m</div>
+        <div class="legend-item"><div class="legend-box" style="background:#fcd34d"></div>100–150 m</div>
+        <div class="legend-item"><div class="legend-box" style="background:#f59e0b"></div>&gt; 150 m</div>
+      </div>
+      <div class="coords">Interval kontur: 20 m | Skala 1:25.000</div>
+    </div>
+  </div>
+</div>
+
+<!-- M3: DENAH PIT -->
+<div class="section" id="m3">
+  <div class="section-header map-header"><span class="num">M3</span> Denah Pit & Tata Letak Jenjang</div>
+  <div class="section-body">
+    <div class="map-container">
+      <div class="map-title">Denah Pit Final — Tampak Atas (Top View) dengan Jenjang 10 m</div>
+      <div id="d3PitLayout" style="position:relative"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box" style="background:#8B7355"></div>Overburden</div>
+        <div class="legend-item"><div class="legend-box" style="background:#1a1a1a"></div>Seam A</div>
+        <div class="legend-item"><div class="legend-box" style="background:#333"></div>Seam B</div>
+        <div class="legend-item"><div class="legend-box" style="background:#555"></div>Seam C</div>
+        <div class="legend-item"><div class="legend-box" style="background:#f59e0b"></div>Jalan Angkut (Ramp)</div>
+      </div>
+    </div>
+
+    <div class="sub-header">Cross-Section Pit (Tampak Samping)</div>
+    <div class="map-container">
+      <div class="map-title">Penampang Melintang A–A' Pit — Jenjang 10 m, Slope 45°–55°</div>
+      <div id="d3PitCrossSection" style="position:relative"></div>
+    </div>
+  </div>
+</div>
+
+<!-- M4: LAYOUT FASILITAS -->
+<div class="section" id="m4">
+  <div class="section-header map-header"><span class="num">M4</span> Layout Fasilitas Tambang (Site Plan)</div>
+  <div class="section-body">
+    <div class="map-container">
+      <div class="map-title">Site Plan Fasilitas Utama — Skala 1:5.000</div>
+      <div id="d3FacilityLayout" style="position:relative"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box" style="background:#1a3a5c"></div>Pit Area</div>
+        <div class="legend-item"><div class="legend-box" style="background:#2a5a8c"></div>Stockpile</div>
+        <div class="legend-item"><div class="legend-box" style="background:#3a7aac"></div>Workshop / Crusher</div>
+        <div class="legend-item"><div class="legend-box" style="background:#4a9acc"></div>Fuel Station</div>
+        <div class="legend-item"><div class="legend-box" style="background:#6ab4dc"></div>Settling Pond</div>
+        <div class="legend-item"><div class="legend-box" style="background:#10b981"></div>Kantor & Mess</div>
+        <div class="legend-item"><div class="legend-box" style="background:#8b5cf6"></div>Jetty</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- M5: LAYOUT JALAN ANGKUT -->
+<div class="section" id="m5">
+  <div class="section-header map-header"><span class="num">M5</span> Layout Jalan Angkut (Haul Road Network)</div>
+  <div class="section-body">
+    <div class="map-container">
+      <div class="map-title">Jaringan Jalan Angkut — Panjang Total 12,5 km</div>
+      <div id="d3HaulRoad" style="position:relative"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box" style="background:#f59e0b"></div>Jalan Utama (15 m)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#3b82f6"></div>Cross Drain</div>
+        <div class="legend-item"><div class="legend-box" style="background:#1a3a5c"></div>Node Logistik</div>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top:20px">
+      <div class="card"><h4>Segmen 1: Pit A → ROM</h4><p style="font-size:.85rem;color:#64748b">Panjang: 3,2 km | Grade 6% | Lebar 15 m</p></div>
+      <div class="card"><h4>Segmen 2: ROM → Crusher</h4><p style="font-size:.85rem;color:#64748b">Panjang: 1,8 km | Grade 4% | Lebar 15 m</p></div>
+      <div class="card"><h4>Segmen 3: Crusher → Jetty</h4><p style="font-size:.85rem;color:#64748b">Panjang: 7,5 km | Grade 5% | Lebar 15 m</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- M6: DENAH SETTLING POND -->
+<div class="section" id="m6">
+  <div class="section-header map-header"><span class="num">M6</span> Denah Settling Pond (6 Kompartemen)</div>
+  <div class="section-body">
+    <div class="map-container">
+      <div class="map-title">Denah Settling Pond — 46 m × 36 m × 7 m (6 Kompartemen)</div>
+      <div id="d3SettlingPond" style="position:relative"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box" style="background:#dbeafe"></div>Air Bersih (Outlet)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#93c5fd"></div>Air Sedang</div>
+        <div class="legend-item"><div class="legend-box" style="background:#3b82f6"></div>Air Keruh</div>
+        <div class="legend-item"><div class="legend-box" style="background:#1e40af"></div>Air Sangat Keruh</div>
+        <div class="legend-item"><div class="legend-box" style="background:#64748b"></div>Baffle / Sekat</div>
+        <div class="legend-item"><div class="legend-box" style="background:#f59e0b"></div>Pompa</div>
+      </div>
+    </div>
+    <div class="note-info note">
+      <strong>Aliran:</strong> Air dari pit → Kompartemen 1 (inlet) → 2 → 3 → 4 → 5 → 6 (outlet). Setiap kompartemen berukuran 7 m × 6 m × 7 m. Waktu retensi total 6,5 jam pada hujan ekstrem.
+    </div>
+  </div>
+</div>
+
+<!-- M7: PETA SEBARAN SEAM -->
+<div class="section" id="m7">
+  <div class="section-header map-header"><span class="num">M7</span> Peta Sebaran Seam Batu Bara (Isopach)</div>
+  <div class="section-body">
+    <div class="map-container">
+      <div class="map-title">Peta Isopach & Sebaran 4 Seam Utama (Seam A & B)</div>
+      <div class="grid-2">
+        <div id="d3SeamMapA" style="position:relative"></div>
+        <div id="d3SeamMapB" style="position:relative"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box" style="background:#dc2626"></div>Ketebalan &gt; 5 m</div>
+        <div class="legend-item"><div class="legend-box" style="background:#f59e0b"></div>Ketebalan 3–5 m</div>
+        <div class="legend-item"><div class="legend-box" style="background:#84cc16"></div>Ketebalan 1,5–3 m</div>
+        <div class="legend-item"><div class="legend-box" style="background:#3b82f6"></div>Ketebalan &lt; 1,5 m</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- M8: PETA PROGRES PENAMBANGAN -->
+<div class="section" id="m8">
+  <div class="section-header map-header"><span class="num">M8</span> Peta Progres Penambangan (Tahunan Interaktif)</div>
+  <div class="section-body">
+    <div class="map-container">
+      <div class="map-title">Progres Pit per Tahun — Klik Tombol untuk Melihat Transisi</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button onclick="updateYear(1, event)" class="yearBtn" style="padding:6px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:.8rem">Th-1</button>
+        <button onclick="updateYear(3, event)" class="yearBtn" style="padding:6px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:.8rem">Th-3</button>
+        <button onclick="updateYear(7, event)" class="yearBtn" style="padding:6px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:.8rem">Th-7</button>
+        <button onclick="updateYear(10, event)" class="yearBtn" style="padding:6px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:.8rem">Th-10</button>
+        <button onclick="updateYear(14, event)" class="yearBtn" style="padding:6px 14px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;font-size:.8rem">Th-14</button>
+      </div>
+      <div id="d3ProgressMap" style="position:relative"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box" style="background:#10b981"></div>Blok Aktif</div>
+        <div class="legend-item"><div class="legend-box" style="background:#cbd5e1"></div>Selesai / Reklamasi</div>
+        <div class="legend-item"><div class="legend-box" style="background:#1a3a5c"></div>Akan Datang</div>
+      </div>
+      <div class="coords" id="progressYearLabel">Tahun: 1 — Blok aktif disorot hijau</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end container -->
+
+<div class="footer">
+  <p><strong>PT MINAS MORGUL COAL</strong> — Detail Engineering Design Operasional Tambang Batu Bara</p>
+  <p>Kecamatan Sesayap, Kabupaten Tanah Tidung, Kalimantan Utara | Luas Konsesi: 4.590 Hektar</p>
+  <p style="margin-top:10px;font-size:.8rem;color:#64748b">
+    Dokumen disusun berdasarkan Kepmen ESDM No. 1827 K/30/MEM/2018, Kepmen ESDM No. 344.K/MB.01/MEM.B/2025, PP No. 22/2021.
+  </p>
+  <p style="margin-top:15px;font-size:.75rem;color:#475569">
+    &copy; 2026 PT Minas Morgul Coal. Dokumen DED ini bersifat rahasia.
+  </p>
+</div>
+
+<!-- ===================================================================== -->
+<!-- SCRIPT 1: CHART.JS — 41 GRAFIK                                        -->
+<!-- ===================================================================== -->
+<script>
+const C = {
+  navy:'#1a3a5c', blue1:'#2a5a8c', blue2:'#3a7aac', blue3:'#4a9acc', blue4:'#6ab4dc', blue5:'#8accec',
+  green:'#10b981', green2:'#22c55e', yellow:'#f59e0b', red:'#ef4444', purple:'#8b5cf6',
+  gray:'#64748b', light:'#e2e8f0'
+};
+function ctx(id){return document.getElementById(id).getContext('2d')}
+Chart.defaults.font.family = 'Segoe UI, sans-serif';
+Chart.defaults.font.size = 11;
+
+// 1. KPI
+new Chart(ctx('chartKPI'), {
+  type: 'bar',
+  data: {
+    labels: ['Luas Konsesi (Ha)','Sumber Daya (Jt Ton)','Cadangan (Jt Ton)','Produksi (Jt Ton/Th)','Umur (Th)','SR (BCM:Ton)','CAPEX (Rp 100M)','IRR (%)','Payback (Th)'],
+    datasets: [{ label: 'Nilai KPI', data: [4590, 42.5, 38.3, 3.0, 14.2, 6.8, 18.5, 18.5, 4.2],
+      backgroundColor: [C.navy, C.blue1, C.blue2, C.green, C.blue3, C.yellow, C.purple, C.red, C.blue4], borderRadius: 6 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: { x: { beginAtZero: true, type: 'logarithmic', grid: { color: '#f1f5f9' } } } }
+});
+
+// 2. Saham
+new Chart(ctx('chartSaham'), {
+  type: 'doughnut',
+  data: { labels: ['Investor Utama (55%)','Investor Institusi (25%)','Manajemen (12%)','Publik (8%)'],
+    datasets: [{ data: [55, 25, 12, 8], backgroundColor: [C.navy, C.blue2, C.green, C.yellow], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+});
+
+// 3. Karyawan
+new Chart(ctx('chartKaryawan'), {
+  type: 'bar',
+  data: { labels: ['Mining','Plant','Engineering','HSE','Logistics','Finance','HR','Security'],
+    datasets: [{ label: 'Jumlah Karyawan', data: [120, 65, 25, 18, 30, 22, 15, 25], backgroundColor: C.blue2, borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+// 4. Hujan
+new Chart(ctx('chartHujan'), {
+  type: 'line',
+  data: { labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+    datasets: [{ label: 'Curah Hujan (mm)', data: [280, 260, 290, 270, 250, 230, 210, 220, 240, 260, 290, 300],
+      borderColor: C.blue1, backgroundColor: 'rgba(42,90,140,0.15)', fill: true, tension: 0.35, pointRadius: 4 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'mm' } } } }
+});
+
+// 5. Land use pie
+new Chart(ctx('chartLandUse'), {
+  type: 'doughnut',
+  data: { labels: ['Area Pit','Disposal','Stockpile','Jalan','Infrastruktur','Buffer','Belum Terbuka'],
+    datasets: [{ data: [1720, 980, 145, 85, 62, 318, 1280],
+      backgroundColor: [C.navy, C.blue1, C.blue2, C.blue3, C.blue4, C.green, C.gray], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 9 } } } } }
+});
+
+// 6. Land use bar
+new Chart(ctx('chartLandUseBar'), {
+  type: 'bar',
+  data: { labels: ['Pit','Disposal','Stockpile','Jalan','Infra','Buffer','Belum'],
+    datasets: [{ label: 'Luas (Ha)', data: [1720, 980, 145, 85, 62, 318, 1280],
+      backgroundColor: [C.navy, C.blue1, C.blue2, C.blue3, C.blue4, C.green, C.gray], borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+// 7. Quality bar
+new Chart(ctx('chartQualityBar'), {
+  type: 'bar',
+  data: { labels: ['Seam A','Seam B','Seam C','Seam D'],
+    datasets: [
+      { label: 'TM (%)', data: [26,28,30,32], backgroundColor: C.blue1, borderRadius: 3 },
+      { label: 'Ash (%)', data: [4.8,5.5,6.2,7.0], backgroundColor: C.red, borderRadius: 3 },
+      { label: 'S (%)', data: [0.3,0.4,0.5,0.6], backgroundColor: C.yellow, borderRadius: 3 },
+      { label: 'CV (×100)', data: [56,53,50,47], backgroundColor: C.green, borderRadius: 3 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 9 } } } }, scales: { y: { beginAtZero: true } } }
+});
+
+// 8. Quality radar
+new Chart(ctx('chartQualityRadar'), {
+  type: 'radar',
+  data: { labels: ['CV','Moisture','Ash','Sulfur','Volatile','Fixed C'],
+    datasets: [
+      { label: 'Seam A', data: [95,90,95,92,85,90], borderColor: C.navy, backgroundColor: 'rgba(26,58,92,0.15)', pointRadius: 3 },
+      { label: 'Seam C', data: [80,75,80,80,78,75], borderColor: C.yellow, backgroundColor: 'rgba(245,158,11,0.15)', pointRadius: 3 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 9 } } } }, scales: { r: { beginAtZero: true, max: 100 } } }
+});
+
+// 9. Reserve by block
+new Chart(ctx('chartReserveByBlock'), {
+  type: 'bar',
+  data: { labels: ['Blok A','Blok B','Blok C','Blok D','Blok E','Blok F'],
+    datasets: [{ label: 'Cadangan (Juta Ton)', data: [9.2, 10.1, 7.8, 6.5, 5.4, 3.5], backgroundColor: C.blue2, borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+// 10. Reserve by seam
+new Chart(ctx('chartReserveBySeam'), {
+  type: 'pie',
+  data: { labels: ['Seam A','Seam B','Seam C','Seam D'],
+    datasets: [{ data: [15.2, 13.8, 7.8, 5.7], backgroundColor: [C.navy, C.blue2, C.blue4, C.yellow], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+});
+
+// 11. Reserve by category
+new Chart(ctx('chartReserveByCategory'), {
+  type: 'doughnut',
+  data: { labels: ['Measured','Indicated','Inferred'],
+    datasets: [{ data: [25.8, 12.4, 4.3], backgroundColor: [C.green, C.yellow, C.red], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+});
+
+// 12. Block model
+new Chart(ctx('chartBlockModel'), {
+  type: 'scatter',
+  data: { datasets: [
+    { label: 'Seam A', data: Array.from({length:50},(_,i)=>({x:i*2, y:5+Math.sin(i/5)*2})), backgroundColor: C.navy, pointRadius: 5 },
+    { label: 'Seam B', data: Array.from({length:50},(_,i)=>({x:i*2, y:8+Math.sin(i/4)*2})), backgroundColor: C.blue2, pointRadius: 5 },
+    { label: 'Seam C', data: Array.from({length:50},(_,i)=>({x:i*2, y:12+Math.sin(i/3)*2})), backgroundColor: C.yellow, pointRadius: 5 },
+    { label: 'Seam D', data: Array.from({length:50},(_,i)=>({x:i*2, y:16+Math.sin(i/2)*2})), backgroundColor: C.red, pointRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } },
+    scales: { x: { title: { display: true, text: 'Jarak (×25 m)' }, grid: { color: '#f1f5f9' } },
+      y: { title: { display: true, text: 'Kedalaman (×10 m)' }, grid: { color: '#f1f5f9' } } } }
+});
+
+// 13. Quality projection
+new Chart(ctx('chartQualityProj'), {
+  type: 'line',
+  data: { labels: ['Th-1','Th-2','Th-3','Th-4','Th-5','Th-6','Th-7','Th-8','Th-9','Th-10','Th-11','Th-12','Th-13','Th-14'],
+    datasets: [
+      { label: 'CV (kkal/kg)', data: [5500,5450,5400,5380,5350,5320,5300,5280,5250,5220,5180,5150,5100,5000], borderColor: C.green, backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3, yAxisID: 'y' },
+      { label: 'Ash (%)', data: [4.9,5.0,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,6.0,6.1,6.5], borderColor: C.red, backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.3, yAxisID: 'y1' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } },
+    scales: { y: { type: 'linear', position: 'left', min: 4500, max: 6000, title: { display: true, text: 'CV (kkal/kg)' } },
+      y1: { type: 'linear', position: 'right', min: 3, max: 8, title: { display: true, text: 'Ash (%)' }, grid: { drawOnChartArea: false } } } }
+});
+
+// 14. FoS
+new Chart(ctx('chartFoS'), {
+  type: 'bar',
+  data: { labels: ['Overall Slope','Bench Slope','Disposal Slope','Road Cut','Stockpile'],
+    datasets: [
+      { label: 'FoS Aktual', data: [1.45, 1.55, 1.35, 1.50, 1.40], backgroundColor: C.green, borderRadius: 5 },
+      { label: 'FoS Minimum', data: [1.30, 1.30, 1.25, 1.30, 1.30], backgroundColor: C.red, borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, max: 2 } } }
+});
+
+// 15. Pit progress
+new Chart(ctx('chartPitProgress'), {
+  type: 'line',
+  data: { labels: ['Th-1','Th-2','Th-3','Th-4','Th-5','Th-6','Th-7','Th-8','Th-9','Th-10','Th-11','Th-12','Th-13','Th-14'],
+    datasets: [
+      { label: 'OB Kumulatif (Juta BCM)', data: [12.5,30.7,51.1,71.5,91.6,112,132.7,153.7,175,196.6,218.5,240.7,263.2,281.2], borderColor: C.yellow, backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3, yAxisID: 'y' },
+      { label: 'Coal Kumulatif (Juta Ton)', data: [1.8,4.6,7.6,10.6,13.6,16.6,19.6,22.6,25.6,28.6,31.5,34.2,36.7,38.5], borderColor: C.navy, backgroundColor: 'rgba(26,58,92,0.1)', fill: true, tension: 0.3, yAxisID: 'y1' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } },
+    scales: { y: { position: 'left', beginAtZero: true, title: { display: true, text: 'OB (Juta BCM)' } },
+      y1: { position: 'right', beginAtZero: true, title: { display: true, text: 'Coal (Juta Ton)' }, grid: { drawOnChartArea: false } } } }
+});
+
+// 16. Blast
+new Chart(ctx('chartBlast'), {
+  type: 'bar',
+  data: { labels: ['Th-1','Th-2','Th-3','Th-4','Th-5','Th-6','Th-7','Th-8','Th-9','Th-10','Th-11','Th-12','Th-13','Th-14'],
+    datasets: [{ label: 'Bahan Peledak (Ton)', data: [1500,2200,3000,3200,3300,3400,3500,3600,3700,3800,3700,3500,3200,2500], backgroundColor: C.red, borderRadius: 4 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Ton' } } } }
+});
+
+// 17. Blast cost
+new Chart(ctx('chartBlastCost'), {
+  type: 'doughnut',
+  data: { labels: ['Bahan Peledak','Drilling','Aksesoris','Tenaga Kerja','Lainnya'],
+    datasets: [{ data: [45, 25, 12, 10, 8], backgroundColor: [C.navy, C.blue2, C.blue4, C.green, C.yellow], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+});
+
+// 18. Match factor
+new Chart(ctx('chartMatchFactor'), {
+  type: 'bar',
+  data: { labels: ['Fleet 1','Fleet 2','Fleet 3','Fleet 4','Fleet 5','Fleet 6','Fleet 7','Fleet 8'],
+    datasets: [{ label: 'Match Factor', data: [0.95, 1.02, 0.88, 0.97, 1.05, 0.92, 0.99, 1.08],
+      backgroundColor: ['#10b981','#10b981','#f59e0b','#10b981','#10b981','#f59e0b','#10b981','#10b981'], borderRadius: 6 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 1.3 } } }
+});
+
+// 19. Produktivitas
+new Chart(ctx('chartProduktivitas'), {
+  type: 'bar',
+  data: { labels: ['Exca R9200','Exca ZX870','Loader 992K','Truck HD785','Truck CAT777','Truck FMX'],
+    datasets: [
+      { label: 'Teoritis', data: [1275, 680, 975, 91, 100, 40], backgroundColor: C.blue2, borderRadius: 5 },
+      { label: 'Aktual (85%)', data: [1084, 578, 829, 77, 85, 34], backgroundColor: C.green, borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, type: 'logarithmic' } } }
+});
+
+// 20. Grade
+new Chart(ctx('chartGrade'), {
+  type: 'line',
+  data: { labels: ['0%','1%','2%','3%','4%','5%','6%','7%','8%','9%','10%'],
+    datasets: [
+      { label: 'Rimpull Tersedia (%)', data: [100,92,84,76,68,60,52,44,36,28,20], borderColor: C.green, backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 },
+      { label: 'Rimpull Dibutuhkan (%)', data: [15,20,25,30,35,40,45,50,55,60,65], borderColor: C.red, backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.3 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: '%' } } } }
+});
+
+// 21. Prod curve
+new Chart(ctx('chartProdCurve'), {
+  type: 'line',
+  data: { labels: ['Th-1','Th-2','Th-3','Th-4','Th-5','Th-6','Th-7','Th-8','Th-9','Th-10','Th-11','Th-12','Th-13','Th-14'],
+    datasets: [
+      { label: 'Batu Bara (Juta Ton)', data: [1.8,2.8,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,2.9,2.7,2.5,1.8], borderColor: C.navy, backgroundColor: 'rgba(26,58,92,0.15)', fill: true, tension: 0.3, yAxisID: 'y' },
+      { label: 'Overburden (Juta BCM)', data: [12.5,18.2,20.4,20.4,20.1,20.4,20.7,21.0,21.3,21.6,21.9,22.2,22.5,18.0], borderColor: C.yellow, backgroundColor: 'rgba(245,158,11,0.15)', fill: true, tension: 0.3, yAxisID: 'y1' },
+      { label: 'Stripping Ratio', data: [6.9,6.5,6.8,6.8,6.7,6.8,6.9,7.0,7.1,7.2,7.6,8.2,9.0,10.0], borderColor: C.red, borderDash: [5,5], tension: 0.3, yAxisID: 'y2' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } },
+    scales: { y: { position: 'left', beginAtZero: true, title: { display: true, text: 'Juta Ton / Juta BCM' } },
+      y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } },
+      y2: { position: 'right', beginAtZero: true, max: 12, grid: { drawOnChartArea: false }, display: false } } }
+});
+
+// 22. Bulanan
+new Chart(ctx('chartBulanan'), {
+  type: 'bar',
+  data: { labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+    datasets: [{ label: 'Produksi (ribu ton)', data: [245, 240, 255, 250, 245, 240, 235, 240, 245, 250, 255, 250],
+      backgroundColor: [C.blue1,C.blue1,C.blue2,C.blue2,C.blue3,C.blue3,C.blue4,C.blue4,C.blue3,C.blue3,C.blue2,C.blue2], borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Ribu Ton' } } } }
+});
+
+// 23. Pond
+new Chart(ctx('chartPond'), {
+  type: 'bar',
+  data: { labels: ['Komp 1','Komp 2','Komp 3','Komp 4','Komp 5','Komp 6'],
+    datasets: [
+      { label: 'Kapasitas (m³)', data: [11592,11592,11592,11592,11592,11592], backgroundColor: C.blue2, borderRadius: 5 },
+      { label: 'Terisi Rata-rata (m³)', data: [8500,9200,7800,8800,9000,8200], backgroundColor: C.green, borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'm³' } } } }
+});
+
+// 24. Water quality
+new Chart(ctx('chartWaterQuality'), {
+  type: 'bar',
+  data: { labels: ['pH','TSS (mg/L)','Fe (mg/L)','Mn (mg/L)','BOD (mg/L)','COD (mg/L)'],
+    datasets: [
+      { label: 'Sebelum (Inlet)', data: [5.5, 380, 6.5, 3.8, 28, 95], backgroundColor: C.red, borderRadius: 5 },
+      { label: 'Setelah (Outlet)', data: [7.2, 120, 1.5, 0.8, 12, 55], backgroundColor: C.green, borderRadius: 5 },
+      { label: 'Baku Mutu', data: [7.5, 400, 7, 4, 30, 100], backgroundColor: C.yellow, borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, type: 'logarithmic' } } }
+});
+
+// 25. Limbah
+new Chart(ctx('chartLimbah'), {
+  type: 'doughnut',
+  data: { labels: ['Limbah B3','Domestik','Medis','Limbah Cair','Overburden'],
+    datasets: [{ data: [12, 45, 3, 180, 2500], backgroundColor: [C.red, C.yellow, C.purple, C.blue2, C.navy], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 9 } } } } }
+});
+
+// 26. Env program
+new Chart(ctx('chartEnvProgram'), {
+  type: 'radar',
+  data: { labels: ['Pengelolaan Air','Pengendalian Debu','Limbah B3','Revegetasi','Monitoring','Energi Bersih','Emisi'],
+    datasets: [
+      { label: 'Capaian (%)', data: [92,85,88,78,90,65,82], borderColor: C.green, backgroundColor: 'rgba(16,185,129,0.15)', pointBackgroundColor: C.green, pointRadius: 5 },
+      { label: 'Target (%)', data: [95,90,95,85,95,80,90], borderColor: C.yellow, backgroundColor: 'rgba(245,158,11,0.05)', pointBackgroundColor: C.yellow, pointRadius: 5, borderDash: [5,5] }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { r: { beginAtZero: true, max: 100 } } }
+});
+
+// 27. Reklamasi cost
+new Chart(ctx('chartReklamasiCost'), {
+  type: 'bar',
+  data: { labels: ['Penataan Lahan','Top Soil','Fast Growing','Local Species','Monitoring'],
+    datasets: [{ label: 'Biaya (Rp Miliar)', data: [380, 220, 350, 400, 200], backgroundColor: [C.navy, C.blue2, C.blue4, C.green, C.yellow], borderRadius: 6 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Rp Miliar' } } } }
+});
+
+// 28. Dept
+new Chart(ctx('chartDept'), {
+  type: 'bar',
+  data: { labels: ['Mining','Plant','Engineering','HSE','Logistics','Finance','HR','Security'],
+    datasets: [{ label: 'Karyawan Puncak', data: [120, 65, 25, 18, 30, 22, 15, 25],
+      backgroundColor: [C.navy, C.blue2, C.blue3, C.green, C.yellow, C.purple, C.blue4, C.gray], borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+// 29. Pendidikan
+new Chart(ctx('chartPendidikan'), {
+  type: 'pie',
+  data: { labels: ['S1/S2','D3','SMA/SMK','SMP','SD'],
+    datasets: [{ data: [25, 15, 45, 10, 5], backgroundColor: [C.navy, C.blue2, C.green, C.yellow, C.red], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+});
+
+// 30. Logistik
+new Chart(ctx('chartLogistik'), {
+  type: 'bar',
+  data: { labels: ['BBM','Oli','Ban','Suku Cadang','Bahan Peledak','Material','Chemical'],
+    datasets: [{ label: 'Biaya (Rp Miliar)', data: [420, 45, 78, 185, 52, 32, 15],
+      backgroundColor: [C.red, C.yellow, C.blue2, C.navy, C.purple, C.green, C.blue4], borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Rp Miliar' } } } }
+});
+
+// 31. Insiden trend
+new Chart(ctx('chartInsidenTrend'), {
+  type: 'line',
+  data: { labels: ['Th-1','Th-2','Th-3','Th-4','Th-5','Th-6','Th-7'],
+    datasets: [
+      { label: 'LTIFR', data: [0.45, 0.38, 0.28, 0.22, 0.18, 0.15, 0.12], borderColor: C.red, backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.3, pointRadius: 5 },
+      { label: 'TRIFR', data: [2.8, 2.3, 1.9, 1.5, 1.2, 1.0, 0.9], borderColor: C.yellow, backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3, pointRadius: 5 },
+      { label: 'Near Miss', data: [12, 10, 8, 7, 5, 4, 3], borderColor: C.green, backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3, pointRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Rate per 1 Juta Jam Kerja' } } } }
+});
+
+// 32. Penyebab insiden
+new Chart(ctx('chartPenyebabInsiden'), {
+  type: 'pie',
+  data: { labels: ['Kelelahan','Peralatan','Lingkungan','Prosedur','Pelatihan'],
+    datasets: [{ data: [30, 25, 18, 15, 12], backgroundColor: [C.red, C.yellow, C.green, C.blue2, C.purple], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+});
+
+// 33. APD
+new Chart(ctx('chartAPD'), {
+  type: 'bar',
+  data: { labels: ['Helm','Sepatu','Kacamata','Sarung Tangan','Rompi','Masker','Ear Plug','Harness'],
+    datasets: [{ label: 'Kepatuhan (%)', data: [99, 98, 95, 97, 99, 92, 90, 96], backgroundColor: C.green, borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+});
+
+// 34. CAPEX
+new Chart(ctx('chartCAPEX'), {
+  type: 'doughnut',
+  data: { labels: ['Peralatan Tambang','Infrastruktur','Land Acquisition','Engineering','Pre-stripping','Working Capital'],
+    datasets: [{ data: [850, 320, 180, 95, 280, 125], backgroundColor: [C.navy, C.blue2, C.blue4, C.green, C.yellow, C.purple], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 9 } } } } }
+});
+
+// 35. OPEX
+new Chart(ctx('chartOPEX'), {
+  type: 'doughnut',
+  data: { labels: ['BBM & Pelumas','Gaji & Benefit','Maintenance','Kontraktor','Lingkungan','Overhead'],
+    datasets: [{ data: [420, 280, 195, 180, 95, 80], backgroundColor: [C.red, C.yellow, C.green, C.blue2, C.purple, C.gray], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 9 } } } } }
+});
+
+// 36. Cashflow
+new Chart(ctx('chartCashflow'), {
+  type: 'bar',
+  data: { labels: ['Th-1','Th-2','Th-3','Th-4','Th-5','Th-6','Th-7','Th-8','Th-9','Th-10','Th-11','Th-12','Th-13','Th-14'],
+    datasets: [
+      { label: 'Pendapatan', data: [760,1230,1360,1400,1400,1400,1400,1400,1400,1400,1350,1280,1150,850], backgroundColor: C.green, borderRadius: 4 },
+      { label: 'Biaya Operasional', data: [880,1050,1040,1020,1030,1040,1050,1060,1070,1080,1100,1130,1170,1050], backgroundColor: C.red, borderRadius: 4 },
+      { label: 'Laba Bersih', data: [-120,180,320,380,370,360,350,340,330,320,250,150,-20,-200], backgroundColor: C.blue2, borderRadius: 4 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Rp Miliar' } } } }
+});
+
+// 37. Sensitivitas
+new Chart(ctx('chartSensitivitas'), {
+  type: 'line',
+  data: { labels: ['-30%','-20%','-10%','0%','+10%','+20%','+30%'],
+    datasets: [
+      { label: 'Harga Batu Bara', data: [-800, -300, 200, 750, 1250, 1750, 2250], borderColor: C.navy, tension: 0.3, pointRadius: 5 },
+      { label: 'Biaya Operasional', data: [1050, 900, 825, 750, 675, 600, 525], borderColor: C.red, tension: 0.3, pointRadius: 5 },
+      { label: 'Kurs USD/IDR', data: [-150, 0, 400, 750, 1100, 1450, 1800], borderColor: C.green, tension: 0.3, pointRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { title: { display: true, text: 'NPV (Rp Miliar)' } } } }
+});
+
+// 38. Risk map
+new Chart(ctx('chartRiskMap'), {
+  type: 'scatter',
+  data: { datasets: [
+    { label: 'Tinggi', data: [{x:4,y:4},{x:4.5,y:4.2},{x:3.8,y:4.5}], backgroundColor: C.red, pointRadius: 14 },
+    { label: 'Sedang', data: [{x:3,y:3},{x:2,y:4},{x:3,y:2},{x:2,y:3},{x:3.5,y:3.5}], backgroundColor: C.yellow, pointRadius: 12 },
+    { label: 'Rendah', data: [{x:1,y:2},{x:1,y:1},{x:1.5,y:1.5}], backgroundColor: C.green, pointRadius: 10 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } },
+    scales: { x: { min: 0, max: 5, title: { display: true, text: 'Probabilitas →' }, grid: { color: '#f1f5f9' } },
+      y: { min: 0, max: 5, title: { display: true, text: 'Dampak →' }, grid: { color: '#f1f5f9' } } } }
+});
+
+// 39. Mitigasi cost
+new Chart(ctx('chartMitigasiCost'), {
+  type: 'bar',
+  data: { labels: ['Hedging','Drainase','Maintenance','Geoteknik','CSR','Compliance','Pelatihan','SMK3'],
+    datasets: [{ label: 'Biaya (Rp Miliar)', data: [45, 38, 52, 28, 22, 35, 15, 30], backgroundColor: C.blue2, borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Rp Miliar' } } } }
+});
+
+// 40. Risk level
+new Chart(ctx('chartRiskLevel'), {
+  type: 'doughnut',
+  data: { labels: ['Risiko Tinggi','Risiko Sedang','Risiko Rendah'],
+    datasets: [{ data: [3, 5, 2], backgroundColor: [C.red, C.yellow, C.green], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+});
+
+// 41. CSR
+new Chart(ctx('chartCSR'), {
+  type: 'bar',
+  data: { labels: ['Pendidikan','Kesehatan','Ekonomi','Infrastruktur','Lingkungan','Budaya'],
+    datasets: [{ label: 'Anggaran (Rp Miliar)', data: [5, 4, 6, 5, 3, 2],
+      backgroundColor: [C.navy, C.blue2, C.green, C.yellow, C.purple, C.blue4], borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Rp Miliar' } } } }
+});
+</script>
+
+<!-- ===================================================================== -->
+<!-- SCRIPT 2: D3.JS — 8 PETA & DENAH TEKNIK                              -->
+<!-- ===================================================================== -->
+<script>
+/* =========================================================================
+   D3.JS PETA & DENAH MODULE
+   ========================================================================= */
+
+function makeTooltip(containerId) {
+  const container = document.getElementById(containerId);
+  let tip = container.querySelector('.map-tooltip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.className = 'map-tooltip';
+    container.appendChild(tip);
+  }
+  return tip;
+}
+
+function attachTooltip(selection, tip, htmlFn) {
+  selection
+    .on('mouseover', function(event, d) {
+      tip.innerHTML = htmlFn(d);
+      tip.classList.add('show');
+      moveTooltip(event, tip);
+    })
+    .on('mousemove', function(event) { moveTooltip(event, tip); })
+    .on('mouseout', function() { tip.classList.remove('show'); });
+}
+
+function moveTooltip(event, tip) {
+  const container = tip.parentElement;
+  const rect = container.getBoundingClientRect();
+  let x = event.clientX - rect.left + 12;
+  let y = event.clientY - rect.top + 12;
+  // Boundary check
+  if (x + 230 > rect.width) x = event.clientX - rect.left - 240;
+  if (y + 100 > rect.height) y = event.clientY - rect.top - 110;
+  tip.style.left = x + 'px';
+  tip.style.top = y + 'px';
+}
+
+/* ============ M1: PETA KONSESI ============ */
+function drawConsessionMap() {
+  const containerId = 'd3MapConsession';
+  const W = 900, H = 500;
+  const svg = d3.select('#' + containerId).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+
+  svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#f0f9ff');
+
+  // Grid
+  for (let i = 0; i <= 18; i++) {
+    svg.append('line').attr('x1', i*50).attr('y1', 0).attr('x2', i*50).attr('y2', H)
+      .attr('stroke', '#dbeafe').attr('stroke-width', .5);
+  }
+  for (let i = 0; i <= 10; i++) {
+    svg.append('line').attr('x1', 0).attr('y1', i*50).attr('x2', W).attr('y2', i*50)
+      .attr('stroke', '#dbeafe').attr('stroke-width', .5);
+  }
+
+  const blocks = [
+    { id:'A', x:60,  y:60,  w:200, h:140, color:'#1a3a5c', ha:850,  reserve:9.2,  year:'1–3', status:'Aktif' },
+    { id:'B', x:280, y:60,  w:220, h:140, color:'#2a5a8c', ha:920,  reserve:10.1, year:'3–6', status:'Aktif' },
+    { id:'C', x:520, y:60,  w:180, h:140, color:'#3a7aac', ha:780,  reserve:7.8,  year:'6–9', status:'Perencanaan' },
+    { id:'D', x:60,  y:220, w:190, h:150, color:'#4a9acc', ha:690,  reserve:6.5,  year:'9–11', status:'Perencanaan' },
+    { id:'E', x:270, y:220, w:200, h:150, color:'#6ab4dc', ha:750,  reserve:5.4,  year:'11–13', status:'Perencanaan' },
+    { id:'F', x:490, y:220, w:190, h:150, color:'#8accec', ha:600,  reserve:3.5,  year:'13–14', status:'Perencanaan' }
+  ];
+
+  const tip = makeTooltip(containerId);
+
+  svg.selectAll('.block').data(blocks).enter().append('rect')
+    .attr('class', 'block')
+    .attr('x', d => d.x).attr('y', d => d.y).attr('width', d => d.w).attr('height', d => d.h)
+    .attr('fill', d => d.color).attr('stroke', '#fff').attr('stroke-width', 2).attr('rx', 6)
+    .style('cursor', 'pointer').style('transition', 'opacity .2s')
+    .on('mouseover', function() { d3.select(this).style('opacity', .8); })
+    .on('mouseout', function() { d3.select(this).style('opacity', 1); })
+    .call(sel => attachTooltip(sel, tip, d => `
+      <strong>Blok ${d.id}</strong><br>Luas: ${d.ha} Ha<br>
+      Cadangan: ${d.reserve} juta ton<br>Jadwal: Th ${d.year}<br>Status: ${d.status}
+    `));
+
+  svg.selectAll('.blockLabel').data(blocks).enter().append('text')
+    .attr('x', d => d.x + d.w/2).attr('y', d => d.y + 40)
+    .attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', 22).attr('font-weight', '700')
+    .text(d => 'BLOK ' + d.id).style('pointer-events', 'none');
+
+  svg.selectAll('.blockSub').data(blocks).enter().append('text')
+    .attr('x', d => d.x + d.w/2).attr('y', d => d.y + 65)
+    .attr('text-anchor', 'middle').attr('fill', 'rgba(255,255,255,0.85)').attr('font-size', 12)
+    .text(d => d.ha + ' Ha • ' + d.reserve + ' Jt Ton').style('pointer-events', 'none');
+
+  // Fasilitas
+  svg.append('rect').attr('x', 720).attr('y', 60).attr('width', 140).attr('height', 150)
+    .attr('fill', '#10b981').attr('opacity', .85).attr('stroke', '#fff').attr('stroke-width', 2).attr('rx', 6)
+    .call(sel => attachTooltip(sel, tip, () => '<strong>Area Fasilitas</strong><br>Stockpile: 150.000 ton<br>Crusher: 1.500 t/jam<br>Workshop, Fuel, Kantor'));
+  svg.append('text').attr('x', 790).attr('y', 130).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', 14).attr('font-weight', '700').text('FASILITAS').style('pointer-events', 'none');
+  svg.append('text').attr('x', 790).attr('y', 150).attr('text-anchor', 'middle').attr('fill', 'rgba(255,255,255,0.9)').attr('font-size', 11).text('Stockpile • Crusher').style('pointer-events', 'none');
+
+  // Jetty
+  svg.append('rect').attr('x', 720).attr('y', 320).attr('width', 140).attr('height', 60)
+    .attr('fill', '#8b5cf6').attr('opacity', .9).attr('stroke', '#fff').attr('stroke-width', 2).attr('rx', 6)
+    .call(sel => attachTooltip(sel, tip, () => '<strong>Jetty / Dermaga</strong><br>Kapasitas: Barge 8.000 DWT<br>Lokasi: Sungai Sesayap'));
+  svg.append('text').attr('x', 790).attr('y', 355).attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-size', 14).attr('font-weight', '700').text('JETTY').style('pointer-events', 'none');
+
+  // Main road
+  svg.append('path').attr('d', 'M 60 350 Q 200 400 400 400 T 700 380 L 860 380')
+    .attr('stroke', '#f59e0b').attr('stroke-width', 6).attr('fill', 'none').attr('stroke-linecap', 'round')
+    .style('cursor', 'pointer')
+    .call(sel => attachTooltip(sel, tip, () => '<strong>Jalan Utama</strong><br>Panjang: 12,5 km<br>Lebar: 15 m<br>Grade maks: 8%'));
+  svg.append('text').attr('x', 400).attr('y', 420).attr('text-anchor', 'middle').attr('fill', '#92400e').attr('font-size', 11).attr('font-weight', '600').text('Jalan Utama — 12,5 km').style('pointer-events', 'none');
+
+  // North arrow
+  svg.append('g').attr('transform', 'translate(840, 30)').call(g => {
+    g.append('polygon').attr('points', '0,0 -6,15 0,12 6,15').attr('fill', '#1a3a5c');
+    g.append('text').attr('x', 0).attr('y', 28).attr('text-anchor', 'middle').attr('font-size', 11).attr('font-weight', '700').attr('fill', '#1a3a5c').text('N');
+  });
+
+  // Scale bar
+  svg.append('g').attr('transform', 'translate(30, 460)').call(g => {
+    g.append('rect').attr('x', 0).attr('y', 0).attr('width', 100).attr('height', 6).attr('fill', '#1a3a5c');
+    g.append('rect').attr('x', 100).attr('y', 0).attr('width', 100).attr('height', 6).attr('fill', '#fff').attr('stroke', '#1a3a5c');
+    g.append('text').attr('x', 0).attr('y', 20).attr('font-size', 9).attr('fill', '#1a3a5c').text('0');
+    g.append('text').attr('x', 200).attr('y', 20).attr('text-anchor', 'end').attr('font-size', 9).attr('fill', '#1a3a5c').text('2 km');
+  });
+
+  svg.on('mousemove', function(event) {
+    const [mx, my] = d3.pointer(event);
+    const lon = (116.75 + (mx / W) * 0.5).toFixed(4);
+    const lat = (3.60 - (my / H) * 0.3).toFixed(4);
+    document.getElementById('coordConsession').textContent =
+      `Koordinat: ${lat}° LU, ${lon}° BT  |  UTM: X=${(400000 + mx*50).toFixed(0)}, Y=${(395000 + (H-my)*50).toFixed(0)}`;
+  });
+}
+
+/* ============ M2: PETA KONTUR ============ */
+function drawContourMap() {
+  const containerId = 'd3MapContour';
+  const W = 900, H = 450;
+  const svg = d3.select('#' + containerId).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+
+  const defs = svg.append('defs');
+  const grad = defs.append('linearGradient').attr('id', 'elevGrad').attr('x1','0%').attr('y1','0%').attr('x2','100%').attr('y2','100%');
+  grad.append('stop').attr('offset','0%').attr('stop-color','#fef3c7');
+  grad.append('stop').attr('offset','33%').attr('stop-color','#fde68a');
+  grad.append('stop').attr('offset','66%').attr('stop-color','#fcd34d');
+  grad.append('stop').attr('offset','100%').attr('stop-color','#f59e0b');
+  svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'url(#elevGrad)');
+
+  const cx = W/2, cy = H/2;
+  const levels = [200, 180, 160, 140, 120, 100, 80, 60, 40];
+  const tip = makeTooltip(containerId);
+
+  levels.forEach((elev, idx) => {
+    const scale = 0.45 - idx * 0.045;
+    const pts = [];
+    const n = 60;
+    for (let i = 0; i < n; i++) {
+      const angle = (i / n) * Math.PI * 2;
+      const noise = 1 + Math.sin(angle*3 + idx) * 0.15 + Math.cos(angle*5 + idx*2) * 0.08;
+      const rx = W * scale * noise;
+      const ry = H * scale * 0.7 * noise;
+      pts.push([cx + rx * Math.cos(angle), cy + ry * Math.sin(angle)]);
+    }
+    const line = d3.line().curve(d3.curveCatmullRomClosed);
+    svg.append('path').attr('d', line(pts)).attr('fill', 'none')
+      .attr('stroke', '#92400e').attr('stroke-width', idx === 0 ? 2.5 : 1.2).attr('opacity', .7)
+      .style('cursor', 'pointer')
+      .call(sel => attachTooltip(sel, tip, () => `<strong>Kontur ${elev} mdpl</strong><br>Interval: 20 m<br>Area: ${((levels.length - idx) * 400).toFixed(0)} Ha`));
+    svg.append('text').attr('x', cx + W * scale * 0.7 + 8).attr('y', cy + 5)
+      .attr('font-size', 10).attr('fill', '#92400e').attr('font-weight', '600').text(elev);
+  });
+
+  svg.append('circle').attr('cx', cx).attr('cy', cy).attr('r', 5).attr('fill', '#dc2626');
+  svg.append('text').attr('x', cx + 10).attr('y', cy - 8).attr('font-size', 11).attr('fill', '#7f1d1d').attr('font-weight', '700').text('Puncak 185 mdpl');
+
+  svg.append('path').attr('d', `M 0 ${H*0.8} Q ${W*0.3} ${H*0.7} ${W*0.5} ${H*0.85} T ${W} ${H*0.75}`)
+    .attr('stroke', '#3b82f6').attr('stroke-width', 5).attr('fill', 'none').attr('opacity', .6);
+  svg.append('text').attr('x', W*0.3).attr('y', H*0.72).attr('font-size', 11).attr('fill', '#1e40af').attr('font-weight', '600').attr('font-style', 'italic').text('Sungai Sesayap');
+
+  for (let i = 0; i <= 6; i++) {
+    svg.append('text').attr('x', i*150 + 5).attr('y', H - 8).attr('font-size', 9).attr('fill', '#64748b').text((116.75 + i*0.08).toFixed(2) + '°BT');
+    svg.append('text').attr('x', 5).attr('y', i*75 + 12).attr('font-size', 9).attr('fill', '#64748b').text((3.65 - i*0.04).toFixed(2) + '°LU');
+  }
+}
+
+/* ============ M3A: DENAH PIT ============ */
+function drawPitLayout() {
+  const containerId = 'd3PitLayout';
+  const W = 900, H = 500;
+  const svg = d3.select('#' + containerId).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+
+  svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#f8fafc');
+
+  const cx = W/2, cy = H/2;
+  const tip = makeTooltip(containerId);
+
+  // Overburden boundary
+  const obPts = [];
+  for (let i = 0; i < 40; i++) {
+    const a = (i/40) * Math.PI * 2;
+    const noise = 1 + Math.sin(a*3) * 0.1;
+    obPts.push([cx + 400 * noise * Math.cos(a), cy + 220 * noise * Math.sin(a)]);
+  }
+  svg.append('path').attr('d', d3.line().curve(d3.curveCatmullRomClosed)(obPts))
+    .attr('fill', '#8B7355').attr('opacity', .4).attr('stroke', '#6b5644').attr('stroke-width', 2);
+
+  const benches = [
+    { r: 360, fill: '#A0522D', label: 'Bench 1 (Elev 185)' },
+    { r: 300, fill: '#8B7355', label: 'Bench 3 (Elev 165)' },
+    { r: 245, fill: '#A0522D', label: 'Bench 5 (Elev 145)' },
+    { r: 195, fill: '#8B7355', label: 'Bench 7 (Elev 125)' },
+    { r: 150, fill: '#333',    label: 'Seam A (Elev 105)' },
+    { r: 110, fill: '#555',    label: 'Seam B (Elev 95)' },
+    { r: 75,  fill: '#777',    label: 'Seam C (Elev 85)' }
+  ];
+  benches.forEach((b, idx) => {
+    const pts = [];
+    for (let i = 0; i < 40; i++) {
+      const a = (i/40) * Math.PI * 2;
+      const noise = 1 + Math.cos(a*4 + idx) * 0.06;
+      pts.push([cx + b.r * noise * Math.cos(a), cy + b.r * 0.55 * noise * Math.sin(a)]);
+    }
+    svg.append('path').attr('d', d3.line().curve(d3.curveCatmullRomClosed)(pts))
+      .attr('fill', b.fill).attr('opacity', idx >= 4 ? .95 : .7)
+      .attr('stroke', idx >= 4 ? '#000' : 'rgba(0,0,0,0.2)').attr('stroke-width', idx >= 4 ? 1.5 : 1)
+      .style('cursor', 'pointer')
+      .call(sel => attachTooltip(sel, tip, () => `<strong>${b.label}</strong><br>Lebar jenjang: 8 m<br>Slope tunggal: 45°–55°`));
+  });
+
+  // Ramp spiral
+  const rampPts = [];
+  for (let i = 0; i <= 100; i++) {
+    const t = i / 100;
+    const angle = t * Math.PI * 3.5;
+    const r = 360 - t * 280;
+    rampPts.push([cx + r * Math.cos(angle), cy + r * 0.55 * Math.sin(angle)]);
+  }
+  svg.append('path').attr('d', d3.line()(rampPts))
+    .attr('stroke', '#f59e0b').attr('stroke-width', 5).attr('fill', 'none').attr('stroke-linecap', 'round')
+    .style('cursor', 'pointer')
+    .call(sel => attachTooltip(sel, tip, () => '<strong>Ramp / Jalan Angkut</strong><br>Panjang: 2.400 m<br>Grade: 8%<br>Lebar: 15 m'));
+
+  svg.append('defs').append('marker').attr('id', 'arrowhead').attr('markerWidth', 10).attr('markerHeight', 10)
+    .attr('refX', 8).attr('refY', 3).attr('orient', 'auto')
+    .append('polygon').attr('points', '0,0 10,3 0,6').attr('fill', '#f59e0b');
+
+  svg.append('path').attr('d', `M ${cx} ${cy} L ${cx + 60} ${cy - 40}`)
+    .attr('stroke', '#f59e0b').attr('stroke-width', 3).attr('marker-end', 'url(#arrowhead)');
+
+  svg.append('text').attr('x', cx).attr('y', 30).attr('text-anchor', 'middle').attr('font-size', 14).attr('font-weight', '700').attr('fill', '#1a3a5c').text('PIT FINAL — TAMPAK ATAS');
+
+  svg.append('text').attr('x', 20).attr('y', H - 40).attr('font-size', 11).attr('font-weight', '600').attr('fill', '#1a3a5c').text('Elevasi tertinggi: 185 mdpl');
+  svg.append('text').attr('x', 20).attr('y', H - 20).attr('font-size', 11).attr('font-weight', '600').attr('fill', '#1a3a5c').text('Elevasi terendah: 45 mdpl');
+}
+
+/* ============ M3B: CROSS-SECTION ============ */
+function drawPitCrossSection() {
+  const containerId = 'd3PitCrossSection';
+  const W = 900, H = 350;
+  const svg = d3.select('#' + containerId).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+
+  const defs = svg.append('defs');
+  const skyGrad = defs.append('linearGradient').attr('id', 'skyGrad').attr('x1','0%').attr('y1','0%').attr('x2','0%').attr('y2','100%');
+  skyGrad.append('stop').attr('offset','0%').attr('stop-color','#bae6fd');
+  skyGrad.append('stop').attr('offset','100%').attr('stop-color','#e0f2fe');
+
+  svg.append('rect').attr('width', W).attr('height', H*0.3).attr('fill', 'url(#skyGrad)');
+  svg.append('rect').attr('y', H*0.3).attr('width', W).attr('height', H*0.7).attr('fill', '#f8fafc');
+
+  const benchHeight = 40, benchWidth = 60, slopeWidth = 35;
+  const startX = 80, topY = 60;
+  let pathD = `M ${startX} ${topY}`;
+  const benches = 7;
+  let currentX = startX;
+  const tip = makeTooltip(containerId);
+
+  for (let i = 0; i < benches; i++) {
+    const y1 = topY + i * (benchHeight + 5);
+    const y2 = y1 + benchHeight;
+    pathD += ` L ${currentX + benchWidth} ${y1}`;
+    pathD += ` L ${currentX + benchWidth + slopeWidth} ${y2}`;
+    currentX += benchWidth + slopeWidth;
+  }
+
+  const bottomX = currentX;
+  const bottomY = topY + benches * (benchHeight + 5) + 10;
+  pathD += ` L ${bottomX + 100} ${bottomY}`;
+  pathD += ` L ${bottomX + 100} ${H}`;
+  pathD += ` L ${startX} ${H} Z`;
+
+  svg.append('path').attr('d', pathD).attr('fill', '#8B7355').attr('opacity', .8);
+
+  const seamY = topY + 4 * (benchHeight + 5) + benchHeight / 2;
+  svg.append('rect').attr('x', startX + benchWidth + 4*(benchWidth+slopeWidth) - 5)
+    .attr('y', seamY).attr('width', 40).attr('height', 6).attr('fill', '#1a1a1a')
+    .call(sel => attachTooltip(sel, tip, () => '<strong>Seam A</strong><br>Ketebalan 5,4 m<br>CV 5.600 kkal/kg'));
+  svg.append('rect').attr('x', startX + benchWidth + 5*(benchWidth+slopeWidth) - 5)
+    .attr('y', seamY + 50).attr('width', 35).attr('height', 5).attr('fill', '#333')
+    .call(sel => attachTooltip(sel, tip, () => '<strong>Seam B</strong><br>Ketebalan 4,6 m<br>CV 5.300 kkal/kg'));
+
+  for (let i = 0; i < benches; i++) {
+    const y = topY + i * (benchHeight + 5) + benchHeight / 2;
+    svg.append('text').attr('x', W - 20).attr('y', y + 4).attr('text-anchor', 'end')
+      .attr('font-size', 10).attr('fill', '#1a3a5c').attr('font-weight', '600')
+      .text(`Bench ${i+1} — Elev ${185 - i*10}`);
+  }
+
+  svg.append('line').attr('x1', 0).attr('y1', bottomY - 20).attr('x2', W).attr('y2', bottomY - 20)
+    .attr('stroke', '#3b82f6').attr('stroke-width', 1.5).attr('stroke-dasharray', '6,4')
+    .call(sel => attachTooltip(sel, tip, () => '<strong>Water Table</strong><br>Kedalaman: ± 60 m'));
+  svg.append('text').attr('x', 10).attr('y', bottomY - 25).attr('font-size', 10).attr('fill', '#1e40af').attr('font-style', 'italic').text('Muka air tanah');
+
+  svg.append('line').attr('x1', startX).attr('y1', 40).attr('x2', bottomX + 100).attr('y2', 40).attr('stroke', '#1a3a5c').attr('stroke-width', 1);
+  svg.append('line').attr('x1', startX).attr('y1', 35).attr('x2', startX).attr('y2', 45).attr('stroke', '#1a3a5c').attr('stroke-width', 1);
+  svg.append('line').attr('x1', bottomX + 100).attr('y1', 35).attr('x2', bottomX + 100).attr('y2', 45).attr('stroke', '#1a3a5c').attr('stroke-width', 1);
+  svg.append('text').attr('x', (startX + bottomX + 100)/2).attr('y', 35).attr('text-anchor', 'middle')
+    .attr('font-size', 11).attr('fill', '#1a3a5c').attr('font-weight', '600').text('720 m');
+
+  svg.append('text').attr('x', startX - 20).attr('y', topY + 5).attr('font-size', 14).attr('font-weight', '700').attr('fill', '#1a3a5c').text("A");
+  svg.append('text').attr('x', bottomX + 110).attr('y', bottomY + 10).attr('font-size', 14).attr('font-weight', '700').attr('fill', '#1a3a5c').text("A'");
+}
+
+/* ============ M4: LAYOUT FASILITAS ============ */
+function drawFacilityLayout() {
+  const containerId = 'd3FacilityLayout';
+  const W = 900, H = 550;
+  const svg = d3.select('#' + containerId).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+
+  svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#f0fdf4');
+  svg.append('rect').attr('x', 20).attr('y', 20).attr('width', W-40).attr('height', H-40)
+    .attr('fill', 'none').attr('stroke', '#10b981').attr('stroke-width', 2).attr('stroke-dasharray', '8,4');
+
+  const tip = makeTooltip(containerId);
+
+  const facilities = [
+    { id:'pit',   label:'PIT AREA',     x:60,  y:60,  w:200, h:180, color:'#1a3a5c', info:'Area penambangan utama<br>1.720 Ha • 6 blok' },
+    { id:'stock', label:'STOCKPILE',    x:290, y:60,  w:180, h:120, color:'#2a5a8c', info:'ROM + Product<br>150.000 + 80.000 ton' },
+    { id:'crush', label:'CRUSHER',      x:490, y:60,  w:140, h:120, color:'#3a7aac', info:'Kapasitas 1.500 t/jam<br>Output: -50 mm' },
+    { id:'jetty', label:'JETTY',        x:660, y:60,  w:180, h:120, color:'#8b5cf6', info:'Barge 8.000 DWT<br>Loading rate 2.000 t/jam' },
+    { id:'work',  label:'WORKSHOP',     x:60,  y:280, w:180, h:120, color:'#3a7aac', info:'8 bay • 2.0 Ha<br>Maintenance & repair' },
+    { id:'fuel',  label:'FUEL STATION', x:260, y:280, w:160, h:120, color:'#4a9acc', info:'200.000 liter<br>2 dispenser' },
+    { id:'pond',  label:'SETTLING POND',x:440, y:280, w:200, h:120, color:'#6ab4dc', info:'6 kompartemen<br>69.552 m³' },
+    { id:'kantor',label:'KANTOR & MESS',x:660, y:280, w:180, h:120, color:'#10b981', info:'200 orang<br>1,5 Ha' },
+    { id:'disposal',label:'DISPOSAL',   x:60,  y:430, w:340, h:90, color:'#8B7355', info:'Out-of-pit disposal<br>15 Ha' },
+    { id:'lab',   label:'LABORATORIUM', x:420, y:430, w:180, h:90, color:'#f59e0b', info:'Analisis kualitas<br>50 sampel/hari' },
+    { id:'genset',label:'POWER PLANT',  x:620, y:430, w:220, h:90, color:'#ef4444', info:'2 × 2.500 kVA<br>Backup: 1 × 1.000 kVA' }
+  ];
+
+  svg.selectAll('.fac').data(facilities).enter().append('rect')
+    .attr('x', d => d.x).attr('y', d => d.y).attr('width', d => d.w).attr('height', d => d.h)
+    .attr('fill', d => d.color).attr('opacity', .85).attr('stroke', '#fff').attr('stroke-width', 2).attr('rx', 6)
+    .style('cursor', 'pointer')
+    .call(sel => attachTooltip(sel, tip, d => `<strong>${d.label}</strong><br>${d.info}`))
+    .on('mouseover', function() { d3.select(this).attr('opacity', 1); })
+    .on('mouseout', function() { d3.select(this).attr('opacity', .85); });
+
+  svg.selectAll('.facLabel').data(facilities).enter().append('text')
+    .attr('x', d => d.x + d.w/2).attr('y', d => d.y + d.h/2).attr('text-anchor', 'middle').attr('dy', '0.35em')
+    .attr('font-size', d => d.w < 150 ? 10 : 12).attr('font-weight', '700').attr('fill', '#fff')
+    .text(d => d.label).style('pointer-events', 'none');
+
+  // Roads
+  const roads = [
+    [260, 150, 290, 120], [470, 120, 490, 120], [630, 120, 660, 120],
+    [150, 240, 150, 280], [340, 340, 440, 340], [240, 340, 260, 340],
+    [640, 340, 660, 340], [400, 400, 400, 430], [510, 400, 510, 430], [730, 400, 730, 430]
+  ];
+  roads.forEach(([x1,y1,x2,y2]) => {
+    svg.append('line').attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)
+      .attr('stroke', '#f59e0b').attr('stroke-width', 4).attr('stroke-linecap', 'round');
+  });
+
+  svg.append('g').attr('transform', 'translate(850, 480)').call(g => {
+    g.append('circle').attr('r', 20).attr('fill', '#fff').attr('stroke', '#1a3a5c').attr('stroke-width', 2);
+    g.append('polygon').attr('points', '0,-15 -5,5 0,0 5,5').attr('fill', '#1a3a5c');
+    g.append('text').attr('y', 30).attr('text-anchor', 'middle').attr('font-size', 10).attr('font-weight', '700').attr('fill', '#1a3a5c').text('N');
+  });
+
+  svg.append('g').attr('transform', 'translate(30, 540)').call(g => {
+    g.append('rect').attr('x', 0).attr('width', 80).attr('height', 6).attr('fill', '#1a3a5c');
+    g.append('rect').attr('x', 80).attr('width', 80).attr('height', 6).attr('fill', '#fff').attr('stroke', '#1a3a5c');
+    g.append('text').attr('y', 20).attr('font-size', 9).attr('fill', '#1a3a5c').text('0');
+    g.append('text').attr('x', 160).attr('y', 20).attr('text-anchor', 'end').attr('font-size', 9).attr('fill', '#1a3a5c').text('2 km');
+  });
+}
+
+/* ============ M5: LAYOUT JALAN ANGKUT ============ */
+function drawHaulRoad() {
+  const containerId = 'd3HaulRoad';
+  const W = 900, H = 400;
+  const svg = d3.select('#' + containerId).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+
+  svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#f8fafc');
+  const tip = makeTooltip(containerId);
+
+  const nodes = [
+    { id:'pit',  x:80,  y:100, label:'PIT A', color:'#1a3a5c' },
+    { id:'pit2', x:80,  y:280, label:'PIT D', color:'#1a3a5c' },
+    { id:'rom',  x:300, y:100, label:'ROM PAD', color:'#2a5a8c' },
+    { id:'rom2', x:300, y:280, label:'ROM PAD 2', color:'#2a5a8c' },
+    { id:'crush',x:520, y:190, label:'CRUSHER', color:'#3a7aac' },
+    { id:'stock',x:690, y:190, label:'PRODUCT STOCK', color:'#4a9acc' },
+    { id:'jetty',x:850, y:190, label:'JETTY', color:'#8b5cf6' }
+  ];
+  const edges = [
+    { s:'pit',   t:'rom',   w:15 },
+    { s:'pit2',  t:'rom2',  w:15 },
+    { s:'rom',   t:'crush', w:15 },
+    { s:'rom2',  t:'crush', w:15 },
+    { s:'crush', t:'stock', w:15 },
+    { s:'stock', t:'jetty', w:15 }
+  ];
+
+  edges.forEach(e => {
+    const s = nodes.find(n => n.id === e.s);
+    const t = nodes.find(n => n.id === e.t);
+    const midX = (s.x + t.x) / 2;
+    const midY = (s.y + t.y) / 2 - 30;
+    svg.append('path').attr('d', `M ${s.x} ${s.y} Q ${midX} ${midY} ${t.x} ${t.y}`)
+      .attr('stroke', '#f59e0b').attr('stroke-width', 6).attr('fill', 'none').attr('stroke-linecap', 'round')
+      .style('cursor', 'pointer')
+      .call(sel => attachTooltip(sel, tip, () => `<strong>Segmen ${e.s.toUpperCase()} → ${e.t.toUpperCase()}</strong><br>Lebar: 15 m<br>Grade: 6%`));
+  });
+
+  svg.selectAll('.node').data(nodes).enter().append('circle')
+    .attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 18)
+    .attr('fill', d => d.color).attr('stroke', '#fff').attr('stroke-width', 3)
+    .style('cursor', 'pointer')
+    .call(sel => attachTooltip(sel, tip, d => `<strong>${d.label}</strong><br>Node logistik utama`));
+
+  svg.selectAll('.nodeLabel').data(nodes).enter().append('text')
+    .attr('x', d => d.x).attr('y', d => d.y + 38).attr('text-anchor', 'middle')
+    .attr('font-size', 10).attr('font-weight', '700').attr('fill', '#1a3a5c').text(d => d.label);
+
+  const drains = [
+    { x:190, y:82 }, { x:400, y:120 }, { x:600, y:170 },
+    { x:190, y:300 }, { x:400, y:250 }, { x:600, y:220 }
+  ];
+  svg.selectAll('.drain').data(drains).enter().append('circle')
+    .attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 5).attr('fill', '#3b82f6')
+    .call(sel => attachTooltip(sel, tip, () => '<strong>Cross Drain</strong><br>Ø 1,2 m'));
+
+  svg.append('text').attr('x', 190).attr('y', 70).attr('text-anchor','middle').attr('font-size', 10).attr('fill', '#92400e').attr('font-weight', '600').text('3,2 km');
+  svg.append('text').attr('x', 410).attr('y', 140).attr('text-anchor','middle').attr('font-size', 10).attr('fill', '#92400e').attr('font-weight', '600').text('2,0 km');
+  svg.append('text').attr('x', 605).attr('y', 165).attr('text-anchor','middle').attr('font-size', 10).attr('fill', '#92400e').attr('font-weight', '600').text('1,8 km');
+  svg.append('text').attr('x', 770).attr('y', 165).attr('text-anchor','middle').attr('font-size', 10).attr('fill', '#92400e').attr('font-weight', '600').text('5,5 km');
+
+  svg.append('text').attr('x', W/2).attr('y', 30).attr('text-anchor', 'middle')
+    .attr('font-size', 14).attr('font-weight', '700').attr('fill', '#1a3a5c').text('JARINGAN JALAN ANGKUT — TOTAL 12,5 KM');
+}
+
+/* ============ M6: SETTLING POND ============ */
+function drawSettlingPond() {
+  const containerId = 'd3SettlingPond';
+  const W = 900, H = 400;
+  const svg = d3.select('#' + containerId).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+
+  svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#f8fafc');
+  const tip = makeTooltip(containerId);
+
+  svg.append('rect').attr('x', 40).attr('y', 60).attr('width', 820).attr('height', 280)
+    .attr('fill', '#e0f2fe').attr('stroke', '#1a3a5c').attr('stroke-width', 3);
+
+  const compWidth = 820 / 6 - 10;
+  const colors = ['#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'];
+  const labels = ['Kompartemen 1 (Inlet)', 'Kompartemen 2', 'Kompartemen 3', 'Kompartemen 4', 'Kompartemen 5', 'Kompartemen 6 (Outlet)'];
+  const sediment = [3.5, 2.5, 1.8, 1.2, 0.6, 0.2];
+
+  svg.append('defs').append('marker').attr('id', 'flowArrow').attr('markerWidth', 8).attr('markerHeight', 8)
+    .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+    .append('polygon').attr('points', '0,0 8,3 0,6').attr('fill', '#f59e0b');
+
+  for (let i = 0; i < 6; i++) {
+    const x = 50 + i * (compWidth + 12);
+    svg.append('rect').attr('x', x).attr('y', 70).attr('width', compWidth).attr('height', 260)
+      .attr('fill', colors[i]).attr('rx', 4).style('cursor', 'pointer')
+      .call(sel => attachTooltip(sel, tip, () => `<strong>${labels[i]}</strong><br>Volume: 11.592 m³<br>Sedimen: ${sediment[i]} m<br>Kedalaman air: ${7 - sediment[i]} m`));
+
+    svg.append('rect').attr('x', x).attr('y', 330 - sediment[i] * 25)
+      .attr('width', compWidth).attr('height', sediment[i] * 25).attr('fill', '#78350f').attr('opacity', .7).attr('rx', 2);
+
+    svg.append('text').attr('x', x + compWidth/2).attr('y', 100)
+      .attr('text-anchor', 'middle').attr('font-size', 11).attr('font-weight', '700').attr('fill', '#fff')
+      .text('K-' + (i+1)).style('pointer-events', 'none');
+
+    svg.append('text').attr('x', x + compWidth/2).attr('y', 335)
+      .attr('text-anchor', 'middle').attr('font-size', 9).attr('fill', '#78350f').text(sediment[i] + ' m').style('pointer-events', 'none');
+
+    if (i < 5) {
+      svg.append('rect').attr('x', x + compWidth + 2).attr('y', 70).attr('width', 8).attr('height', 260)
+        .attr('fill', '#64748b').attr('rx', 2);
+      svg.append('path').attr('d', `M ${x + compWidth + 2} 200 L ${x + compWidth + 12} 200`)
+        .attr('stroke', '#f59e0b').attr('stroke-width', 3).attr('marker-end', 'url(#flowArrow)');
+    }
+  }
+
+  svg.append('path').attr('d', 'M 20 200 L 45 200').attr('stroke', '#1e40af').attr('stroke-width', 8).attr('fill', 'none');
+  svg.append('text').attr('x', 15).attr('y', 190).attr('font-size', 11).attr('font-weight', '700').attr('fill', '#1e40af').text('IN');
+
+  svg.append('path').attr('d', 'M 860 200 L 880 200').attr('stroke', '#10b981').attr('stroke-width', 8).attr('fill', 'none');
+  svg.append('text').attr('x', 862).attr('y', 190).attr('font-size', 11).attr('font-weight', '700').attr('fill', '#10b981').text('OUT');
+
+  [1, 3, 5].forEach(i => {
+    const x = 50 + i * (compWidth + 12) + compWidth/2;
+    svg.append('circle').attr('cx', x).attr('cy', 350).attr('r', 12)
+      .attr('fill', '#f59e0b').attr('stroke', '#fff').attr('stroke-width', 2)
+      .call(sel => attachTooltip(sel, tip, () => '<strong>Pompa</strong><br>Kapasitas: 500 m³/jam'));
+    svg.append('text').attr('x', x).attr('y', 354).attr('text-anchor', 'middle')
+      .attr('font-size', 10).attr('font-weight', '700').attr('fill', '#fff').text('P');
+  });
+
+  svg.append('text').attr('x', W/2).attr('y', 35).attr('text-anchor', 'middle')
+    .attr('font-size', 15).attr('font-weight', '700').attr('fill', '#1a3a5c').text('DENAH SETTLING POND — 6 KOMPARTEMEN');
+
+  svg.append('line').attr('x1', 40).attr('y1', 380).attr('x2', 860).attr('y2', 380).attr('stroke', '#1a3a5c');
+  svg.append('line').attr('x1', 40).attr('y1', 375).attr('x2', 40).attr('y2', 385).attr('stroke', '#1a3a5c');
+  svg.append('line').attr('x1', 860).attr('y1', 375).attr('x2', 860).attr('y2', 385).attr('stroke', '#1a3a5c');
+  svg.append('text').attr('x', 450).attr('y', 375).attr('text-anchor', 'middle')
+    .attr('font-size', 11).attr('fill', '#1a3a5c').attr('font-weight', '600').text('46 m');
+}
+
+/* ============ M7: PETA SEBARAN SEAM ============ */
+function drawSeamMaps() {
+  ['A', 'B'].forEach((seam, idx) => {
+    const containerId = 'd3SeamMap' + seam;
+    const W = 440, H = 300;
+    const svg = d3.select('#' + containerId).append('svg')
+      .attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+
+    svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#f8fafc');
+    const tip = makeTooltip(containerId);
+
+    const cx = W/2, cy = H/2;
+    const pts = [];
+    for (let i = 0; i < 30; i++) {
+      const a = (i/30) * Math.PI * 2;
+      const noise = 1 + Math.sin(a * 3 + idx) * 0.12 + Math.cos(a * 5) * 0.08;
+      pts.push([cx + 160 * noise * Math.cos(a), cy + 100 * noise * Math.sin(a)]);
+    }
+
+    svg.append('path').attr('d', d3.line().curve(d3.curveCatmullRomClosed)(pts))
+      .attr('fill', '#3b82f6').attr('opacity', .3).attr('stroke', '#1e40af').attr('stroke-width', 1.5);
+
+    const zones = [
+      { scale: 0.85, color: '#84cc16', label: '1,5–3 m' },
+      { scale: 0.6,  color: '#f59e0b', label: '3–5 m' },
+      { scale: 0.35, color: '#dc2626', label: '> 5 m' }
+    ];
+    zones.forEach((z, zi) => {
+      const zPts = pts.map(([x, y]) => [cx + (x-cx) * z.scale, cy + (y-cy) * z.scale]);
+      svg.append('path').attr('d', d3.line().curve(d3.curveCatmullRomClosed)(zPts))
+        .attr('fill', z.color).attr('opacity', .6).attr('stroke', '#fff').attr('stroke-width', 1.2)
+        .style('cursor', 'pointer')
+        .call(sel => attachTooltip(sel, tip, () => `<strong>Seam ${seam} — Zona ${z.label}</strong><br>Luas: ${(200 - zi * 60).toFixed(0)} Ha<br>Volume: ${(3 - zi * 0.8).toFixed(1)} juta ton`));
+    });
+
+    const boreholes = [];
+    for (let i = 0; i < 15; i++) {
+      boreholes.push({
+        x: 50 + Math.random() * (W - 100),
+        y: 50 + Math.random() * (H - 100),
+        depth: 40 + Math.random() * 100
+      });
+    }
+    svg.selectAll('.bh').data(boreholes).enter().append('circle')
+      .attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 3.5)
+      .attr('fill', '#fff').attr('stroke', '#1a3a5c').attr('stroke-width', 1.5)
+      .call(sel => attachTooltip(sel, tip, d => `<strong>Borehole</strong><br>Kedalaman: ${d.depth.toFixed(0)} m<br>Kualitas: Baik`));
+
+    svg.append('text').attr('x', W/2).attr('y', 22).attr('text-anchor', 'middle')
+      .attr('font-size', 13).attr('font-weight', '700').attr('fill', '#1a3a5c').text('SEAM ' + seam);
+  });
+}
+
+/* ============ M8: PETA PROGRES ============ */
+let progressSvg, progressBlocks;
+function drawProgressMap() {
+  const containerId = 'd3ProgressMap';
+  const W = 900, H = 450;
+  progressSvg = d3.select('#' + containerId).append('svg')
+    .attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+
+  progressSvg.append('rect').attr('width', W).attr('height', H).attr('fill', '#f0fdf4');
+  const tip = makeTooltip(containerId);
+
+  const blocks = [
+    { id:'A', x:80,  y:80,  w:220, h:140, startY:1,  endY:3,  reserve:9.2 },
+    { id:'B', x:320, y:80,  w:240, h:140, startY:3,  endY:6,  reserve:10.1 },
+    { id:'C', x:580, y:80,  w:200, h:140, startY:6,  endY:9,  reserve:7.8 },
+    { id:'D', x:80,  y:240, w:210, h:150, startY:9,  endY:11, reserve:6.5 },
+    { id:'E', x:310, y:240, w:220, h:150, startY:11, endY:13, reserve:5.4 },
+    { id:'F', x:550, y:240, w:230, h:150, startY:13, endY:15, reserve:3.5 }
+  ];
+
+  progressBlocks = progressSvg.selectAll('.pBlock').data(blocks).enter().append('g').attr('class', 'pBlock');
+
+  progressBlocks.append('rect')
+    .attr('x', d => d.x).attr('y', d => d.y).attr('width', d => d.w).attr('height', d => d.h)
+    .attr('fill', '#1a3a5c').attr('stroke', '#fff').attr('stroke-width', 2).attr('rx', 6)
+    .style('cursor', 'pointer')
+    .call(sel => attachTooltip(sel, tip, d => `<strong>Blok ${d.id}</strong><br>Jadwal: Th ${d.startY}–${d.endY}<br>Cadangan: ${d.reserve} juta ton`));
+
+  progressBlocks.append('text')
+    .attr('x', d => d.x + d.w/2).attr('y', d => d.y + d.h/2).attr('text-anchor', 'middle').attr('dy', '0.35em')
+    .attr('font-size', 28).attr('font-weight', '700').attr('fill', '#fff').text(d => d.id).style('pointer-events', 'none');
+
+  progressBlocks.append('text')
+    .attr('x', d => d.x + d.w/2).attr('y', d => d.y + d.h/2 + 30).attr('text-anchor', 'middle')
+    .attr('font-size', 11).attr('fill', 'rgba(255,255,255,0.85)').text(d => `Th ${d.startY}–${d.endY}`).style('pointer-events', 'none');
+
+  updateYear(1, null);
+}
+
+function updateYear(y, event) {
+  if (!progressBlocks) return;
+  progressBlocks.select('rect').transition().duration(500)
+    .attr('fill', d => {
+      if (y >= d.endY) return '#cbd5e1';
+      if (y >= d.startY && y < d.endY) return '#10b981';
+      return '#1a3a5c';
+    });
+  progressBlocks.selectAll('text').transition().duration(500)
+    .attr('fill', d => (y >= d.endY) ? '#475569' : '#fff');
+  document.getElementById('progressYearLabel').textContent =
+    `Tahun: ${y} — Blok aktif disorot hijau, selesai abu-abu, akan datang biru gelap`;
+  document.querySelectorAll('.yearBtn').forEach(b => {
+    b.style.background = '#fff';
+    b.style.color = '#1a3a5c';
+    b.style.fontWeight = '600';
+  });
+  if (event && event.target) {
+    event.target.style.background = '#1a3a5c';
+    event.target.style.color = '#fff';
+  }
+}
+
+/* ============ INIT ALL ============ */
+document.addEventListener('DOMContentLoaded', () => {
+  drawConsessionMap();
+  drawContourMap();
+  drawPitLayout();
+  drawPitCrossSection();
+  drawFacilityLayout();
+  drawHaulRoad();
+  drawSettlingPond();
+  drawSeamMaps();
+  drawProgressMap();
+});
+</script>
+</body>
+</html>

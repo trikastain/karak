@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AADI - PT Adaro Andalan Indonesia Tbk | Sistem Manajemen Tambang</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; }
+  .sidebar-item.active { background: linear-gradient(90deg, #dc2626 0%, #991b1b 100%); color: white; }
+  .sidebar-item:hover:not(.active) { background: #1f2937; }
+  .fade-in { animation: fadeIn 0.4s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: translateY(0);} }
+  .progress-bar { transition: width 0.8s ease-in-out; }
+  #pit3d-container { width: 100%; height: 600px; background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 60%, #d4c4a8 100%); border-radius: 12px; overflow: hidden; position: relative; cursor: grab; }
+  #pit3d-container:active { cursor: grabbing; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .stat-card { transition: all 0.3s; }
+  .stat-card:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+  .tab-btn.active { background: #dc2626; color: white; }
+  .bench-row:hover { background: #fef2f2 !important; }
+  .pit-info-panel { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.88); color: white; padding: 12px; border-radius: 8px; font-size: 11px; min-width: 240px; z-index: 10; border: 1px solid #dc2626; }
+  .pit-compass { position: absolute; bottom: 15px; left: 15px; background: 15px; background: rgba(255,255,255,0.95); padding: 8px; border-radius: 50%; width: 70px; height: 70px; z-index: 10; }
+  .pit-scale { position: absolute; bottom: 15px; right: 15px; background: rgba(255,255,255,0.95); padding: 6px 12px; border-radius: 6px; font-size: 11px; z-index: 10; }
+  .barge-move { animation: bargeFloat 3s ease-in-out infinite; }
+  @keyframes bargeFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  .water-flow { animation: waterFlow 4s linear infinite; }
+  @keyframes waterFlow { 0% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -40; } }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: #f3f4f6; }
+  .adaro-gradient { background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%); }
+  .envirocoal-badge { background: linear-gradient(90deg, #059669 0%, #047857 100%); }
+  .map-svg { width: 100%; height: 600px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; }
+  .masterplan-svg { width: 100%; height: 750px; background: #f0fdf4; border-radius: 12px; }
+  .route-svg { width: 100%; height: 550px; background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%); border-radius: 12px; }
+</style>
+</head>
+<body class="bg-gray-100">
+<div class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-gray-900 text-white flex flex-col flex-shrink-0">
+    <div class="p-5 border-b border-gray-800">
+      <h1 class="text-xl font-bold text-red-500"><i class="fas fa-mountain mr-2"></i>AADI</h1>
+      <p class="text-xs text-gray-400 mt-1">PT Adaro Andalan Indonesia Tbk</p>
+      <p class="text-[10px] text-gray-500 mt-1">Holding Tambang Batubara Terintegrasi</p>
+      <p class="text-[10px] text-amber-400 mt-1">IPO: Rp 5.550/saham · BEI</p>
+    </div>
+    <nav class="flex-1 overflow-y-auto py-3">
+      <div class="px-3 space-y-1 text-sm">
+        <a href="#" class="sidebar-item active flex items-center px-3 py-2.5 rounded-lg" data-module="dashboard"><i class="fas fa-tachometer-alt w-5"></i><span class="ml-3">Dashboard</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="produksi"><i class="fas fa-hard-hat w-5"></i><span class="ml-3">Produksi Tambang</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="cadangan"><i class="fas fa-cubes w-5"></i><span class="ml-3">Cadangan & Sumber Daya</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="fleet"><i class="fas fa-truck w-5"></i><span class="ml-3">Fleet & Logistik</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="sdm"><i class="fas fa-users w-5"></i><span class="ml-3">SDM</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="k3"><i class="fas fa-shield-alt w-5"></i><span class="ml-3">K3LH</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="lingkungan"><i class="fas fa-leaf w-5"></i><span class="ml-3">Lingkungan</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="keuangan"><i class="fas fa-chart-line w-5"></i><span class="ml-3">Keuangan</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="peta"><i class="fas fa-map-marked-alt w-5"></i><span class="ml-3">Peta Konsesi</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="pit3d"><i class="fas fa-cube w-5"></i><span class="ml-3">3D Pit - Tutupan</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="rute"><i class="fas fa-route w-5"></i><span class="ml-3">Rute Barito-Taboneo</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="masterplan"><i class="fas fa-drafting-compass w-5"></i><span class="ml-3">Master Plan Site</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="pemasaran"><i class="fas fa-globe-asia w-5"></i><span class="ml-3">Pemasaran Global</span></a>
+        <a href="#" class="sidebar-item flex items-center px-3 py-2.5 rounded-lg" data-module="ipo"><i class="fas fa-landmark w-5"></i><span class="ml-3">Info IPO AADI</span></a>
+      </div>
+    </nav>
+    <div class="p-3 border-t border-gray-800">
+      <div class="flex items-center">
+        <div class="w-9 h-9 bg-red-600 rounded-full flex items-center justify-center"><i class="fas fa-user text-white text-sm"></i></div>
+        <div class="ml-2"><p class="text-sm font-medium">Admin Site</p><p class="text-xs text-gray-400">Kalteng · Kalsel</p></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 overflow-y-auto">
+    <header class="bg-white shadow-sm border-b sticky top-0 z-10">
+      <div class="px-6 py-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-gray-800" id="module-title">Dashboard</h2>
+          <p class="text-xs text-gray-500" id="module-subtitle">Overview operasional Grup Adaro Andalan Indonesia</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium"><i class="fas fa-circle text-[8px] mr-1"></i>PROPER Emas AI</div>
+          <div class="text-right">
+            <p class="text-xs font-medium text-gray-800" id="current-date"></p>
+            <p class="text-xs text-gray-500" id="current-time"></p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-5" id="content-area">
+
+      <!-- DASHBOARD -->
+      <div id="dashboard-module" class="module-content fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+          <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-red-600 stat-card">
+            <div class="flex items-center justify-between">
+              <div><p class="text-xs text-gray-500">Produksi 6M 2024</p><p class="text-2xl font-bold mt-1">32,74</p><p class="text-xs text-gray-500">Juta Ton Batubara</p></div>
+              <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><i class="fas fa-hard-hat text-red-600 text-xl"></i></div>
+            </div>
+            <div class="mt-3 flex items-center text-xs"><i class="fas fa-arrow-up text-green-500 mr-1"></i><span class="text-green-500 font-medium">+3%</span><span class="text-gray-500 ml-2">vs 6M 2023</span></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-blue-600 stat-card">
+            <div class="flex items-center justify-between">
+              <div><p class="text-xs text-gray-500">Total Cadangan (JORC)</p><p class="text-2xl font-bold mt-1">917,4</p><p class="text-xs text-gray-500">Juta Ton · 5 Tambang</p></div>
+              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-database text-blue-600 text-xl"></i></div>
+            </div>
+            <div class="mt-3 flex items-center text-xs"><span class="text-gray-500">Sumber Daya: <b>4.102 Mt</b></span></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-600 stat-card">
+            <div class="flex items-center justify-between">
+              <div><p class="text-xs text-gray-500">Revenue 6M 2024</p><p class="text-2xl font-bold mt-1">US$ 2,66</p><p class="text-xs text-gray-500">Miliar · Rp 43,5 T</p></div>
+              <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-dollar-sign text-green-600 text-xl"></i></div>
+            </div>
+            <div class="mt-3 flex items-center text-xs"><i class="fas fa-arrow-down text-red-500 mr-1"></i><span class="text-red-500 font-medium">-18%</span><span class="text-gray-500 ml-2">vs H1 2023</span></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-amber-600 stat-card">
+            <div class="flex items-center justify-between">
+              <div><p class="text-xs text-gray-500">Armada Logistik</p><p class="text-2xl font-bold mt-1">771K</p><p class="text-xs text-gray-500">Ton/Hari Kapasitas</p></div>
+              <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center"><i class="fas fa-ship text-amber-600 text-xl"></i></div>
+            </div>
+            <div class="mt-3 flex items-center text-xs"><span class="text-gray-500">85 Tugboat · 71 Tongkang</span></div>
+          </div>
+        </div>
+
+        <!-- Anak Perusahaan -->
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-5">
+          <h3 class="text-base font-bold mb-3"><i class="fas fa-building text-red-600 mr-2"></i>7 Aset Tambang Batubara Grup AADI</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div class="p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-300">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="font-bold text-green-800">PT Adaro Indonesia (AI)</p>
+                  <p class="text-[10px] text-gray-600">Tabalong & Balangan, Kalsel</p>
+                </div>
+                <span class="px-2 py-0.5 bg-green-600 text-white text-[9px] rounded">IUPK-KOP</span>
+              </div>
+              <div class="mt-2 text-xs space-y-1">
+                <div class="flex justify-between"><span class="text-gray-600">Luas Konsesi:</span><b>23.942 Ha</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Cadangan:</span><b>642,0 Mt</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Produksi 6M:</span><b>25,69 Mt</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Merk:</span><b class="text-green-700">Envirocoal®</b></div>
+              </div>
+            </div>
+            <div class="p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-300">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="font-bold text-blue-800">Balangan Coal (BC)</p>
+                  <p class="text-[10px] text-gray-600">SCM + LSA + PCS · Balangan</p>
+                </div>
+                <span class="px-2 py-0.5 bg-blue-600 text-white text-[9px] rounded">IUP-OP</span>
+              </div>
+              <div class="mt-2 text-xs space-y-1">
+                <div class="flex justify-between"><span class="text-gray-600">Total Luas:</span><b>7.500 Ha</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Cadangan:</span><b>123,1 Mt</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Produksi 6M:</span><b>4,45 Mt</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">SR 6M 2024:</span><b>4,38x</b></div>
+              </div>
+            </div>
+            <div class="p-3 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg border border-amber-300">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="font-bold text-amber-800">PT Mustika Indah Permai</p>
+                  <p class="text-[10px] text-gray-600">Lahat, Sumatera Selatan</p>
+                </div>
+                <span class="px-2 py-0.5 bg-amber-600 text-white text-[9px] rounded">IUP-OP</span>
+              </div>
+              <div class="mt-2 text-xs space-y-1">
+                <div class="flex justify-between"><span class="text-gray-600">Luas Konsesi:</span><b>2.000 Ha</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Cadangan:</span><b>152,3 Mt</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Produksi 6M:</span><b>2,61 Mt</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">SR 6M 2024:</span><b>1,96x</b></div>
+              </div>
+            </div>
+            <div class="p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-300">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="font-bold text-purple-800">PT Pari Coal (PC)</p>
+                  <p class="text-[10px] text-gray-600">Mahakam Ulu, Kaltim</p>
+                </div>
+                <span class="px-2 py-0.5 bg-purple-600 text-white text-[9px] rounded">PKP2B</span>
+              </div>
+              <div class="mt-2 text-xs space-y-1">
+                <div class="flex justify-between"><span class="text-gray-600">Luas Konsesi:</span><b>24.971 Ha</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Cadangan:</span><b>23,5 Mt</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Status:</span><b class="text-purple-700">Development</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Target:</span><b>3,5 Mt/th</b></div>
+              </div>
+            </div>
+            <div class="p-3 bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg border border-pink-300">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="font-bold text-pink-800">PT Ratah Coal (RC)</p>
+                  <p class="text-[10px] text-gray-600">Murung Raya, Kalteng</p>
+                </div>
+                <span class="px-2 py-0.5 bg-pink-600 text-white text-[9px] rounded">PKP2B</span>
+              </div>
+              <div class="mt-2 text-xs space-y-1">
+                <div class="flex justify-between"><span class="text-gray-600">Luas Konsesi:</span><b>36.490 Ha</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Status:</span><b class="text-pink-700">Eksplorasi</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Jenis:</span><b>Bituminous</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Periode:</span><b>2023-2024</b></div>
+              </div>
+            </div>
+            <div class="p-3 bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg border border-cyan-300">
+              <p class="font-bold text-cyan-800 text-sm">Adaro Logistics (AL)</p>
+              <p class="text-[10px] text-gray-600 mb-2">Segmen Logistik Terintegrasi</p>
+              <div class="text-xs space-y-1">
+                <div class="flex justify-between"><span class="text-gray-600">Tugboat:</span><b>85 unit</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Tongkang:</span><b>71 unit</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Floating Crane:</span><b>4 unit</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Kapasitas:</span><b>771K ton/hari</b></div>
+              </div>
+            </div>
+            <div class="p-3 bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg border border-teal-300">
+              <p class="font-bold text-teal-800 text-sm">Adaro Water (ATM)</p>
+              <p class="text-[10px] text-gray-600 mb-2">Pengelolaan Air & SPAM</p>
+              <div class="text-xs space-y-1">
+                <div class="flex justify-between"><span class="text-gray-600">SPAM:</span><b>7 Perumda</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Distribusi 2023:</span><b>31,8 jt m³</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">SR Terlayani:</span><b>147.000 SR</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Pompa Dewatering:</span><b>33 unit</b></div>
+              </div>
+            </div>
+            <div class="p-3 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg border border-indigo-300">
+              <p class="font-bold text-indigo-800 text-sm">KPI (Kaltara Power)</p>
+              <p class="text-[10px] text-gray-600 mb-2">PLTU 1.060 MW · Kaltara</p>
+              <div class="text-xs space-y-1">
+                <div class="flex justify-between"><span class="text-gray-600">Kapasitas:</span><b>1.060 MW</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Status:</span><b class="text-indigo-700">Konstruksi</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Target COD:</span><b>Q4 2025/Q1 2026</b></div>
+                <div class="flex justify-between"><span class="text-gray-600">Customer:</span><b>Smelter Al</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ringkasan -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Produksi per Tambang (6M 2024)</h3>
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>AI (Envirocoal)</span><span class="font-bold">25,69 Mt · 78,5%</span></div>
+                <div class="w-full bg-gray-200 rounded-full h-3"><div class="bg-red-600 h-3 rounded-full" style="width: 78.5%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>BC (SCM+LSA+PCS)</span><span class="font-bold">4,45 Mt · 13,6%</span></div>
+                <div class="w-full bg-gray-200 rounded-full h-3"><div class="bg-blue-600 h-3 rounded-full" style="width: 13.6%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>MIP (Sumsel)</span><span class="font-bold">2,61 Mt · 8,0%</span></div>
+                <div class="w-full bg-gray-200 rounded-full h-3"><div class="bg-amber-600 h-3 rounded-full" style="width: 8%"></div></div>
+              </div>
+              <div class="pt-2 border-t flex justify-between text-sm font-bold">
+                <span>TOTAL PRODUKSI</span><span class="text-red-600">32,74 Juta Ton</span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Performa Keuangan 6M 2024 (US$ Juta)</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Pendapatan Usaha</span><b class="text-green-700">2.656,5</b></div>
+              <div class="flex justify-between p-2 bg-gray-50 rounded"><span>Beban Pokok</span><b>(1.879,3)</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Laba Bruto</span><b class="text-blue-700">777,2</b></div>
+              <div class="flex justify-between p-2 bg-amber-50 rounded"><span>Laba Sebelum Pajak</span><b class="text-amber-700">1.035,2</b></div>
+              <div class="flex justify-between p-2 bg-red-50 rounded"><span>Laba Bersih</span><b class="text-red-700">922,8</b></div>
+              <div class="flex justify-between p-2 bg-purple-50 rounded border-t-2 border-purple-300"><span>Margin Bersih</span><b class="text-purple-700">34,7%</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUKSI -->
+      <div id="produksi-module" class="module-content hidden fade-in">
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-base font-bold mb-3"><i class="fas fa-mountain text-red-600 mr-2"></i>Detail Produksi Tambang AI (Envirocoal)</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="p-3 bg-red-50 rounded-lg text-center"><p class="text-xs text-gray-600">Produksi 6M 2024</p><p class="text-xl font-bold text-red-700">25,69 Mt</p></div>
+            <div class="p-3 bg-amber-50 rounded-lg text-center"><p class="text-xs text-gray-600">Pengupasan OB</p><p class="text-xl font-bold text-amber-700">106,62 Mbcm</p></div>
+            <div class="p-3 bg-blue-50 rounded-lg text-center"><p class="text-xs text-gray-600">Stripping Ratio</p><p class="text-xl font-bold text-blue-700">4,15x</p></div>
+            <div class="p-3 bg-green-50 rounded-lg text-center"><p class="text-xs text-gray-600">Penjualan Bersih</p><p class="text-xl font-bold text-green-700">29,56 Mt</p></div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-800 text-white"><tr><th class="px-3 py-2 text-left">Keterangan</th><th class="px-3 py-2 text-right">6M 2024</th><th class="px-3 py-2 text-right">FY 2023</th><th class="px-3 py-2 text-right">FY 2022</th><th class="px-3 py-2 text-right">FY 2021</th></tr></thead>
+              <tbody class="divide-y">
+                <tr><td class="px-3 py-2">Volume Produksi (Juta ton)</td><td class="px-3 py-2 text-right font-bold">25,69</td><td class="px-3 py-2 text-right">48,60</td><td class="px-3 py-2 text-right">49,12</td><td class="px-3 py-2 text-right">43,15</td></tr>
+                <tr><td class="px-3 py-2">Volume Penjualan Bersih (Juta ton)</td><td class="px-3 py-2 text-right font-bold">29,56</td><td class="px-3 py-2 text-right">57,35</td><td class="px-3 py-2 text-right">55,60</td><td class="px-3 py-2 text-right">47,55</td></tr>
+                <tr><td class="px-3 py-2">Pendapatan Usaha (US$)</td><td class="px-3 py-2 text-right font-bold text-green-700">2,14 M</td><td class="px-3 py-2 text-right">4,93 M</td><td class="px-3 py-2 text-right">6,75 M</td><td class="px-3 py-2 text-right">3,24 M</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Produksi Balangan Coal (BC)</h3>
+            <div class="overflow-x-auto text-sm">
+              <table class="w-full">
+                <thead class="bg-blue-800 text-white"><tr><th class="px-2 py-2 text-left">Entitas</th><th class="px-2 py-2 text-right">6M 2024</th><th class="px-2 py-2 text-right">FY 2023</th><th class="px-2 py-2 text-right">FY 2022</th></tr></thead>
+                <tbody class="divide-y">
+                  <tr class="bg-blue-50"><td class="px-2 py-2 font-bold">BC TOTAL</td><td class="px-2 py-2 text-right font-bold">4,46 Mt</td><td class="px-2 py-2 text-right">8,02 Mt</td><td class="px-2 py-2 text-right">7,11 Mt</td></tr>
+                  <tr><td class="px-2 py-2 pl-4">└ SCM</td><td class="px-2 py-2 text-right">2,46 Mt</td><td class="px-2 py-2 text-right">3,95 Mt</td><td class="px-2 py-2 text-right">3,30 Mt</td></tr>
+                  <tr><td class="px-2 py-2 pl-4">└ LSA</td><td class="px-2 py-2 text-right">1,98 Mt</td><td class="px-2 py-2 text-right">4,07 Mt</td><td class="px-2 py-2 text-right">3,81 Mt</td></tr>
+                  <tr><td class="px-2 py-2 pl-4">└ PCS</td><td class="px-2 py-2 text-right">0,02 Mt</td><td class="px-2 py-2 text-right">—</td><td class="px-2 py-2 text-right">—</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-3 text-xs bg-blue-50 p-2 rounded">
+              <p><b>Total OB 6M 2024:</b> 19,48 Mbcm (+34% vs 2023)</p>
+              <p><b>Stripping Ratio:</b> 4,38x</p>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Produksi MIP (Sumatera Selatan)</h3>
+            <div class="overflow-x-auto text-sm">
+              <table class="w-full">
+                <thead class="bg-amber-800 text-white"><tr><th class="px-2 py-2 text-left">Keterangan</th><th class="px-2 py-2 text-right">6M 2024</th><th class="px-2 py-2 text-right">FY 2023</th><th class="px-2 py-2 text-right">FY 2022</th></tr></thead>
+                <tbody class="divide-y">
+                  <tr><td class="px-2 py-2">Volume Produksi</td><td class="px-2 py-2 text-right font-bold">2,61 Mt</td><td class="px-2 py-2 text-right">4,15 Mt</td><td class="px-2 py-2 text-right">3,28 Mt</td></tr>
+                  <tr><td class="px-2 py-2">Penjualan Bersih</td><td class="px-2 py-2 text-right font-bold">2,86 Mt</td><td class="px-2 py-2 text-right">4,01 Mt</td><td class="px-2 py-2 text-right">2,64 Mt</td></tr>
+                  <tr><td class="px-2 py-2">Pendapatan</td><td class="px-2 py-2 text-right font-bold text-green-700">$159,5 jt</td><td class="px-2 py-2 text-right">$251,5 jt</td><td class="px-2 py-2 text-right">$212,6 jt</td></tr>
+                  <tr><td class="px-2 py-2">Total OB</td><td class="px-2 py-2 text-right">5,12 Mbcm</td><td class="px-2 py-2 text-right">—</td><td class="px-2 py-2 text-right">5,66 Mbcm</td></tr>
+                  <tr><td class="px-2 py-2">Stripping Ratio</td><td class="px-2 py-2 text-right font-bold">1,96x</td><td class="px-2 py-2 text-right">—</td><td class="px-2 py-2 text-right">—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mt-4">
+          <h3 class="text-base font-bold mb-3">Kualitas Batubara Envirocoal® (AI)</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div class="p-3 bg-green-50 rounded-lg border-l-4 border-green-600"><p class="text-xs text-gray-600">Calorific Value (GAR)</p><p class="text-lg font-bold text-green-700">4.000-5.000 kkal/kg</p><p class="text-[10px] text-gray-500">Sub-bituminous</p></div>
+            <div class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-600"><p class="text-xs text-gray-600">Ash Content</p><p class="text-lg font-bold text-blue-700">2,0 - 2,5% adb</p><p class="text-[10px] text-gray-500">Terendah di dunia</p></div>
+            <div class="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-600"><p class="text-xs text-gray-600">Sulfur Content</p><p class="text-lg font-bold text-purple-700">0,1 - 0,2% adb</p><p class="text-[10px] text-gray-500">Low sulfur</p></div>
+            <div class="p-3 bg-amber-50 rounded-lg border-l-4 border-amber-600"><p class="text-xs text-gray-600">Nitrogen Content</p><p class="text-lg font-bold text-amber-700">1,0% daf</p><p class="text-[10px] text-gray-500">Rendah · Low NOx</p></div>
+          </div>
+          <div class="mt-3 p-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-lg text-sm">
+            <p class="font-bold"><i class="fas fa-award mr-2"></i>Envirocoal® — Salah Satu Batubara Terbersih di Dunia</p>
+            <p class="text-xs mt-1">Kadar abu & sulfur terendah global · Memenuhi standar emisi ketat Jepang, Korea, EU · Merek dagang terdaftar sejak 1990 di 13 negara</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CADANGAN & SUMBER DAYA -->
+      <div id="cadangan-module" class="module-content hidden fade-in">
+        <div class="bg-gradient-to-r from-red-700 to-red-900 text-white rounded-xl shadow-lg p-5 mb-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs opacity-90">Laporan JORC · PT Quantus Consultants Indonesia · Juni 2024</p>
+              <h3 class="text-2xl font-bold mt-1">Cadangan & Sumber Daya Batubara Grup AADI</h3>
+            </div>
+            <i class="fas fa-mountain text-6xl opacity-30"></i>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+            <div class="bg-white/10 backdrop-blur rounded-lg p-3"><p class="text-xs opacity-80">Total Sumber Daya</p><p class="text-2xl font-bold">4.102 Mt</p></div>
+            <div class="bg-white/10 backdrop-blur rounded-lg p-3"><p class="text-xs opacity-80">Total Cadangan</p><p class="text-2xl font-bold">917,4 Mt</p></div>
+            <div class="bg-white/10 backdrop-blur rounded-lg p-3"><p class="text-xs opacity-80">Mine Life (est.)</p><p class="text-2xl font-bold">~25 th</p></div>
+            <div class="bg-white/10 backdrop-blur rounded-lg p-3"><p class="text-xs opacity-80">Konsesi Aktif</p><p class="text-2xl font-bold">33.442 Ha</p></div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-base font-bold mb-3">Sumber Daya Batubara (JORC Juni 2024)</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-800 text-white"><tr><th class="px-3 py-2 text-left">Perusahaan / Proyek</th><th class="px-3 py-2 text-right">Terukur (Mt)</th><th class="px-3 py-2 text-right">Tertunjuk (Mt)</th><th class="px-3 py-2 text-right">Tereka (Mt)</th><th class="px-3 py-2 text-right font-bold">Total (Mt)</th><th class="px-3 py-2 text-right">TM (%ar)</th><th class="px-3 py-2 text-right">Ash (%adb)</th><th class="px-3 py-2 text-right">CV (kkal/kg ar)</th></tr></thead>
+              <tbody class="divide-y">
+                <tr class="bg-red-50"><td class="px-3 py-2 font-bold">PT Adaro Indonesia (AI)</td><td class="px-3 py-2 text-right" colspan="3"></td><td class="px-3 py-2 text-right font-bold text-red-700">3.396,6</td><td class="px-3 py-2 text-right" colspan="3"></td></tr>
+                <tr><td class="px-3 py-2 pl-6">└ Tutupan Utara</td><td class="px-3 py-2 text-right">843,7</td><td class="px-3 py-2 text-right">201,0</td><td class="px-3 py-2 text-right">63,2</td><td class="px-3 py-2 text-right font-bold">1.107,9</td><td class="px-3 py-2 text-right">27,4</td><td class="px-3 py-2 text-right">2,0</td><td class="px-3 py-2 text-right">4.838</td></tr>
+                <tr><td class="px-3 py-2 pl-6">└ Tutupan Selatan</td><td class="px-3 py-2 text-right">532,2</td><td class="px-3 py-2 text-right">124,8</td><td class="px-3 py-2 text-right">33,7</td><td class="px-3 py-2 text-right font-bold">690,7</td><td class="px-3 py-2 text-right">29,1</td><td class="px-3 py-2 text-right">2,6</td><td class="px-3 py-2 text-right">4.848</td></tr>
+                <tr><td class="px-3 py-2 pl-6">└ Paringin Utara</td><td class="px-3 py-2 text-right">176,7</td><td class="px-3 py-2 text-right">24,0</td><td class="px-3 py-2 text-right">10,2</td><td class="px-3 py-2 text-right font-bold">210,9</td><td class="px-3 py-2 text-right">28,4</td><td class="px-3 py-2 text-right">2,8</td><td class="px-3 py-2 text-right">4.891</td></tr>
+                <tr><td class="px-3 py-2 pl-6">└ Wara I</td><td class="px-3 py-2 text-right">736,7</td><td class="px-3 py-2 text-right">234,6</td><td class="px-3 py-2 text-right">89,9</td><td class="px-3 py-2 text-right font-bold">1.060,6</td><td class="px-3 py-2 text-right">38,8</td><td class="px-3 py-2 text-right">3,7</td><td class="px-3 py-2 text-right">4.004</td></tr>
+                <tr><td class="px-3 py-2 pl-6">└ Wara II</td><td class="px-3 py-2 text-right">310,8</td><td class="px-3 py-2 text-right">13,0</td><td class="px-3 py-2 text-right">2,7</td><td class="px-3 py-2 text-right font-bold">326,5</td><td class="px-3 py-2 text-right">42,7</td><td class="px-3 py-2 text-right">3,7</td><td class="px-3 py-2 text-right">3.614</td></tr>
+                <tr class="bg-blue-50"><td class="px-3 py-2 font-bold">Balangan Coal (BC)</td><td class="px-3 py-2 text-right" colspan="3"></td><td class="px-3 py-2 text-right font-bold text-blue-700">344,4</td><td class="px-3 py-2 text-right" colspan="3"></td></tr>
+                <tr><td class="px-3 py-2 pl-6">└ PT Semesta Centramas</td><td class="px-3 py-2 text-right">59,7</td><td class="px-3 py-2 text-right">14,8</td><td class="px-3 py-2 text-right">6,2</td><td class="px-3 py-2 text-right font-bold">80,7</td><td class="px-3 py-2 text-right">32,9</td><td class="px-3 py-2 text-right">2,7</td><td class="px-3 py-2 text-right">4.352</td></tr>
+                <tr><td class="px-3 py-2 pl-6">└ PT Paramitha Cipta Sarana</td><td class="px-3 py-2 text-right">43,3</td><td class="px-3 py-2 text-right">8,7</td><td class="px-3 py-2 text-right">5,7</td><td class="px-3 py-2 text-right font-bold">57,7</td><td class="px-3 py-2 text-right">32,1</td><td class="px-3 py-2 text-right">3,9</td><td class="px-3 py-2 text-right">4.335</td></tr>
+                <tr><td class="px-3 py-2 pl-6">└ PT Laskar Semesta Alam</td><td class="px-3 py-2 text-right">98,1</td><td class="px-3 py-2 text-right">75,0</td><td class="px-3 py-2 text-right">32,8</td><td class="px-3 py-2 text-right font-bold">205,9</td><td class="px-3 py-2 text-right">30,4</td><td class="px-3 py-2 text-right">2,3</td><td class="px-3 py-2 text-right">4.571</td></tr>
+                <tr class="bg-amber-50"><td class="px-3 py-2 font-bold">PT Mustika Indah Permai (MIP)</td><td class="px-3 py-2 text-right">329,6</td><td class="px-3 py-2 text-right">29,1</td><td class="px-3 py-2 text-right">2,3</td><td class="px-3 py-2 text-right font-bold text-amber-700">361,1</td><td class="px-3 py-2 text-right">34,2</td><td class="px-3 py-2 text-right">6,3</td><td class="px-3 py-2 text-right">4.317</td></tr>
+                <tr class="bg-gray-800 text-white font-bold"><td class="px-3 py-2">TOTAL SUMBER DAYA</td><td class="px-3 py-2 text-right">3.130,0</td><td class="px-3 py-2 text-right">725,0</td><td class="px-3 py-2 text-right">246,8</td><td class="px-3 py-2 text-right text-yellow-400">4.102,0</td><td class="px-3 py-2 text-right">—</td><td class="px-3 py-2 text-right">—</td><td class="px-3 py-2 text-right">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <h3 class="text-base font-bold mb-3">Cadangan Batubara (JORC Juni 2024)</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-800 text-white"><tr><th class="px-3 py-2 text-left">Perusahaan / Proyek</th><th class="px-3 py-2 text-right">Terbukti (Mt)</th><th class="px-3 py-2 text-right">Terkira (Mt)</th><th class="px-3 py-2 text-right font-bold">Total (Mt)</th><th class="px-3 py-2 text-right">TM (%ar)</th><th class="px-3 py-2 text-right">Ash (%adb)</th><th class="px-3 py-2 text-right">CV (kkal/kg ar)</th></tr></thead>
+              <tbody class="divide-y">
+                <tr class="bg-red-50"><td class="px-3 py-2 font-bold">AI — Tutupan Utara</td><td class="px-3 py-2 text-right">258,3</td><td class="px-3 py-2 text-right">74,8</td><td class="px-3 py-2 text-right font-bold">333,1</td><td class="px-3 py-2 text-right">27,0</td><td class="px-3 py-2 text-right">1,9</td><td class="px-3 py-2 text-right">4.820</td></tr>
+                <tr><td class="px-3 py-2 pl-6">AI — Tutupan Selatan</td><td class="px-3 py-2 text-right">59,4</td><td class="px-3 py-2 text-right">2,2</td><td class="px-3 py-2 text-right font-bold">61,6</td><td class="px-3 py-2 text-right">27,4</td><td class="px-3 py-2 text-right">2,1</td><td class="px-3 py-2 text-right">5.000</td></tr>
+                <tr><td class="px-3 py-2 pl-6">AI — Wara I</td><td class="px-3 py-2 text-right">78,9</td><td class="px-3 py-2 text-right">168,4</td><td class="px-3 py-2 text-right font-bold">247,3</td><td class="px-3 py-2 text-right">39,1</td><td class="px-3 py-2 text-right">3,4</td><td class="px-3 py-2 text-right">3.995</td></tr>
+                <tr class="bg-red-100 font-bold"><td class="px-3 py-2">Subtotal AI</td><td class="px-3 py-2 text-right">396,6</td><td class="px-3 py-2 text-right">245,4</td><td class="px-3 py-2 text-right text-red-700">642,0</td><td class="px-3 py-2 text-right">—</td><td class="px-3 py-2 text-right">—</td><td class="px-3 py-2 text-right">—</td></tr>
+                <tr class="bg-blue-50"><td class="px-3 py-2 font-bold">BC — SCM</td><td class="px-3 py-2 text-right">14,2</td><td class="px-3 py-2 text-right">19,9</td><td class="px-3 py-2 text-right font-bold">34,1</td><td class="px-3 py-2 text-right">34,3</td><td class="px-3 py-2 text-right">2,0</td><td class="px-3 py-2 text-right">4.231</td></tr>
+                <tr><td class="px-3 py-2 pl-6">BC — PCS</td><td class="px-3 py-2 text-right">19,0</td><td class="px-3 py-2 text-right">2,0</td><td class="px-3 py-2 text-right font-bold">21,0</td><td class="px-3 py-2 text-right">33,2</td><td class="px-3 py-2 text-right">3,4</td><td class="px-3 py-2 text-right">4.358</td></tr>
+                <tr><td class="px-3 py-2 pl-6">BC — LSA</td><td class="px-3 py-2 text-right">48,1</td><td class="px-3 py-2 text-right">19,8</td><td class="px-3 py-2 text-right font-bold">67,9</td><td class="px-3 py-2 text-right">32,1</td><td class="px-3 py-2 text-right">1,9</td><td class="px-3 py-2 text-right">4.520</td></tr>
+                <tr class="bg-blue-100 font-bold"><td class="px-3 py-2">Subtotal BC</td><td class="px-3 py-2 text-right">81,3</td><td class="px-3 py-2 text-right">41,7</td><td class="px-3 py-2 text-right text-blue-700">123,1</td><td class="px-3 py-2 text-right">—</td><td class="px-3 py-2 text-right">—</td><td class="px-3 py-2 text-right">—</td></tr>
+                <tr class="bg-amber-50"><td class="px-3 py-2 font-bold">MIP — Sumatera Selatan</td><td class="px-3 py-2 text-right">57,6</td><td class="px-3 py-2 text-right">94,7</td><td class="px-3 py-2 text-right font-bold text-amber-700">152,3</td><td class="px-3 py-2 text-right">34,0</td><td class="px-3 py-2 text-right">7,3</td><td class="px-3 py-2 text-right">4.282</td></tr>
+                <tr class="bg-gray-800 text-white font-bold"><td class="px-3 py-2">TOTAL CADANGAN</td><td class="px-3 py-2 text-right">535,5</td><td class="px-3 py-2 text-right">381,8</td><td class="px-3 py-2 text-right text-yellow-400">917,4</td><td class="px-3 py-2 text-right">—</td><td class="px-3 py-2 text-right">—</td><td class="px-3 py-2 text-right">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded text-xs">
+            <p><b>Catatan:</b> Laporan JORC disusun oleh PT Quantus Consultants Indonesia (QCI). Competent Person: Sigit Hardjanto (AusIMM 991885) — Sumber Daya, Jimmy Gunarso (AusIMM 316337) — Cadangan.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLEET & LOGISTIK -->
+      <div id="fleet-module" class="module-content hidden fade-in">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Kapal Tunda</p><p class="text-2xl font-bold text-red-700">85</p><p class="text-[10px] text-gray-500">Tugboat units</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Tongkang</p><p class="text-2xl font-bold text-blue-700">71</p><p class="text-[10px] text-gray-500">Barges</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Floating Crane</p><p class="text-2xl font-bold text-amber-700">4</p><p class="text-[10px] text-gray-500">FC units</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Kapasitas Angkut</p><p class="text-2xl font-bold text-green-700">771K</p><p class="text-[10px] text-gray-500">Ton/hari</p></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-base font-bold mb-3"><i class="fas fa-ship text-red-600 mr-2"></i>Armada Adaro Logistics (per Nov 2024)</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div class="p-3 bg-blue-50 rounded-lg"><p class="text-xs text-gray-600">Kapal Motor</p><p class="text-xl font-bold text-blue-700">3</p></div>
+            <div class="p-3 bg-amber-50 rounded-lg"><p class="text-xs text-gray-600">Landing Craft Tank</p><p class="text-xl font-bold text-amber-700">1</p></div>
+            <div class="p-3 bg-red-50 rounded-lg"><p class="text-xs text-gray-600">Kapal Tunda</p><p class="text-xl font-bold text-red-700">85</p></div>
+            <div class="p-3 bg-green-50 rounded-lg"><p class="text-xs text-gray-600">Kapal Tongkang</p><p class="text-xl font-bold text-green-700">71</p></div>
+            <div class="p-3 bg-purple-50 rounded-lg"><p class="text-xs text-gray-600">SPB</p><p class="text-xl font-bold text-purple-700">3</p></div>
+            <div class="p-3 bg-cyan-50 rounded-lg"><p class="text-xs text-gray-600">Floating Crane</p><p class="text-xl font-bold text-cyan-700">4</p></div>
+            <div class="p-3 bg-pink-50 rounded-lg"><p class="text-xs text-gray-600">Floating Transfer Unit</p><p class="text-xl font-bold text-pink-700">3</p></div>
+            <div class="p-3 bg-indigo-50 rounded-lg"><p class="text-xs text-gray-600">Floating Office</p><p class="text-xl font-bold text-indigo-700">1</p></div>
+            <div class="p-3 bg-orange-50 rounded-lg"><p class="text-xs text-gray-600">Fuel Oil Trans. Barge</p><p class="text-xl font-bold text-orange-700">3</p></div>
+            <div class="p-3 bg-teal-50 rounded-lg"><p class="text-xs text-gray-600">Self-Propelled Oil Barge</p><p class="text-xl font-bold text-teal-700">3</p></div>
+            <div class="p-3 bg-gray-100 rounded-lg"><p class="text-xs text-gray-600">Cutter Suction Dredger</p><p class="text-xl font-bold text-gray-700">1</p></div>
+            <div class="p-3 bg-lime-50 rounded-lg"><p class="text-xs text-gray-600">Total Armada</p><p class="text-xl font-bold text-lime-700">178+</p></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Alat Berat Tambang (AI)</h3>
+            <div class="overflow-x-auto text-sm">
+              <table class="w-full">
+                <thead class="bg-gray-100"><tr><th class="px-2 py-2 text-left">Tipe</th><th class="px-2 py-2 text-left">Model</th><th class="px-2 py-2 text-right">Kapasitas</th></tr></thead>
+                <tbody class="divide-y">
+                  <tr><td class="px-2 py-2">Excavator</td><td class="px-2 py-2">Komatsu PC800 / PC1250</td><td class="px-2 py-2 text-right">5,4 - 8,9 m³</td></tr>
+                  <tr><td class="px-2 py-2">Excavator</td><td class="px-2 py-2">CAT 6040</td><td class="px-2 py-2 text-right">22 m³</td></tr>
+                  <tr><td class="px-2 py-2">Dump Truck</td><td class="px-2 py-2">CAT 777E</td><td class="px-2 py-2 text-right">100 ton</td></tr>
+                  <tr><td class="px-2 py-2">Dump Truck</td><td class="px-2 py-2">Belaz 7555</td><td class="px-2 py-2 text-right">55 ton</td></tr>
+                  <tr><td class="px-2 py-2">Double Trailer</td><td class="px-2 py-2">Komatsu HD785-7</td><td class="px-2 py-2 text-right">135 ton</td></tr>
+                  <tr><td class="px-2 py-2">Wheel Loader</td><td class="px-2 py-2">Komatsu WA600</td><td class="px-2 py-2 text-right">9,5 m³</td></tr>
+                  <tr><td class="px-2 py-2">Motor Grader</td><td class="px-2 py-2">CAT 140H</td><td class="px-2 py-2 text-right">14 ft blade</td></tr>
+                  <tr><td class="px-2 py-2">Dozer</td><td class="px-2 py-2">Komatsu D375A / D39PX</td><td class="px-2 py-2 text-right">45 ton</td></tr>
+                  <tr><td class="px-2 py-2">Water Truck</td><td class="px-2 py-2">CAT 777W</td><td class="px-2 py-2 text-right">30.000 L</td></tr>
+                  <tr><td class="px-2 py-2">Crushing Plant</td><td class="px-2 py-2">Kelanis CPBL</td><td class="px-2 py-2 text-right">200.000 t/hari</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Terminal & Pelabuhan</h3>
+            <div class="space-y-2 text-sm">
+              <div class="p-3 bg-red-50 rounded-lg border-l-4 border-red-600">
+                <p class="font-bold">Kelanis CPBL Terminal (Kalteng)</p>
+                <p class="text-xs text-gray-600">Stockpile 450.000 ton · Jetty · Barge Loading</p>
+              </div>
+              <div class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-600">
+                <p class="font-bold">Taboneo Anchorage (Kalsel)</p>
+                <p class="text-xs text-gray-600">Transshipment · Floating Crane · Mother Vessel</p>
+              </div>
+              <div class="p-3 bg-amber-50 rounded-lg border-l-4 border-amber-600">
+                <p class="font-bold">IBT Pulau Laut Terminal</p>
+                <p class="text-xs text-gray-600">8 Stockpile · 12 jt ton/th · BBM 80.000 KL</p>
+              </div>
+              <div class="p-3 bg-green-50 rounded-lg border-l-4 border-green-600">
+                <p class="font-bold">Muara Tuhup Terminal</p>
+                <p class="text-xs text-gray-600">Barge-to-Barge Transfer · AMI Coal</p>
+              </div>
+              <div class="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-600">
+                <p class="font-bold">MIP Ports (Sumsel)</p>
+                <p class="text-xs text-gray-600">SDJ · RMK · WBS · FMS · 4 Pelabuhan</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SDM -->
+      <div id="sdm-module" class="module-content hidden fade-in">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Total Karyawan</p><p class="text-2xl font-bold text-red-700">3.073</p><p class="text-[10px] text-gray-500">per 30 Juni 2024</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Karyawan Tetap</p><p class="text-2xl font-bold text-green-700">2.696</p><p class="text-[10px] text-gray-500">87,7%</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">PKWT</p><p class="text-2xl font-bold text-amber-700">377</p><p class="text-[10px] text-gray-500">12,3%</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Tenaga Kerja Asing</p><p class="text-2xl font-bold text-blue-700">44</p><p class="text-[10px] text-gray-500">Expert</p></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Komposisi per Jabatan (Tetap)</h3>
+            <div class="space-y-2 text-sm">
+              <div><div class="flex justify-between mb-1"><span>Division Head</span><b>32</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-red-600 h-2 rounded-full" style="width: 4%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>Department Head</span><b>120</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-red-600 h-2 rounded-full" style="width: 15%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>Section Head</span><b>239</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-amber-600 h-2 rounded-full" style="width: 30%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>Supervisor</span><b>741</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-600 h-2 rounded-full" style="width: 93%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>Staf</span><b>665</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-green-600 h-2 rounded-full" style="width: 83%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>Non Staff</span><b>898</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-purple-600 h-2 rounded-full" style="width: 100%"></div></div></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Distribusi per Lokasi</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between p-2 bg-red-50 rounded"><span>Kalimantan Selatan</span><b>1.616 (59,9%)</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Kalimantan Tengah</span><b>489 (18,1%)</b></div>
+              <div class="flex justify-between p-2 bg-amber-50 rounded"><span>DKI Jakarta</span><b>448 (16,6%)</b></div>
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Sumatera Selatan</span><b>79 (2,9%)</b></div>
+              <div class="flex justify-between p-2 bg-purple-50 rounded"><span>Jawa Timur</span><b>14</b></div>
+              <div class="flex justify-between p-2 bg-pink-50 rounded"><span>Singapura</span><b>17</b></div>
+              <div class="flex justify-between p-2 bg-cyan-50 rounded"><span>Kalimantan Utara</span><b>1</b></div>
+              <div class="flex justify-between p-2 bg-gray-100 rounded"><span>Wilayah lain</span><b>32</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <h3 class="text-base font-bold mb-3">Komposisi per Fungsi</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+            <div class="p-2 bg-red-50 rounded"><p class="text-gray-600">Operation/Production</p><p class="text-lg font-bold text-red-700">854</p></div>
+            <div class="p-2 bg-blue-50 rounded"><p class="text-gray-600">Plant & Maintenance</p><p class="text-lg font-bold text-blue-700">351</p></div>
+            <div class="p-2 bg-amber-50 rounded"><p class="text-gray-600">Engineering/Technical</p><p class="text-lg font-bold text-amber-700">428</p></div>
+            <div class="p-2 bg-green-50 rounded"><p class="text-gray-600">HSE & Risk Mgmt</p><p class="text-lg font-bold text-green-700">205</p></div>
+            <div class="p-2 bg-purple-50 rounded"><p class="text-gray-600">Finance & Accounting</p><p class="text-lg font-bold text-purple-700">169</p></div>
+            <div class="p-2 bg-pink-50 rounded"><p class="text-gray-600">External Relation</p><p class="text-lg font-bold text-pink-700">98</p></div>
+            <div class="p-2 bg-cyan-50 rounded"><p class="text-gray-600">Logistics</p><p class="text-lg font-bold text-cyan-700">73</p></div>
+            <div class="p-2 bg-indigo-50 rounded"><p class="text-gray-600">Human Resources</p><p class="text-lg font-bold text-indigo-700">78</p></div>
+            <div class="p-2 bg-teal-50 rounded"><p class="text-gray-600">Procurement</p><p class="text-lg font-bold text-teal-700">98</p></div>
+            <div class="p-2 bg-orange-50 rounded"><p class="text-gray-600">Marketing</p><p class="text-lg font-bold text-orange-700">65</p></div>
+            <div class="p-2 bg-lime-50 rounded"><p class="text-gray-600">General Affairs</p><p class="text-lg font-bold text-lime-700">122</p></div>
+            <div class="p-2 bg-rose-50 rounded"><p class="text-gray-600">IT</p><p class="text-lg font-bold text-rose-700">36</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- K3 -->
+      <div id="k3-module" class="module-content hidden fade-in">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div class="bg-gradient-to-br from-green-500 to-green-700 text-white rounded-xl shadow p-4"><p class="text-xs opacity-90">Zero Accident Mindset</p><p class="text-lg font-bold mt-1">A-ZAM</p><p class="text-[10px] opacity-90">Program K3 Adaro</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Sertifikasi ISO</p><p class="text-xl font-bold text-green-700">ISO 45001:2018</p><p class="text-[10px] text-gray-500">SMK3 Adaro</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Forbes 2023</p><p class="text-xl font-bold text-amber-700">Best Employers</p><p class="text-[10px] text-gray-500">World's Best</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">PROPER</p><p class="text-xl font-bold text-emerald-700">EMAS</p><p class="text-[10px] text-gray-500">AI · 5x berturut</p></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-base font-bold mb-3">5 Pilar K3LH Adaro (A-ZAM)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div class="p-3 bg-red-50 rounded-lg border-t-4 border-red-600 text-center"><i class="fas fa-brain text-3xl text-red-600 mb-2"></i><p class="font-bold text-sm">Mindset</p><p class="text-[10px] text-gray-600">Pola pikir selamat</p></div>
+            <div class="p-3 bg-amber-50 rounded-lg border-t-4 border-amber-600 text-center"><i class="fas fa-search text-3xl text-amber-600 mb-2"></i><p class="font-bold text-sm">Hazard ID</p><p class="text-[10px] text-gray-600">Identifikasi bahaya</p></div>
+            <div class="p-3 bg-blue-50 rounded-lg border-t-4 border-blue-600 text-center"><i class="fas fa-chart-bar text-3xl text-blue-600 mb-2"></i><p class="font-bold text-sm">Risk Assessment</p><p class="text-[10px] text-gray-600">Penilaian risiko</p></div>
+            <div class="p-3 bg-green-50 rounded-lg border-t-4 border-green-600 text-center"><i class="fas fa-shield-alt text-3xl text-green-600 mb-2"></i><p class="font-bold text-sm">Control</p><p class="text-[10px] text-gray-600">Pengendalian</p></div>
+            <div class="p-3 bg-purple-50 rounded-lg border-t-4 border-purple-600 text-center"><i class="fas fa-clipboard-check text-3xl text-purple-600 mb-2"></i><p class="font-bold text-sm">Monitoring</p><p class="text-[10px] text-gray-600">Pemantauan</p></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Pengawas Operasional Bersertifikat</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between p-2 bg-red-50 rounded"><span>Pengawas Operasional Utama</span><b>17 orang</b></div>
+              <div class="flex justify-between p-2 bg-amber-50 rounded"><span>Pengawas Operasional Madya</span><b>38 orang</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Pengawas Operasional Pertama</span><b>11 orang</b></div>
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Juru Ledak Kelas 1</span><b>1 orang</b></div>
+              <div class="flex justify-between p-2 bg-purple-50 rounded"><span>Sertifikasi AusIMM / IAGI / PERHAPI</span><b>30+ orang</b></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Program K3 Unggulan</h3>
+            <div class="space-y-2 text-xs">
+              <div class="p-2 bg-gray-50 rounded"><i class="fas fa-check text-green-600 mr-2"></i><b>Emergency Response Team</b> — Siaga 24/7 di setiap site</div>
+              <div class="p-2 bg-gray-50 rounded"><i class="fas fa-check text-green-600 mr-2"></i><b>Slope Stability Radar & Robotic Total Station</b> — Monitoring lereng real-time</div>
+              <div class="p-2 bg-gray-50 rounded"><i class="fas fa-check text-green-600 mr-2"></i><b>Brigade Pengendalian Kebakaran Hutan & Lahan</b></div>
+              <div class="p-2 bg-gray-50 rounded"><i class="fas fa-check text-green-600 mr-2"></i><b>Crisis Management Plan & Drill Rutin</b> — Koordinasi KSOP & BUP</div>
+              <div class="p-2 bg-gray-50 rounded"><i class="fas fa-check text-green-600 mr-2"></i><b>Zero Coal Contamination (ZCC)</b> — Program kualitas produk</div>
+              <div class="p-2 bg-gray-50 rounded"><i class="fas fa-check text-green-600 mr-2"></i><b>Asuransi All Risk</b> — Property, Marine Hull, CGL, CAR</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINGKUNGAN -->
+      <div id="lingkungan-module" class="module-content hidden fade-in">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div class="bg-gradient-to-br from-green-500 to-emerald-700 text-white rounded-xl shadow p-4"><p class="text-xs opacity-90">PROPER KLHK</p><p class="text-2xl font-bold mt-1">EMAS</p><p class="text-[10px] opacity-90">AI · 5x berturut-turut</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Konsesi Kehutanan</p><p class="text-xl font-bold text-green-700">45.320 Ha</p><p class="text-[10px] text-gray-500">ASL + HAL + lainnya</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Potensi Karbon</p><p class="text-xl font-bold text-emerald-700">873.980</p><p class="text-[10px] text-gray-500">TCO2e/tahun</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4"><p class="text-xs text-gray-500">Revegetasi RLI</p><p class="text-xl font-bold text-teal-700">1.430 Ha</p><p class="text-[10px] text-gray-500">Lahan pasca tambang</p></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-base font-bold mb-3">Kebijakan Lingkungan Grup AADI</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div class="p-3 bg-blue-50 rounded-lg"><i class="fas fa-tint text-blue-600 mr-2"></i><b>Pengelolaan Air & Air Limbah</b><p class="text-xs text-gray-600 mt-1">Drainase → Pompa dewatering → Kolam pengendapan → Baku mutu terpenuhi 100%</p></div>
+            <div class="p-3 bg-red-50 rounded-lg"><i class="fas fa-exclamation-triangle text-red-600 mr-2"></i><b>Bahan Berbahaya & Beracun (B3)</b><p class="text-xs text-gray-600 mt-1">Pedoman teknis PP 74/2001 · SDS wajib · Prosedur ketat bahan peledak ANFO</p></div>
+            <div class="p-3 bg-amber-50 rounded-lg"><i class="fas fa-trash text-amber-600 mr-2"></i><b>Limbah B3</b><p class="text-xs text-gray-600 mt-1">100% terkelola · Pemanfaatan oli bekas untuk bahan peledak · Minimasi timbulan</p></div>
+            <div class="p-3 bg-green-50 rounded-lg"><i class="fas fa-recycle text-green-600 mr-2"></i><b>Sampah Domestik 3R</b><p class="text-xs text-gray-600 mt-1">Reduce · Reuse · Recycle · Bank Sampah binaan · Black Soldier Fly</p></div>
+            <div class="p-3 bg-gray-50 rounded-lg"><i class="fas fa-wind text-gray-600 mr-2"></i><b>Kualitas Udara & Emisi</b><p class="text-xs text-gray-600 mt-1">CEMS real-time · SISPEK KLHK · Low NOx Burner · Limestone Injection</p></div>
+            <div class="p-3 bg-emerald-50 rounded-lg"><i class="fas fa-paw text-emerald-600 mr-2"></i><b>Keanekaragaman Hayati</b><p class="text-xs text-gray-600 mt-1">HCV area · Bekantan Pulau Bakut (populasi +82%) · Selective clearing</p></div>
+            <div class="p-3 bg-yellow-50 rounded-lg"><i class="fas fa-bolt text-yellow-600 mr-2"></i><b>Energi & Konservasi</b><p class="text-xs text-gray-600 mt-1">ISO 50001:2018 · SNI ISO 50006 · Program ECO · Solar PV AI</p></div>
+            <div class="p-3 bg-teal-50 rounded-lg"><i class="fas fa-smog text-teal-600 mr-2"></i><b>Emisi GRK & NZE Roadmap</b><p class="text-xs text-gray-600 mt-1">GHG Protocol · Scope 1 & 2 · Nature Based Solution · Target Net Zero 2060</p></div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <h3 class="text-base font-bold mb-3">Dokumen Lingkungan (AMDAL/UKL-UPL)</h3>
+          <div class="overflow-x-auto text-xs">
+            <table class="w-full">
+              <thead class="bg-gray-800 text-white"><tr><th class="px-2 py-2 text-left">Entitas</th><th class="px-2 py-2 text-left">Dokumen</th><th class="px-2 py-2 text-left">Penerbit</th></tr></thead>
+              <tbody class="divide-y">
+                <tr><td class="px-2 py-2 font-bold">AI</td><td class="px-2 py-2">SK KLHK No. SK.1347/MENLHK/SETJEN/PLA.4/12/2022</td><td class="px-2 py-2">Kapasitas 72 jt ton/th · Tabalong & Balangan</td></tr>
+                <tr><td class="px-2 py-2 font-bold">SCM</td><td class="px-2 py-2">Kepmen LHK No. 1028 Tahun 2024</td><td class="px-2 py-2">6 jt ton/th · 2.500 Ha</td></tr>
+                <tr><td class="px-2 py-2 font-bold">LSA</td><td class="px-2 py-2">Kepmen LHK No. 814 Tahun 2024</td><td class="px-2 py-2">3→6 jt ton/th · 2.500 Ha</td></tr>
+                <tr><td class="px-2 py-2 font-bold">PCS</td><td class="px-2 py-2">Kepmen LHK No. 411 Tahun 2024</td><td class="px-2 py-2">Balangan · Kalsel</td></tr>
+                <tr><td class="px-2 py-2 font-bold">MIP</td><td class="px-2 py-2">SK DPMPTSP Lahat No. 503.4/003/2018</td><td class="px-2 py-2">Jalan angkut & jembatan</td></tr>
+                <tr><td class="px-2 py-2 font-bold">PC</td><td class="px-2 py-2">SK KLHK No. SK.1175/MENLHK/SETJEN/PLA.4/11/2023</td><td class="px-2 py-2">3,5 Mt/th · Mahakam Ulu</td></tr>
+                <tr><td class="px-2 py-2 font-bold">IBT</td><td class="px-2 py-2">SK Gubernur Kalsel No. 188.44/046/2016</td><td class="px-2 py-2">Pelabuhan Mekar Putih</td></tr>
+                <tr><td class="px-2 py-2 font-bold">KPI</td><td class="px-2 py-2">SK Dirut KIPI No. 352/2024</td><td class="px-2 py-2">PLTU 2x150 + 2x380 MW</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- KEUANGAN -->
+      <div id="keuangan-module" class="module-content hidden fade-in">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div class="bg-gradient-to-br from-green-600 to-green-800 text-white rounded-xl shadow p-4"><p class="text-xs opacity-90">Revenue 6M 2024</p><p class="text-xl font-bold mt-1">US$ 2,66 M</p><p class="text-[10px] opacity-90">Rp 43,5 Triliun</p></div>
+          <div class="bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-xl shadow p-4"><p class="text-xs opacity-90">Laba Bersih 6M</p><p class="text-xl font-bold mt-1">US$ 922,8 jt</p><p class="text-[10px] opacity-90">Margin 34,7%</p></div>
+          <div class="bg-gradient-to-br from-purple-600 to-purple-800 text-white rounded-xl shadow p-4"><p class="text-xs opacity-90">Total Aset</p><p class="text-xl font-bold mt-1">US$ 5,43 M</p><p class="text-[10px] opacity-90">per 30 Juni 2024</p></div>
+          <div class="bg-gradient-to-br from-amber-600 to-amber-800 text-white rounded-xl shadow p-4"><p class="text-xs opacity-90">Total Ekuitas</p><p class="text-xl font-bold mt-1">US$ 2,72 M</p><p class="text-[10px] opacity-90">DER 0,5x</p></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <div class="flex flex-wrap gap-2 mb-4 border-b pb-3">
+            <button class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium" data-tab="pnl">Laba Rugi</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-gray-100" data-tab="neraca">Neraca</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-gray-100" data-tab="cashflow">Arus Kas</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-gray-100" data-tab="rasio">Rasio Keuangan</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-gray-100" data-tab="segmen">Segmen</button>
+          </div>
+
+          <!-- P&L -->
+          <div id="tab-pnl" class="tab-content">
+            <h3 class="text-base font-bold mb-3">Laporan Laba Rugi Konsolidasian (US$ Juta)</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-800 text-white"><tr><th class="px-3 py-2 text-left">Keterangan</th><th class="px-3 py-2 text-right">6M 2024</th><th class="px-3 py-2 text-right">6M 2023</th><th class="px-3 py-2 text-right">FY 2023</th><th class="px-3 py-2 text-right">FY 2022</th><th class="px-3 py-2 text-right">FY 2021</th></tr></thead>
+                <tbody class="divide-y">
+                  <tr class="bg-green-50 font-bold"><td class="px-3 py-2">Pendapatan Usaha</td><td class="px-3 py-2 text-right">2.656,5</td><td class="px-3 py-2 text-right">3.255,2</td><td class="px-3 py-2 text-right">5.915,4</td><td class="px-3 py-2 text-right">7.725,9</td><td class="px-3 py-2 text-right">3.862,1</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Penjualan Batubara</td><td class="px-3 py-2 text-right">2.553,7</td><td class="px-3 py-2 text-right">3.173,1</td><td class="px-3 py-2 text-right">5.732,1</td><td class="px-3 py-2 text-right">7.596,5</td><td class="px-3 py-2 text-right">3.776,3</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Logistik</td><td class="px-3 py-2 text-right">89,8</td><td class="px-3 py-2 text-right">73,2</td><td class="px-3 py-2 text-right">159,6</td><td class="px-3 py-2 text-right">114,2</td><td class="px-3 py-2 text-right">49,7</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Lain-lain</td><td class="px-3 py-2 text-right">13,0</td><td class="px-3 py-2 text-right">8,9</td><td class="px-3 py-2 text-right">23,8</td><td class="px-3 py-2 text-right">15,3</td><td class="px-3 py-2 text-right">36,2</td></tr>
+                  <tr class="bg-red-50"><td class="px-3 py-2">Beban Pokok Pendapatan</td><td class="px-3 py-2 text-right">(1.879,3)</td><td class="px-3 py-2 text-right">(2.134,1)</td><td class="px-3 py-2 text-right">(4.186,5)</td><td class="px-3 py-2 text-right">(3.776,9)</td><td class="px-3 py-2 text-right">(2.369,3)</td></tr>
+                  <tr class="bg-blue-50 font-bold"><td class="px-3 py-2">LABA BRUTO</td><td class="px-3 py-2 text-right text-blue-700">777,2</td><td class="px-3 py-2 text-right">1.121,1</td><td class="px-3 py-2 text-right">1.728,9</td><td class="px-3 py-2 text-right">3.949,1</td><td class="px-3 py-2 text-right">1.492,8</td></tr>
+                  <tr><td class="px-3 py-2">Beban Usaha</td><td class="px-3 py-2 text-right">(134,7)</td><td class="px-3 py-2 text-right">(179,4)</td><td class="px-3 py-2 text-right">(311,8)</td><td class="px-3 py-2 text-right">(290,4)</td><td class="px-3 py-2 text-right">(170,9)</td></tr>
+                  <tr><td class="px-3 py-2">Pendapatan/(Beban) Lain</td><td class="px-3 py-2 text-right">301,8</td><td class="px-3 py-2 text-right">(17,3)</td><td class="px-3 py-2 text-right">(25,7)</td><td class="px-3 py-2 text-right">(32,8)</td><td class="px-3 py-2 text-right">(52,2)</td></tr>
+                  <tr class="bg-amber-50 font-bold"><td class="px-3 py-2">LABA SEBELUM PAJAK</td><td class="px-3 py-2 text-right text-amber-700">1.035,2</td><td class="px-3 py-2 text-right">993,6</td><td class="px-3 py-2 text-right">1.560,0</td><td class="px-3 py-2 text-right">3.848,1</td><td class="px-3 py-2 text-right">1.225,3</td></tr>
+                  <tr><td class="px-3 py-2">Beban Pajak</td><td class="px-3 py-2 text-right">(112,4)</td><td class="px-3 py-2 text-right">(188,8)</td><td class="px-3 py-2 text-right">(274,1)</td><td class="px-3 py-2 text-right">(1.498,5)</td><td class="px-3 py-2 text-right">(396,0)</td></tr>
+                  <tr class="bg-green-600 text-white font-bold"><td class="px-3 py-2">LABA BERSIH</td><td class="px-3 py-2 text-right">922,8</td><td class="px-3 py-2 text-right">804,8</td><td class="px-3 py-2 text-right">1.285,9</td><td class="px-3 py-2 text-right">2.349,6</td><td class="px-3 py-2 text-right">829,3</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- NERACA -->
+          <div id="tab-neraca" class="tab-content hidden">
+            <h3 class="text-base font-bold mb-3">Laporan Posisi Keuangan (US$ Juta)</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-800 text-white"><tr><th class="px-3 py-2 text-left">Keterangan</th><th class="px-3 py-2 text-right">30 Jun 2024</th><th class="px-3 py-2 text-right">31 Des 2023</th><th class="px-3 py-2 text-right">31 Des 2022</th><th class="px-3 py-2 text-right">31 Des 2021</th></tr></thead>
+                <tbody class="divide-y">
+                  <tr><td class="px-3 py-2">Aset Lancar</td><td class="px-3 py-2 text-right">1.876,0</td><td class="px-3 py-2 text-right">3.270,2</td><td class="px-3 py-2 text-right">4.326,8</td><td class="px-3 py-2 text-right">2.429,2</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Kas & Setara Kas</td><td class="px-3 py-2 text-right font-bold">1.080,0</td><td class="px-3 py-2 text-right">2.534,5</td><td class="px-3 py-2 text-right">3.380,3</td><td class="px-3 py-2 text-right">1.503,1</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Piutang Usaha</td><td class="px-3 py-2 text-right">510,3</td><td class="px-3 py-2 text-right">416,3</td><td class="px-3 py-2 text-right">609,0</td><td class="px-3 py-2 text-right">414,0</td></tr>
+                  <tr><td class="px-3 py-2">Aset Tidak Lancar</td><td class="px-3 py-2 text-right">3.557,0</td><td class="px-3 py-2 text-right">3.792,8</td><td class="px-3 py-2 text-right">3.639,3</td><td class="px-3 py-2 text-right">3.761,6</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Properti Pertambangan</td><td class="px-3 py-2 text-right">421,4</td><td class="px-3 py-2 text-right">438,2</td><td class="px-3 py-2 text-right">467,8</td><td class="px-3 py-2 text-right">643,7</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Aset Tetap</td><td class="px-3 py-2 text-right">686,3</td><td class="px-3 py-2 text-right">532,5</td><td class="px-3 py-2 text-right">417,7</td><td class="px-3 py-2 text-right">474,8</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Goodwill</td><td class="px-3 py-2 text-right">737,3</td><td class="px-3 py-2 text-right">737,3</td><td class="px-3 py-2 text-right">737,3</td><td class="px-3 py-2 text-right">737,3</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Investasi Asosiasi</td><td class="px-3 py-2 text-right">899,0</td><td class="px-3 py-2 text-right">1.039,1</td><td class="px-3 py-2 text-right">911,1</td><td class="px-3 py-2 text-right">699,5</td></tr>
+                  <tr class="bg-blue-50 font-bold"><td class="px-3 py-2">TOTAL ASET</td><td class="px-3 py-2 text-right text-blue-700">5.433,0</td><td class="px-3 py-2 text-right">7.062,9</td><td class="px-3 py-2 text-right">7.966,1</td><td class="px-3 py-2 text-right">6.190,8</td></tr>
+                  <tr class="bg-red-50"><td class="px-3 py-2">Liabilitas Jk Pendek</td><td class="px-3 py-2 text-right">1.519,9</td><td class="px-3 py-2 text-right">1.798,3</td><td class="px-3 py-2 text-right">2.117,6</td><td class="px-3 py-2 text-right">1.095,9</td></tr>
+                  <tr class="bg-red-50"><td class="px-3 py-2">Liabilitas Jk Panjang</td><td class="px-3 py-2 text-right">1.192,2</td><td class="px-3 py-2 text-right">474,1</td><td class="px-3 py-2 text-right">1.340,3</td><td class="px-3 py-2 text-right">1.472,9</td></tr>
+                  <tr class="bg-red-600 text-white font-bold"><td class="px-3 py-2">TOTAL LIABILITAS</td><td class="px-3 py-2 text-right">2.712,1</td><td class="px-3 py-2 text-right">2.272,5</td><td class="px-3 py-2 text-right">3.457,9</td><td class="px-3 py-2 text-right">2.568,8</td></tr>
+                  <tr class="bg-green-600 text-white font-bold"><td class="px-3 py-2">TOTAL EKUITAS</td><td class="px-3 py-2 text-right">2.721,0</td><td class="px-3 py-2 text-right">4.790,5</td><td class="px-3 py-2 text-right">4.508,2</td><td class="px-3 py-2 text-right">3.622,1</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CASHFLOW -->
+          <div id="tab-cashflow" class="tab-content hidden">
+            <h3 class="text-base font-bold mb-3">Laporan Arus Kas Konsolidasian (US$ Juta)</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-800 text-white"><tr><th class="px-3 py-2 text-left">Keterangan</th><th class="px-3 py-2 text-right">6M 2024</th><th class="px-3 py-2 text-right">FY 2023</th><th class="px-3 py-2 text-right">FY 2022</th><th class="px-3 py-2 text-right">FY 2021</th></tr></thead>
+                <tbody class="divide-y">
+                  <tr class="bg-green-50"><td class="px-3 py-2">Arus Kas dari Operasi</td><td class="px-3 py-2 text-right font-bold text-green-700">633,3</td><td class="px-3 py-2 text-right">595,2</td><td class="px-3 py-2 text-right">3.135,3</td><td class="px-3 py-2 text-right">1.065,4</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Penerimaan dari Pelanggan</td><td class="px-3 py-2 text-right">2.560,9</td><td class="px-3 py-2 text-right">6.095,3</td><td class="px-3 py-2 text-right">7.521,5</td><td class="px-3 py-2 text-right">3.647,6</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Pembayaran ke Pemasok</td><td class="px-3 py-2 text-right">(1.360,7)</td><td class="px-3 py-2 text-right">(2.928,0)</td><td class="px-3 py-2 text-right">(2.532,7)</td><td class="px-3 py-2 text-right">(1.713,9)</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Pembayaran Royalti</td><td class="px-3 py-2 text-right">(489,2)</td><td class="px-3 py-2 text-right">(1.357,3)</td><td class="px-3 py-2 text-right">(1.043,6)</td><td class="px-3 py-2 text-right">(499,4)</td></tr>
+                  <tr class="bg-blue-50"><td class="px-3 py-2">Arus Kas Investasi</td><td class="px-3 py-2 text-right font-bold text-blue-700">346,6</td><td class="px-3 py-2 text-right">(79,0)</td><td class="px-3 py-2 text-right">251,1</td><td class="px-3 py-2 text-right">122,5</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Capex Aset Tetap</td><td class="px-3 py-2 text-right">(152,0)</td><td class="px-3 py-2 text-right">(248,6)</td><td class="px-3 py-2 text-right">(99,3)</td><td class="px-3 py-2 text-right">(49,6)</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Divestasi Asosiasi</td><td class="px-3 py-2 text-right">510,3</td><td class="px-3 py-2 text-right">3,0</td><td class="px-3 py-2 text-right">—</td><td class="px-3 py-2 text-right">380,0</td></tr>
+                  <tr class="bg-red-50"><td class="px-3 py-2">Arus Kas Pendanaan</td><td class="px-3 py-2 text-right font-bold text-red-700">(2.413,8)</td><td class="px-3 py-2 text-right">(1.365,9)</td><td class="px-3 py-2 text-right">(1.486,6)</td><td class="px-3 py-2 text-right">(379,7)</td></tr>
+                  <tr><td class="px-3 py-2 pl-6">└ Dividen Pemegang Saham</td><td class="px-3 py-2 text-right">(2.971,7)</td><td class="px-3 py-2 text-right">(1.013,8)</td><td class="px-3 py-2 text-right">(1.511,1)</td><td class="px-3 py-2 text-right">(580,7)</td></tr>
+                  <tr class="bg-gray-800 text-white font-bold"><td class="px-3 py-2">Kas Akhir Periode</td><td class="px-3 py-2 text-right">1.080,0</td><td class="px-3 py-2 text-right">2.534,5</td><td class="px-3 py-2 text-right">3.380,3</td><td class="px-3 py-2 text-right">1.503,1</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- RASIO -->
+          <div id="tab-rasio" class="tab-content hidden">
+            <h3 class="text-base font-bold mb-3">Rasio Keuangan Utama</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div class="p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-300"><p class="text-xs text-gray-600">ROE (6M 2024)</p><p class="text-2xl font-bold text-green-700">68%</p><p class="text-[10px]">Return on Equity</p></div>
+              <div class="p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-300"><p class="text-xs text-gray-600">ROA (6M 2024)</p><p class="text-2xl font-bold text-blue-700">34%</p><p class="text-[10px]">Return on Assets</p></div>
+              <div class="p-3 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg border border-amber-300"><p class="text-xs text-gray-600">Current Ratio</p><p class="text-2xl font-bold text-amber-700">1,2x</p><p class="text-[10px]">Likuiditas</p></div>
+              <div class="p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-300"><p class="text-xs text-gray-600">DER</p><p class="text-2xl font-bold text-purple-700">0,5x</p><p class="text-[10px]">Debt to Equity</p></div>
+              <div class="p-3 bg-gradient-to-br from-red-50 to-red-100 rounded-lg border border-red-300"><p class="text-xs text-gray-600">Net Profit Margin</p><p class="text-2xl font-bold text-red-700">35%</p><p class="text-[10px]">6M 2024</p></div>
+              <div class="p-3 bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg border border-teal-300"><p class="text-xs text-gray-600">ICR</p><p class="text-2xl font-bold text-teal-700">38,7x</p><p class="text-[10px]">Interest Coverage</p></div>
+            </div>
+          </div>
+
+          <!-- SEGMEN -->
+          <div id="tab-segmen" class="tab-content hidden">
+            <h3 class="text-base font-bold mb-3">Kontribusi Segmen Usaha (6M 2024)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div class="p-4 bg-gradient-to-br from-red-500 to-red-700 text-white rounded-lg">
+                <p class="text-xs opacity-90">Pertambangan & Perdagangan Batubara</p>
+                <p class="text-3xl font-bold mt-2">96,1%</p>
+                <p class="text-xs opacity-90 mt-1">Revenue: US$ 2.553,7 jt</p>
+                <p class="text-xs opacity-90">Laba: US$ 419,5 jt (45,5%)</p>
+              </div>
+              <div class="p-4 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-lg">
+                <p class="text-xs opacity-90">Logistik (AL)</p>
+                <p class="text-3xl font-bold mt-2">10,6%</p>
+                <p class="text-xs opacity-90 mt-1">Revenue: US$ 281,9 jt</p>
+                <p class="text-xs opacity-90">Laba: US$ 138,6 jt (14,4%)</p>
+              </div>
+              <div class="p-4 bg-gradient-to-br from-green-500 to-green-700 text-white rounded-lg">
+                <p class="text-xs opacity-90">Lain-lain (Water, Land, Power)</p>
+                <p class="text-3xl font-bold mt-2">1,2%</p>
+                <p class="text-xs opacity-90 mt-1">Revenue: US$ 32,1 jt</p>
+                <p class="text-xs opacity-90">Laba: US$ 150,2 jt (16,3%)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PETA KONSESI -->
+      <div id="peta-module" class="module-content hidden fade-in">
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-base font-bold mb-3"><i class="fas fa-map-marked-alt text-red-600 mr-2"></i>Peta Sebaran Konsesi Tambang Grup AADI</h3>
+          <svg class="map-svg" viewBox="0 0 1000 600">
+            <defs>
+              <linearGradient id="seaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:0.4"/>
+                <stop offset="100%" style="stop-color:#1e40af;stop-opacity:0.6"/>
+              </linearGradient>
+              <radialGradient id="mineGlow">
+                <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1"/>
+                <stop offset="100%" style="stop-color:#dc2626;stop-opacity:0"/>
+              </radialGradient>
+            </defs>
+
+            <!-- Background Sea -->
+            <rect width="1000" height="600" fill="url(#seaGrad)"/>
+
+            <!-- Kalimantan Island (simplified) -->
+            <path d="M 150 100 Q 200 80 280 90 L 400 120 Q 500 140 550 200 L 580 300 Q 570 380 520 420 L 450 460 Q 380 480 320 470 L 250 450 Q 180 420 150 360 L 120 280 Q 110 200 130 150 Z" fill="#86efac" stroke="#166534" stroke-width="2"/>
+
+            <!-- Sumatera (partial) -->
+            <path d="M 50 350 Q 80 340 100 360 L 120 420 Q 110 480 80 500 L 40 490 Q 20 450 30 400 Z" fill="#86efac" stroke="#166534" stroke-width="2"/>
+
+            <!-- Java (partial) -->
+            <path d="M 200 520 Q 300 510 420 520 L 500 530 Q 480 550 400 555 L 250 550 Q 200 540 200 520 Z" fill="#86efac" stroke="#166534" stroke-width="2"/>
+
+            <!-- Sulawesi (partial) -->
+            <path d="M 620 280 Q 650 260 680 290 L 690 350 Q 670 380 640 370 L 620 340 Z" fill="#86efac" stroke="#166534" stroke-width="2"/>
+
+            <!-- Province Labels -->
+            <text x="300" y="200" font-size="14" font-weight="bold" fill="#166534">KALIMANTAN</text>
+            <text x="320" y="220" font-size="11" fill="#166534">TENGAH</text>
+            <text x="420" y="320" font-size="12" font-weight="bold" fill="#166534">KALSEL</text>
+            <text x="480" y="200" font-size="12" font-weight="bold" fill="#166534">KALTIM</text>
+            <text x="70" y="420" font-size="11" font-weight="bold" fill="#166534">SUMSEL</text>
+            <text x="550" y="100" font-size="11" font-weight="bold" fill="#166534">KALTARA</text>
+
+            <!-- City markers -->
+            <circle cx="430" cy="340" r="3" fill="#333"/><text x="438" y="344" font-size="9" fill="#333">Banjarmasin</text>
+            <circle cx="380" cy="280" r="3" fill="#333"/><text x="388" y="284" font-size="9" fill="#333">Palangkaraya</text>
+            <circle cx="520" cy="240" r="3" fill="#333"/><text x="528" y="244" font-size="9" fill="#333">Samarinda</text>
+            <circle cx="580" cy="130" r="3" fill="#333"/><text x="588" y="134" font-size="9" fill="#333">Tanjug Selor</text>
+            <circle cx="110" cy="450" r="3" fill="#333"/><text x="118" y="454" font-size="9" fill="#333">Palembang</text>
+
+            <!-- SUNGAI BARITO -->
+            <path d="M 380 280 Q 400 310 420 340 Q 425 355 430 370" stroke="#2563eb" stroke-width="3" fill="none" opacity="0.7"/>
+            <text x="395" y="320" font-size="9" fill="#1e40af" font-style="italic" transform="rotate(-70 395 320)">Sungai Barito</text>
+
+            <!-- MINE MARKERS -->
+            <!-- AI - Tabalong/Balangan Kalsel -->
+            <circle cx="410" cy="280" r="25" fill="url(#mineGlow)" opacity="0.6"/>
+            <circle cx="410" cy="280" r="12" fill="#dc2626" stroke="#fff" stroke-width="2"/>
+            <text x="410" y="284" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">AI</text>
+            <text x="410" y="260" text-anchor="middle" font-size="10" font-weight="bold" fill="#991b1b">TAMBANG TUTUPAN</text>
+            <text x="410" y="305" text-anchor="middle" font-size="9" fill="#7f1d1d">23.942 Ha · 642 Mt</text>
+
+            <!-- BC - Balangan -->
+            <circle cx="450" cy="260" r="20" fill="url(#mineGlow)" opacity="0.5"/>
+            <circle cx="450" cy="260" r="10" fill="#2563eb" stroke="#fff" stroke-width="2"/>
+            <text x="450" y="264" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff">BC</text>
+            <text x="450" y="245" text-anchor="middle" font-size="9" font-weight="bold" fill="#1e3a8a">BALANGAN COAL</text>
+            <text x="450" y="285" text-anchor="middle" font-size="8" fill="#1e3a8a">SCM+LSA+PCS · 7.500 Ha</text>
+
+            <!-- MIP - Lahat Sumsel -->
+            <circle cx="130" cy="420" r="20" fill="url(#mineGlow)" opacity="0.5"/>
+            <circle cx="130" cy="420" r="10" fill="#f59e0b" stroke="#fff" stroke-width="2"/>
+            <text x="130" y="424" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff">MIP</text>
+            <text x="130" y="405" text-anchor="middle" font-size="9" font-weight="bold" fill="#92400e">MIP LAHAT</text>
+            <text x="130" y="445" text-anchor="middle" font-size="8" fill="#92400e">2.000 Ha · 152 Mt</text>
+
+            <!-- PC - Mahakam Ulu Kaltim -->
+            <circle cx="520" cy="180" r="20" fill="url(#mineGlow)" opacity="0.5"/>
+            <circle cx="520" cy="180" r="10" fill="#9333ea" stroke="#fff" stroke-width="2"/>
+            <text x="520" y="184" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff">PC</text>
+            <text x="520" y="165" text-anchor="middle" font-size="9" font-weight="bold" fill="#581c87">PARI COAL</text>
+            <text x="520" y="205" text-anchor="middle" font-size="8" fill="#581c87">24.971 Ha · Development</text>
+
+            <!-- RC - Murung Raya Kalteng -->
+            <circle cx="340" cy="310" r="20" fill="url(#mineGlow)" opacity="0.5"/>
+            <circle cx="340" cy="310" r="10" fill="#ec4899" stroke="#fff" stroke-width="2"/>
+            <text x="340" y="314" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff">RC</text>
+            <text x="340" y="295" text-anchor="middle" font-size="9" font-weight="bold" fill="#831843">RATAH COAL</text>
+            <text x="340" y="335" text-anchor="middle" font-size="8" fill="#831843">36.490 Ha · Eksplorasi</text>
+
+            <!-- KPI - Kaltara -->
+            <circle cx="570" cy="100" r="18" fill="url(#mineGlow)" opacity="0.5"/>
+            <circle cx="570" cy="100" r="9" fill="#0891b2" stroke="#fff" stroke-width="2"/>
+            <text x="570" y="104" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff">KPI</text>
+            <text x="570" y="85" text-anchor="middle" font-size="8" font-weight="bold" fill="#155e75">PLTU 1.060 MW</text>
+
+            <!-- LOGISTICS ROUTES -->
+            <!-- Kelanis Terminal -->
+            <circle cx="395" cy="360" r="6" fill="#000" stroke="#fff" stroke-width="1.5"/>
+            <text x="405" y="363" font-size="9" font-weight="bold" fill="#000">Kelanis</text>
+
+            <!-- Taboneo Anchorage -->
+            <circle cx="450" cy="380" r="6" fill="#000" stroke="#fff" stroke-width="1.5"/>
+            <text x="460" y="383" font-size="9" font-weight="bold" fill="#000">Taboneo</text>
+
+            <!-- Route: Kelanis to Taboneo -->
+            <path d="M 395 360 Q 420 370 450 380" stroke="#dc2626" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+
+            <!-- Route: Sungai Barito (AI to Kelanis) -->
+            <path d="M 410 280 Q 400 320 395 360" stroke="#1e40af" stroke-width="2.5" fill="none" stroke-dasharray="4,2"/>
+            <text x="360" y="330" font-size="8" fill="#1e40af" font-weight="bold">220 km</text>
+
+            <!-- Route: Taboneo to Sea -->
+            <path d="M 450 380 Q 550 420 700 450" stroke="#dc2626" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+            <text x="580" y="430" font-size="8" fill="#dc2626" font-weight="bold">Ke Asia</text>
+
+            <!-- Legend -->
+            <rect x="20" y="20" width="200" height="180" fill="rgba(255,255,255,0.95)" stroke="#333" stroke-width="1" rx="5"/>
+            <text x="30" y="40" font-size="11" font-weight="bold" fill="#333">LEGENDA PETA</text>
+            <circle cx="40" cy="55" r="6" fill="#dc2626"/><text x="55" y="59" font-size="9" fill="#333">AI — Aktif (Kalsel)</text>
+            <circle cx="40" cy="75" r="6" fill="#2563eb"/><text x="55" y="79" font-size="9" fill="#333">BC — Aktif (Kalsel)</text>
+            <circle cx="40" cy="95" r="6" fill="#f59e0b"/><text x="55" y="99" font-size="9" fill="#333">MIP — Aktif (Sumsel)</text>
+            <circle cx="40" cy="115" r="6" fill="#9333ea"/><text x="55" y="119" font-size="9" fill="#333">PC — Development (Kaltim)</text>
+            <circle cx="40" cy="135" r="6" fill="#ec4899"/><text x="55" y="139" font-size="9" fill="#333">RC — Eksplorasi (Kalteng)</text>
+            <circle cx="40" cy="155" r="6" fill="#0891b2"/><text x="55" y="159" font-size="9" fill="#333">KPI — PLTU (Kaltara)</text>
+            <line x1="30" y1="175" x2="50" y2="175" stroke="#dc2626" stroke-width="2" stroke-dasharray="4,2"/>
+            <text x="55" y="179" font-size="9" fill="#333">Rute Logistik Batubara</text>
+            <line x1="30" y1="190" x2="50" y2="190" stroke="#1e40af" stroke-width="2.5" stroke-dasharray="4,2"/>
+            <text x="55" y="194" font-size="9" fill="#333">Sungai Barito (220 km)</text>
+
+            <!-- Scale -->
+            <line x1="750" y1="560" x2="850" y2="560" stroke="#000" stroke-width="2"/>
+            <line x1="750" y1="555" x2="750" y2="565" stroke="#000" stroke-width="2"/>
+            <line x1="850" y1="555" x2="850" y2="565" stroke="#000" stroke-width="2"/>
+            <text x="800" y="575" text-anchor="middle" font-size="10" fill="#000">~200 km</text>
+
+            <!-- Compass -->
+            <g transform="translate(920, 50)">
+              <circle r="25" fill="#fff" stroke="#333" stroke-width="1.5"/>
+              <path d="M 0 -18 L 4 0 L 0 -6 L -4 0 Z" fill="#dc2626"/>
+              <text y="-8" text-anchor="middle" font-size="10" font-weight="bold" fill="#dc2626">U</text>
+              <text y="18" text-anchor="middle" font-size="8" fill="#333">S</text>
+              <text x="-15" y="4" text-anchor="middle" font-size="8" fill="#333">B</text>
+              <text x="15" y="4" text-anchor="middle" font-size="8" fill="#333">T</text>
+            </g>
+
+            <!-- Title -->
+            <text x="500" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#1f2937">SEBARAN ASET TAMBATG GRUP ADARO ANDALAN INDONESIA</text>
+            <text x="500" y="48" text-anchor="middle" font-size="10" fill="#6b7280">5 Tambang Aktif · 2 Development · 4 Provinsi · Total 94.903 Ha</text>
+          </svg>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h4 class="font-bold text-sm mb-2 text-red-700"><i class="fas fa-hard-hat mr-1"></i>Tambang Aktif</h4>
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between p-2 bg-red-50 rounded"><span>AI · Kalsel</span><b>23.942 Ha</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>SCM · Kalsel</span><b>2.500 Ha</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>LSA · Kalsel</span><b>2.500 Ha</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>PCS · Kalsel</span><b>2.500 Ha</b></div>
+              <div class="flex justify-between p-2 bg-amber-50 rounded"><span>MIP · Sumsel</span><b>2.000 Ha</b></div>
+              <div class="flex justify-between p-2 bg-gray-800 text-white rounded font-bold"><span>TOTAL</span><span>33.442 Ha</span></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h4 class="font-bold text-sm mb-2 text-purple-700"><i class="fas fa-compass mr-1"></i>Dalam Pengembangan</h4>
+            <div class="space-y-1 text-xs">
+              <div class="p-2 bg-purple-50 rounded"><p class="font-bold">PC — Pari Coal</p><p class="text-[10px]">Mahakam Ulu, Kaltim · 24.971 Ha</p><p class="text-[10px]">Status: Engineering detail & konstruksi</p></div>
+              <div class="p-2 bg-pink-50 rounded"><p class="font-bold">RC — Ratah Coal</p><p class="text-[10px]">Murung Raya, Kalteng · 36.490 Ha</p><p class="text-[10px]">Status: Eksplorasi (suspensi)</p></div>
+              <div class="p-2 bg-gray-100 rounded font-bold"><p>Total Pipeline</p><p class="text-[10px]">61.461 Ha</p></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h4 class="font-bold text-sm mb-2 text-blue-700"><i class="fas fa-ship mr-1"></i>Logistik & Terminal</h4>
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Kelanis CPBL</span><b>Kalteng</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Taboneo Anchorage</span><b>Kalsel</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>IBT Pulau Laut</span><b>Kalsel</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Muara Tuhup</span><b>Kalteng</b></div>
+              <div class="flex justify-between p-2 bg-amber-50 rounded"><span>SDJ · RMK · WBS · FMS</span><b>Sumsel</b></div>
+              <div class="flex justify-between p-2 bg-gray-100 rounded font-bold"><span>Total Terminal</span><span>8+ lokasi</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3D PIT HOLE - TUTUPAN -->
+      <div id="pit3d-module" class="module-content hidden fade-in">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div class="bg-white rounded-xl shadow-sm p-3 border-l-4 border-red-600"><p class="text-[10px] text-gray-500">Pit</p><p class="text-lg font-bold">Tutupan Utara</p><p class="text-[10px] text-gray-500">AI · Kalsel</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-3 border-l-4 border-amber-600"><p class="text-[10px] text-gray-500">Cadangan</p><p class="text-lg font-bold">333,1 Mt</p><p class="text-[10px] text-gray-500">Terbukti + Terkira</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-3 border-l-4 border-green-600"><p class="text-[10px] text-gray-500">CV (GAR)</p><p class="text-lg font-bold">4.820 kkal/kg</p><p class="text-[10px] text-gray-500">Sub-bituminous</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-3 border-l-4 border-blue-600"><p class="text-[10px] text-gray-500">Ash Content</p><p class="text-lg font-bold">1,9% adb</p><p class="text-[10px] text-gray-500">Ultra Low Ash</p></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <h3 class="text-base font-bold">3D Visualization — Pit Tutupan Utara</h3>
+              <p class="text-xs text-gray-500">Drag rotate · Scroll zoom · Tambang terbuka multi-bench</p>
+            </div>
+            <div class="flex gap-2">
+              <button id="btn-top" class="px-3 py-1.5 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"><i class="fas fa-arrow-down mr-1"></i>Top</button>
+              <button id="btn-side" class="px-3 py-1.5 bg-purple-500 text-white rounded text-xs hover:bg-purple-600"><i class="fas fa-arrows-alt-h mr-1"></i>Side</button>
+              <button id="btn-rotate" class="px-3 py-1.5 bg-amber-500 text-white rounded text-xs hover:bg-amber-600"><i class="fas fa-sync mr-1"></i>Rotate</button>
+              <button id="btn-reset" class="px-3 py-1.5 bg-gray-500 text-white rounded text-xs hover:bg-gray-600"><i class="fas fa-redo mr-1"></i>Reset</button>
+            </div>
+          </div>
+          <div id="pit3d-container">
+            <div class="pit-info-panel">
+              <div class="font-bold text-red-400 mb-2 flex items-center"><i class="fas fa-cube mr-2"></i>PIT TUTUPAN UTARA — LIVE</div>
+              <div class="space-y-1">
+                <div class="flex justify-between"><span class="text-gray-300">Lokasi:</span><span class="font-bold">Tabalong, Kalsel</span></div>
+                <div class="flex justify-between"><span class="text-gray-300">Cadangan:</span><span class="font-bold text-yellow-400">333,1 Mt</span></div>
+                <div class="flex justify-between"><span class="text-gray-300">Kualitas:</span><span class="font-bold">CV 4.820 · Ash 1,9%</span></div>
+                <div class="flex justify-between"><span class="text-gray-300">TM (%ar):</span><span class="font-bold">27,0%</span></div>
+                <div class="flex justify-between border-t border-gray-600 pt-1 mt-1"><span class="text-gray-300">Metode:</span><span class="font-bold">Open Pit · Truck & Shovel</span></div>
+                <div class="flex justify-between"><span class="text-gray-300">Kontraktor:</span><span class="font-bold">SIS · BUMA · PPA</span></div>
+                <div class="flex justify-between"><span class="text-gray-300">Merk:</span><span class="font-bold text-green-400">Envirocoal®</span></div>
+              </div>
+            </div>
+            <div class="pit-scale"><div class="flex items-center gap-2"><div class="w-16 h-1 bg-black"></div><span class="font-bold">100 m</span></div></div>
+          </div>
+          <div class="mt-3 grid grid-cols-2 md:grid-cols-6 gap-2 text-xs">
+            <div class="flex items-center p-2 bg-gray-50 rounded"><span class="legend-dot mr-2" style="background:#8B4513"></span><div><div class="font-bold">Topsoil</div><div class="text-[10px]">0-2m</div></div></div>
+            <div class="flex items-center p-2 bg-gray-50 rounded"><span class="legend-dot mr-2" style="background:#A0522D"></span><div><div class="font-bold">Laterite Clay</div><div class="text-[10px]">2-15m</div></div></div>
+            <div class="flex items-center p-2 bg-gray-50 rounded"><span class="legend-dot mr-2" style="background:#9E9E9E"></span><div><div class="font-bold">Overburden</div><div class="text-[10px]">15-80m</div></div></div>
+            <div class="flex items-center p-2 bg-gray-800 text-white rounded"><span class="legend-dot mr-2" style="background:#1a1a1a"></span><div><div class="font-bold">Coal Seam</div><div class="text-[10px]">Envirocoal</div></div></div>
+            <div class="flex items-center p-2 bg-gray-50 rounded"><span class="legend-dot mr-2" style="background:#696969"></span><div><div class="font-bold">Interburden</div><div class="text-[10px]">Antara seam</div></div></div>
+            <div class="flex items-center p-2 bg-blue-50 rounded"><span class="legend-dot mr-2" style="background:#4a90e2"></span><div><div class="font-bold">Water Pool</div><div class="text-[10px]">Pit lake</div></div></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Stratigrafi Tutupan Utara</h3>
+            <div class="space-y-1 text-xs">
+              <div class="flex items-center p-2 rounded" style="background:#8B4513"><div class="w-16 text-white font-bold">0-2m</div><div class="flex-1 text-white">Topsoil / Organic Soil</div><div class="text-white">2m</div></div>
+              <div class="flex items-center p-2 rounded" style="background:#A0522D"><div class="w-16 text-white font-bold">2-15m</div><div class="flex-1 text-white">Lateritic Clay</div><div class="text-white">13m</div></div>
+              <div class="flex items-center p-2 rounded" style="background:#9E9E9E"><div class="w-16 text-white font-bold">15-80m</div><div class="flex-1 text-white">Overburden (Sandy Clay)</div><div class="text-white">65m</div></div>
+              <div class="flex items-center p-2 rounded" style="background:#1a1a1a; border:2px solid #fbbf24"><div class="w-16 text-yellow-400 font-bold">80-85m</div><div class="flex-1 text-yellow-400">★ COAL SEAM — Envirocoal</div><div class="text-yellow-400">5m</div></div>
+              <div class="flex items-center p-2 rounded" style="background:#696969"><div class="w-16 text-white font-bold">85-95m</div><div class="flex-1 text-white">Interburden</div><div class="text-white">10m</div></div>
+              <div class="flex items-center p-2 rounded" style="background:#0f0f0f; border:2px solid #fbbf24"><div class="w-16 text-yellow-400 font-bold">95-100m</div><div class="flex-1 text-yellow-400">★ COAL SEAM 2</div><div class="text-yellow-400">5m</div></div>
+              <div class="flex items-center p-2 rounded" style="background:#444"><div class="w-16 text-white font-bold">100-180m</div><div class="flex-1 text-white">Floor Sandstone</div><div class="text-white">80m</div></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Detail Bench per Level</h3>
+            <div class="overflow-y-auto max-h-80 text-xs">
+              <table class="w-full">
+                <thead class="bg-gray-100 sticky top-0"><tr><th class="px-2 py-1 text-left">Bench</th><th class="px-2 py-1 text-left">Elev</th><th class="px-2 py-1 text-left">Material</th><th class="px-2 py-1 text-center">Status</th></tr></thead>
+                <tbody class="divide-y">
+                  <tr><td class="px-2 py-1">B-1</td><td class="px-2 py-1">+195 → +180</td><td class="px-2 py-1">Topsoil</td><td class="px-2 py-1 text-center"><span class="text-green-600">Mined</span></td></tr>
+                  <tr><td class="px-2 py-1">B-2</td><td class="px-2 py-1">+180 → +165</td><td class="px-2 py-1">Clay</td><td class="px-2 py-1 text-center"><span class="text-green-600">Mined</span></td></tr>
+                  <tr><td class="px-2 py-1">B-3</td><td class="px-2 py-1">+165 → +150</td><td class="px-2 py-1">OB</td><td class="px-2 py-1 text-center"><span class="text-green-600">Mined</span></td></tr>
+                  <tr><td class="px-2 py-1">B-4</td><td class="px-2 py-1">+150 → +135</td><td class="px-2 py-1">OB</td><td class="px-2 py-1 text-center"><span class="text-blue-600">Active</span></td></tr>
+                  <tr><td class="px-2 py-1">B-5</td><td class="px-2 py-1">+135 → +120</td><td class="px-2 py-1">OB</td><td class="px-2 py-1 text-center"><span class="text-blue-600">Active</span></td></tr>
+                  <tr><td class="px-2 py-1">B-6</td><td class="px-2 py-1">+120 → +105</td><td class="px-2 py-1">OB</td><td class="px-2 py-1 text-center"><span class="text-amber-600">Drilling</span></td></tr>
+                  <tr><td class="px-2 py-1">B-7</td><td class="px-2 py-1">+105 → +90</td><td class="px-2 py-1">Near Coal</td><td class="px-2 py-1 text-center"><span class="text-amber-600">Blasting</span></td></tr>
+                  <tr class="bg-gray-900 text-white"><td class="px-2 py-1 font-bold">B-8 ⛏</td><td class="px-2 py-1">+90 → +75</td><td class="px-2 py-1 text-yellow-400">★ COAL SEAM 1</td><td class="px-2 py-1 text-center"><span class="text-yellow-400">Loading</span></td></tr>
+                  <tr><td class="px-2 py-1">B-9</td><td class="px-2 py-1">+75 → +60</td><td class="px-2 py-1">Interburden</td><td class="px-2 py-1 text-center"><span class="text-gray-500">Planned</span></td></tr>
+                  <tr class="bg-gray-900 text-white"><td class="px-2 py-1 font-bold">B-10 ⛏</td><td class="px-2 py-1">+60 → +45</td><td class="px-2 py-1 text-yellow-400">★ COAL SEAM 2</td><td class="px-2 py-1 text-center"><span class="text-gray-500">Planned</span></td></tr>
+                  <tr><td class="px-2 py-1">B-11</td><td class="px-2 py-1">+45 → +30</td><td class="px-2 py-1">Floor</td><td class="px-2 py-1 text-center"><span class="text-gray-500">Final</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RUTE BARITO-TABONEO -->
+      <div id="rute-module" class="module-content hidden fade-in">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div class="bg-white rounded-xl shadow-sm p-3"><p class="text-[10px] text-gray-500">Pit → ROM</p><p class="text-lg font-bold">3-5 km</p><p class="text-[10px] text-gray-500">Hauling road</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-3"><p class="text-[10px] text-gray-500">ROM → Kelanis CPBL</p><p class="text-lg font-bold">~70 km</p><p class="text-[10px] text-gray-500">Double trailer 135t</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-3"><p class="text-[10px] text-gray-500">Kelanis → Taboneo</p><p class="text-lg font-bold">220 km</p><p class="text-[10px] text-gray-500">Sungai Barito · Barge</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-3"><p class="text-[10px] text-gray-500">Taboneo → Mother Vessel</p><p class="text-lg font-bold">Tranship</p><p class="text-[10px] text-gray-500">Floating Crane 4 unit</p></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-base font-bold mb-3"><i class="fas fa-route text-red-600 mr-2"></i>Rute Logistik Batubara AI — Sungai Barito</h3>
+          <svg class="route-svg" viewBox="0 0 1000 550">
+            <defs>
+              <linearGradient id="riverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.7"/>
+                <stop offset="100%" style="stop-color:#1e40af;stop-opacity:0.9"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Background terrain -->
+            <rect width="1000" height="550" fill="#d4edda"/>
+
+            <!-- Forest patches -->
+            <g opacity="0.6">
+              <circle cx="80" cy="100" r="20" fill="#166534"/>
+              <circle cx="150" cy="80" r="25" fill="#166534"/>
+              <circle cx="200" cy="150" r="18" fill="#166534"/>
+              <circle cx="120" cy="450" r="22" fill="#166534"/>
+              <circle cx="850" cy="100" r="20" fill="#166534"/>
+              <circle cx="900" cy="450" r="25" fill="#166534"/>
+            </g>
+
+            <!-- SUNGAI BARITO (main feature) -->
+            <path d="M 0 380 Q 150 370 300 390 Q 450 410 600 400 Q 750 390 900 410 L 1000 420 L 1000 550 L 0 550 Z" fill="url(#riverGrad)"/>
+            <path d="M 0 380 Q 150 370 300 390 Q 450 410 600 400 Q 750 390 900 410 L 1000 420" stroke="#60a5fa" stroke-width="2" fill="none" stroke-dasharray="10,5" class="water-flow"/>
+            <text x="500" y="470" text-anchor="middle" fill="#fff" font-size="18" font-weight="bold">SUNGAI BARITO · 220 km</text>
+            <text x="500" y="490" text-anchor="middle" fill="#fff" font-size="11">Alur Pelayaran Ambang · Dredging rutin oleh SDM & SMT</text>
+
+            <!-- PIT TUTUPAN (kiri atas) -->
+            <g>
+              <ellipse cx="100" cy="200" rx="60" ry="40" fill="#8B4513" opacity="0.8"/>
+              <ellipse cx="100" cy="200" rx="45" ry="30" fill="#654321"/>
+              <ellipse cx="100" cy="200" rx="30" ry="20" fill="#3d2817"/>
+              <ellipse cx="100" cy="200" rx="15" ry="10" fill="#1a1a1a"/>
+              <text x="100" y="205" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">PIT</text>
+              <text x="100" y="218" text-anchor="middle" fill="#fff" font-size="8">TUTUPAN</text>
+              <text x="100" y="260" text-anchor="middle" fill="#444" font-size="9" font-weight="bold">AI · Tabalong</text>
+            </g>
+
+            <!-- Haul road Pit → ROM -->
+            <path d="M 160 200 Q 220 220 280 230" stroke="#6b4423" stroke-width="6" fill="none" stroke-dasharray="3,2"/>
+            <text x="220" y="210" text-anchor="middle" fill="#6b4423" font-size="9" font-weight="bold">5 km</text>
+
+            <!-- ROM STOCKPILE -->
+            <g>
+              <rect x="280" y="200" width="100" height="60" fill="#78716c" rx="3"/>
+              <polygon points="295,200 310,175 325,200" fill="#1a1a1a"/>
+              <polygon points="325,200 345,170 365,200" fill="#2d2d2d"/>
+              <text x="330" y="230" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">ROM</text>
+              <text x="330" y="245" text-anchor="middle" fill="#fff" font-size="8">Stockpile</text>
+            </g>
+
+            <!-- Haul road ROM → Kelanis -->
+            <path d="M 380 230 Q 430 260 480 290" stroke="#6b4423" stroke-width="6" fill="none" stroke-dasharray="3,2"/>
+            <text x="430" y="250" text-anchor="middle" fill="#6b4423" font-size="9" font-weight="bold">~70 km</text>
+
+            <!-- KELANIS CPBL TERMINAL -->
+            <g>
+              <rect x="470" y="280" width="130" height="90" fill="#92400e" rx="5"/>
+              <rect x="490" y="370" width="90" height="20" fill="#78350f"/>
+              <text x="535" y="310" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">KELANIS CPBL</text>
+              <text x="535" y="325" text-anchor="middle" fill="#fff" font-size="9">Terminal Batubara</text>
+              <text x="535" y="340" text-anchor="middle" fill="#fff" font-size="8">Crushing 200K t/day</text>
+              <text x="535" y="355" text-anchor="middle" fill="#fff" font-size="8">Stockpile 450K ton</text>
+              <!-- Conveyor -->
+              <line x1="500" y1="370" x2="500" y2="395" stroke="#374151" stroke-width="3"/>
+              <line x1="570" y1="370" x2="570" y2="395" stroke="#374151" stroke-width="3"/>
+            </g>
+
+            <!-- Barge on river -->
+            <g class="barge-move">
+              <path d="M 620 420 L 740 420 L 725 445 L 635 445 Z" fill="#475569" stroke="#1e293b" stroke-width="2"/>
+              <rect x="640" y="410" width="80" height="12" fill="#1a1a1a"/>
+              <rect x="655" y="398" width="15" height="12" fill="#dc2626"/>
+              <text x="680" y="435" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">TONGKANG 8-18K DWT</text>
+            </g>
+
+            <!-- TABONEO ANCHORAGE -->
+            <g>
+              <rect x="780" y="300" width="130" height="90" fill="#1e40af" rx="5"/>
+              <text x="845" y="330" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">TABONEO</text>
+              <text x="845" y="345" text-anchor="middle" fill="#fff" font-size="9">Anchorage</text>
+              <text x="845" y="360" text-anchor="middle" fill="#fff" font-size="8">Transshipment</text>
+              <text x="845" y="375" text-anchor="middle" fill="#fff" font-size="8">Floating Crane</text>
+            </g>
+
+            <!-- Floating Crane -->
+            <g transform="translate(770, 400)">
+              <rect width="30" height="8" fill="#f59e0b"/>
+              <rect x="10" y="-15" width="10" height="15" fill="#f59e0b"/>
+              <line x1="15" y1="-15" x2="40" y2="-5" stroke="#333" stroke-width="2"/>
+              <text x="15" y="25" text-anchor="middle" font-size="8" font-weight="bold" fill="#333">FC</text>
+            </g>
+
+            <!-- Mother Vessel (laut) -->
+            <g>
+              <path d="M 920 200 L 990 200 L 985 230 L 925 230 Z" fill="#64748b" stroke="#1e293b" stroke-width="2"/>
+              <rect x="940" y="180" width="30" height="20" fill="#fff"/>
+              <rect x="950" y="165" width="10" height="15" fill="#dc2626"/>
+              <text x="955" y="250" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">MOTHER VESSEL</text>
+              <text x="955" y="265" text-anchor="middle" font-size="8" fill="#1e293b">Handysize → Capesize</text>
+            </g>
+
+            <!-- Route Taboneo → Mother Vessel -->
+            <path d="M 880 340 Q 900 280 940 230" stroke="#dc2626" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+
+            <!-- Animated trucks -->
+            <g>
+              <rect width="12" height="6" fill="#fbbf24" stroke="#000" stroke-width="0.5" rx="1">
+                <animateMotion dur="5s" repeatCount="indefinite" path="M 160 200 Q 220 220 280 230"/>
+              </rect>
+            </g>
+            <g>
+              <rect width="12" height="6" fill="#fbbf24" stroke="#000" stroke-width="0.5" rx="1">
+                <animateMotion dur="7s" repeatCount="indefinite" path="M 380 230 Q 430 260 480 290"/>
+              </rect>
+            </g>
+
+            <!-- Excavator at pit -->
+            <g transform="translate(85, 195)">
+              <rect width="15" height="8" fill="#f59e0b" stroke="#000" stroke-width="0.5"/>
+              <rect x="12" y="2" width="10" height="3" fill="#f59e0b" stroke="#000" stroke-width="0.5"/>
+            </g>
+
+            <!-- Distance labels -->
+            <text x="500" y="410" text-anchor="middle" fill="#1e40af" font-size="10" font-weight="bold">220 km via Sungai Barito</text>
+
+            <!-- Compass -->
+            <g transform="translate(940, 50)">
+              <circle r="22" fill="#fff" stroke="#333" stroke-width="1.5"/>
+              <text y="-8" text-anchor="middle" font-size="10" font-weight="bold" fill="#dc2626">U</text>
+              <text y="16" text-anchor="middle" font-size="8" fill="#333">S</text>
+              <text x="-14" y="4" text-anchor="middle" font-size="8" fill="#333">B</text>
+              <text x="14" y="4" text-anchor="middle" font-size="8" fill="#333">T</text>
+              <path d="M 0 -16 L 3 0 L 0 -5 L -3 0 Z" fill="#dc2626"/>
+            </g>
+
+            <!-- Scale -->
+            <g transform="translate(50, 520)">
+              <line x1="0" y1="0" x2="100" y2="0" stroke="#000" stroke-width="2"/>
+              <line x1="0" y1="-5" x2="0" y2="5" stroke="#000" stroke-width="2"/>
+              <line x1="100" y1="-5" x2="100" y2="5" stroke="#000" stroke-width="2"/>
+              <text x="50" y="15" text-anchor="middle" font-size="9" fill="#000">50 km</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h4 class="font-bold text-sm mb-2"><i class="fas fa-truck text-amber-500 mr-1"></i>Hauling Darat</h4>
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between"><span>Unit Double Trailer</span><b>Komatsu HD785-7</b></div>
+              <div class="flex justify-between"><span>Kapasitas</span><b>135 ton/unit</b></div>
+              <div class="flex justify-between"><span>Rute Pit → ROM</span><b>3-5 km</b></div>
+              <div class="flex justify-between"><span>ROM → Kelanis</span><b>~70 km</b></div>
+              <div class="flex justify-between"><span>Cycle Time</span><b>18-22 menit</b></div>
+              <div class="flex justify-between"><span>Fuel Consumption</span><b>85 L/hour</b></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h4 class="font-bold text-sm mb-2"><i class="fas fa-ship text-blue-500 mr-1"></i>Barging Sungai Barito</h4>
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between"><span>Distance</span><b>220 km</b></div>
+              <div class="flex justify-between"><span>Tongkang</span><b>8.000-18.000 DWT</b></div>
+              <div class="flex justify-between"><span>Tugboat Power</span><b>2×2400 HP</b></div>
+              <div class="flex justify-between"><span>Loading Time</span><b>6-8 jam</b></div>
+              <div class="flex justify-between"><span>Transit Time</span><b>24-36 jam</b></div>
+              <div class="flex justify-between"><span>Dredging</span><b>Rutin oleh SDM</b></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h4 class="font-bold text-sm mb-2"><i class="fas fa-anchor text-red-500 mr-1"></i>Transshipment Taboneo</h4>
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between"><span>Floating Crane</span><b>4 unit</b></div>
+              <div class="flex justify-between"><span>FTU</span><b>3 unit</b></div>
+              <div class="flex justify-between"><span>Kapasitas FC</span><b>222.000 t/hari</b></div>
+              <div class="flex justify-between"><span>Mother Vessel</span><b>Handy → Capesize</b></div>
+              <div class="flex justify-between"><span>Stevedoring</span><b>PBMM</b></div>
+              <div class="flex justify-between"><span>Destinasi</span><b>14 Negara</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MASTER PLAN -->
+      <div id="masterplan-module" class="module-content hidden fade-in">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div class="bg-white rounded-xl shadow-sm p-3"><p class="text-[10px] text-gray-500">Total IUPK AI</p><p class="text-lg font-bold text-red-700">23.942 Ha</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-3"><p class="text-[10px] text-gray-500">Pit Aktif</p><p class="text-lg font-bold text-amber-700">Tutupan + Wara</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-3"><p class="text-[10px] text-gray-500">Kapasitas Produksi</p><p class="text-lg font-bold text-green-700">72 jt t/th</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-3"><p class="text-[10px] text-gray-500">Izin Lingkungan</p><p class="text-lg font-bold text-blue-700">SK KLHK 2022</p></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-base font-bold mb-3"><i class="fas fa-drafting-compass text-red-600 mr-2"></i>Master Plan Site AI — Tabalong & Balangan</h3>
+          <svg class="masterplan-svg" viewBox="0 0 1200 750">
+            <defs>
+              <pattern id="grassPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#a7f3d0"/>
+                <circle cx="5" cy="5" r="1" fill="#059669" opacity="0.5"/>
+                <circle cx="15" cy="15" r="1" fill="#059669" opacity="0.5"/>
+              </pattern>
+              <pattern id="minePattern" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+                <rect width="10" height="10" fill="#8B4513"/>
+                <path d="M 0 0 L 10 10 M 10 0 L 0 10" stroke="#654321" stroke-width="0.5"/>
+              </pattern>
+            </defs>
+
+            <!-- Background -->
+            <rect width="1200" height="750" fill="url(#grassPattern)"/>
+
+            <!-- Boundary IUPK -->
+            <rect x="30" y="30" width="1140" height="690" fill="none" stroke="#dc2626" stroke-width="3" stroke-dasharray="10,5"/>
+            <text x="50" y="55" fill="#dc2626" font-size="12" font-weight="bold">IUPK-KOP AI · 23.942 Ha · Tabalong & Balangan · Kalimantan Selatan</text>
+
+            <!-- PIT TUTUPAN UTARA -->
+            <g>
+              <ellipse cx="250" cy="300" rx="130" ry="90" fill="url(#minePattern)" stroke="#3e2723" stroke-width="2"/>
+              <ellipse cx="250" cy="300" rx="105" ry="72" fill="#654321"/>
+              <ellipse cx="250" cy="300" rx="80" ry="55" fill="#3e2723"/>
+              <ellipse cx="250" cy="300" rx="55" ry="38" fill="#1a1a1a"/>
+              <text x="250" y="295" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">PIT TUTUPAN</text>
+              <text x="250" y="312" text-anchor="middle" fill="#fff" font-size="10">UTARA</text>
+              <text x="250" y="330" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="bold">333,1 Mt · CV 4.820</text>
+            </g>
+
+            <!-- PIT TUTUPAN SELATAN -->
+            <g>
+              <ellipse cx="450" cy="250" rx="80" ry="55" fill="url(#minePattern)" stroke="#3e2723" stroke-width="2"/>
+              <ellipse cx="450" cy="250" rx="60" ry="40" fill="#654321"/>
+              <ellipse cx="450" cy="250" rx="40" ry="25" fill="#3e2723"/>
+              <text x="450" y="250" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">PIT TUTUPAN</text>
+              <text x="450" y="265" text-anchor="middle" fill="#fff" font-size="9">SELATAN</text>
+              <text x="450" y="280" text-anchor="middle" fill="#fbbf24" font-size="8">61,6 Mt</text>
+            </g>
+
+            <!-- PIT WARА I -->
+            <g>
+              <ellipse cx="380" cy="480" rx="110" ry="75" fill="url(#minePattern)" stroke="#3e2723" stroke-width="2"/>
+              <ellipse cx="380" cy="480" rx="85" ry="58" fill="#654321"/>
+              <ellipse cx="380" cy="480" rx="60" ry="40" fill="#3e2723"/>
+              <ellipse cx="380" cy="480" rx="35" ry="22" fill="#1a1a1a"/>
+              <text x="380" y="475" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">PIT WARA I</text>
+              <text x="380" y="495" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="bold">247,3 Mt · CV 3.995</text>
+            </g>
+
+            <!-- PIT PARINGIN UTARA -->
+            <g>
+              <ellipse cx="650" cy="380" rx="70" ry="50" fill="url(#minePattern)" stroke="#3e2723" stroke-width="2"/>
+              <ellipse cx="650" cy="380" rx="50" ry="35" fill="#654321"/>
+              <text x="650" y="380" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">PIT PARINGIN</text>
+              <text x="650" y="395" text-anchor="middle" fill="#fff" font-size="8">UTARA</text>
+              <text x="650" y="410" text-anchor="middle" fill="#fbbf24" font-size="8">210,9 Mt</text>
+            </g>
+
+            <!-- KELANIS CPBL TERMINAL -->
+            <g>
+              <rect x="820" y="280" width="180" height="120" fill="#78716c" stroke="#424242" stroke-width="2" rx="5"/>
+              <polygon points="840,280 860,250 880,280" fill="#1a1a1a"/>
+              <polygon points="880,280 910,245 940,280" fill="#2d2d2d"/>
+              <polygon points="940,280 960,255 980,280" fill="#1a1a1a"/>
+              <text x="910" y="320" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">KELANIS CPBL</text>
+              <text x="910" y="340" text-anchor="middle" fill="#fff" font-size="10">Coal Processing & Barge Loading</text>
+              <text x="910" y="360" text-anchor="middle" fill="#fff" font-size="9">Crushing 200.000 t/day</text>
+              <text x="910" y="375" text-anchor="middle" fill="#fff" font-size="9">Stockpile 450.000 ton</text>
+              <text x="910" y="390" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="bold">Jetty · Barge Loading</text>
+            </g>
+
+            <!-- WORKSHOP -->
+            <g>
+              <rect x="820" y="440" width="120" height="70" fill="#f57c00" stroke="#e65100" stroke-width="2" rx="3"/>
+              <text x="880" y="470" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WORKSHOP</text>
+              <text x="880" y="485" text-anchor="middle" fill="#fff" font-size="8">Maintenance</text>
+              <text x="880" y="498" text-anchor="middle" fill="#fff" font-size="8">Heavy Equipment</text>
+            </g>
+
+            <!-- FUEL STATION -->
+            <g>
+              <rect x="960" y="440" width="120" height="70" fill="#d32f2f" stroke="#b71c1c" stroke-width="2" rx="3"/>
+              <text x="1020" y="470" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">FUEL STATION</text>
+              <text x="1020" y="485" text-anchor="middle" fill="#fff" font-size="8">Pertamina Patra Niaga</text>
+              <text x="1020" y="498" text-anchor="middle" fill="#fff" font-size="8">FSA s/d 2029</text>
+            </g>
+
+            <!-- OFFICE -->
+            <g>
+              <rect x="820" y="120" width="180" height="80" fill="#1976d2" stroke="#0d47a1" stroke-width="2" rx="3"/>
+              <text x="910" y="150" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">MINING OFFICE</text>
+              <text x="910" y="170" text-anchor="middle" fill="#fff" font-size="9">Kantor Site AI</text>
+              <text x="910" y="185" text-anchor="middle" fill="#fff" font-size="8">Tabalong · Kalsel</text>
+            </g>
+
+            <!-- LAB -->
+            <g>
+              <rect x="1020" y="120" width="100" height="80" fill="#7b1fa2" stroke="#4a148c" stroke-width="2" rx="3"/>
+              <text x="1070" y="150" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">LAB</text>
+              <text x="1070" y="170" text-anchor="middle" fill="#fff" font-size="8">Quality Control</text>
+              <text x="1070" y="185" text-anchor="middle" fill="#fff" font-size="8">Coal Testing</text>
+            </g>
+
+            <!-- KLINIK -->
+            <g>
+              <rect x="1020" y="220" width="100" height="60" fill="#c2185b" stroke="#880e4f" stroke-width="2" rx="3"/>
+              <text x="1070" y="245" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">KLINIK</text>
+              <text x="1070" y="265" text-anchor="middle" fill="#fff" font-size="8">24 Jam Emergency</text>
+            </g>
+
+            <!-- CAMP AREA -->
+            <g>
+              <rect x="550" y="80" width="250" height="120" fill="#5d4037" stroke="#3e2723" stroke-width="2" rx="3"/>
+              <text x="675" y="105" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">CAMP AREA</text>
+              <rect x="560" y="115" width="45" height="30" fill="#8d6e63" stroke="#fff" stroke-width="1"/>
+              <text x="582" y="135" text-anchor="middle" fill="#fff" font-size="9">A</text>
+              <rect x="610" y="115" width="45" height="30" fill="#8d6e63" stroke="#fff" stroke-width="1"/>
+              <text x="632" y="135" text-anchor="middle" fill="#fff" font-size="9">B</text>
+              <rect x="660" y="115" width="45" height="30" fill="#8d6e63" stroke="#fff" stroke-width="1"/>
+              <text x="682" y="135" text-anchor="middle" fill="#fff" font-size="9">C</text>
+              <rect x="710" y="115" width="45" height="30" fill="#8d6e63" stroke="#fff" stroke-width="1"/>
+              <text x="732" y="135" text-anchor="middle" fill="#fff" font-size="9">D</text>
+              <rect x="760" y="115" width="35" height="30" fill="#8d6e63" stroke="#fff" stroke-width="1"/>
+              <text x="777" y="135" text-anchor="middle" fill="#fff" font-size="9">E</text>
+              <text x="675" y="170" text-anchor="middle" fill="#fff" font-size="9">Mess · Canteen · Mosque · Sport</text>
+              <text x="675" y="185" text-anchor="middle" fill="#fff" font-size="9">Kapasitas 1.500+ orang</text>
+            </g>
+
+            <!-- REKLAMASI AREA -->
+            <g>
+              <rect x="80" y="500" width="200" height="120" fill="#66bb6a" opacity="0.7" stroke="#2e7d32" stroke-width="2" rx="3"/>
+              <text x="180" y="530" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">AREA REKLAMASI</text>
+              <text x="180" y="550" text-anchor="middle" fill="#fff" font-size="9">Revegetasi RLI</text>
+              <text x="180" y="570" text-anchor="middle" fill="#fff" font-size="9">Fast & Slow Growing</text>
+              <text x="180" y="590" text-anchor="middle" fill="#fff" font-size="9">DAS Rehabilitation</text>
+              <text x="180" y="610" text-anchor="middle" fill="#fff" font-size="9">Bibit dari AML</text>
+            </g>
+
+            <!-- DISPOSAL AREA -->
+            <g>
+              <rect x="600" y="550" width="180" height="100" fill="#92400e" opacity="0.7" stroke="#78350f" stroke-width="2" rx="3"/>
+              <text x="690" y="580" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">DISPOSAL AREA</text>
+              <text x="690" y="600" text-anchor="middle" fill="#fff" font-size="9">Overburden Dumping</text>
+              <text x="690" y="620" text-anchor="middle" fill="#fff" font-size="9">Managed by APM</text>
+              <text x="690" y="635" text-anchor="middle" fill="#fff" font-size="9">106,62 Mbcm OB (6M 2024)</text>
+            </g>
+
+            <!-- HELIPAD -->
+            <g>
+              <circle cx="1120" cy="350" r="30" fill="#424242" stroke="#fff" stroke-width="2"/>
+              <text x="1120" y="358" text-anchor="middle" fill="#fff" font-size="20" font-weight="bold">H</text>
+              <text x="1120" y="395" text-anchor="middle" fill="#000" font-size="9" font-weight="bold">HELIPAD</text>
+            </g>
+
+            <!-- WEIGHBRIDGE -->
+            <g>
+              <rect x="700" y="280" width="80" height="50" fill="#795548" stroke="#4e342e" stroke-width="2" rx="3"/>
+              <text x="740" y="305" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">WEIGH-</text>
+              <text x="740" y="318" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">BRIDGE</text>
+            </g>
+
+            <!-- EXPLOSIVE MAGAZINE -->
+            <g>
+              <rect x="700" y="350" width="80" height="50" fill="#b71c1c" stroke="#7f0000" stroke-width="2" rx="3"/>
+              <text x="740" y="375" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">MAGAZINE</text>
+              <text x="740" y="390" text-anchor="middle" fill="#fff" font-size="8">Explosive (ANFO)</text>
+            </g>
+
+            <!-- WWTP -->
+            <g>
+              <rect x="300" y="620" width="100" height="60" fill="#00796b" stroke="#004d40" stroke-width="2" rx="3"/>
+              <text x="350" y="645" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">WWTP</text>
+              <text x="350" y="660" text-anchor="middle" fill="#fff" font-size="8">Settling Pond</text>
+              <text x="350" y="673" text-anchor="middle" fill="#fff" font-size="8">Water Treatment</text>
+            </g>
+
+            <!-- SECURITY POST -->
+            <g>
+              <rect x="30" y="660" width="80" height="50" fill="#455a64" stroke="#263238" stroke-width="2" rx="3"/>
+              <text x="70" y="685" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">SECURITY</text>
+              <text x="70" y="700" text-anchor="middle" fill="#fff" font-size="8">GATE 1</text>
+            </g>
+
+            <!-- Roads connecting -->
+            <path d="M 250 390 Q 300 430 380 480" stroke="#616161" stroke-width="6" fill="none"/>
+            <path d="M 450 305 Q 500 320 550 330" stroke="#616161" stroke-width="6" fill="none"/>
+            <path d="M 650 430 Q 750 450 820 400" stroke="#616161" stroke-width="6" fill="none"/>
+            <path d="M 380 200 Q 400 230 450 250" stroke="#616161" stroke-width="6" fill="none"/>
+            <path d="M 1000 340 Q 1000 380 1000 440" stroke="#616161" stroke-width="6" fill="none"/>
+
+            <!-- Hauling trucks -->
+            <g>
+              <rect width="12" height="6" fill="#fbbf24" stroke="#000" stroke-width="0.5" rx="1">
+                <animateMotion dur="6s" repeatCount="indefinite" path="M 250 390 Q 300 430 380 480"/>
+              </rect>
+            </g>
+            <g>
+              <rect width="12" height="6" fill="#fbbf24" stroke="#000" stroke-width="0.5" rx="1">
+                <animateMotion dur="7s" repeatCount="indefinite" path="M 650 430 Q 750 450 820 400"/>
+              </rect>
+            </g>
+
+            <!-- Compass -->
+            <g transform="translate(1120, 70)">
+              <circle r="25" fill="#fff" stroke="#333" stroke-width="1.5"/>
+              <path d="M 0 -18 L 4 0 L 0 -6 L -4 0 Z" fill="#dc2626"/>
+              <text y="-8" text-anchor="middle" font-size="10" font-weight="bold" fill="#dc2626">U</text>
+              <text y="18" text-anchor="middle" font-size="8" fill="#333">S</text>
+              <text x="-15" y="4" text-anchor="middle" font-size="8" fill="#333">B</text>
+              <text x="15" y="4" text-anchor="middle" font-size="8" fill="#333">T</text>
+            </g>
+
+            <!-- Scale -->
+            <g transform="translate(50, 720)">
+              <line x1="0" y1="0" x2="100" y2="0" stroke="#000" stroke-width="2"/>
+              <line x1="0" y1="-5" x2="0" y2="5" stroke="#000" stroke-width="2"/>
+              <line x1="100" y1="-5" x2="100" y2="5" stroke="#000" stroke-width="2"/>
+              <text x="50" y="15" text-anchor="middle" font-size="10" fill="#000">2 km</text>
+            </g>
+
+            <!-- Title -->
+            <text x="600" y="20" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a1a1a">MASTER PLAN SITE AI — PT ADARO INDONESIA · TABALONG & BALANGAN</text>
+          </svg>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h4 class="font-bold text-sm mb-2 text-red-700"><i class="fas fa-hard-hat mr-1"></i>Area Produksi</h4>
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between p-2 bg-red-50 rounded"><span>Pit Tutupan Utara</span><b>333,1 Mt</b></div>
+              <div class="flex justify-between p-2 bg-red-50 rounded"><span>Pit Tutupan Selatan</span><b>61,6 Mt</b></div>
+              <div class="flex justify-between p-2 bg-red-50 rounded"><span>Pit Wara I</span><b>247,3 Mt</b></div>
+              <div class="flex justify-between p-2 bg-red-50 rounded"><span>Pit Paringin Utara</span><b>210,9 Mt</b></div>
+              <div class="flex justify-between p-2 bg-red-50 rounded"><span>Pit Wara II</span><b>—</b></div>
+              <div class="flex justify-between p-2 bg-gray-800 text-white rounded font-bold"><span>Total AI</span><span>642,0 Mt</span></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h4 class="font-bold text-sm mb-2 text-blue-700"><i class="fas fa-industry mr-1"></i>Fasilitas Utama</h4>
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Kelanis CPBL Terminal</span><b>450K ton</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Crushing Plant</span><b>200K t/day</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Workshop</span><b>Heavy Equip</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Fuel Station</span><b>Pertamina</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Laboratorium</span><b>QC</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Helipad</span><b>D 25m</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>Weighbridge</span><b>Multi unit</b></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h4 class="font-bold text-sm mb-2 text-green-700"><i class="fas fa-users mr-1"></i>Fasilitas Pekerja</h4>
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Camp (5 blok)</span><b>1.500+ org</b></div>
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Mess Eksekutif</span><b>80 kamar</b></div>
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Canteen</span><b>500 seat</b></div>
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Klinik Tambang</span><b>24 jam</b></div>
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Masjid</span><b>500 orang</b></div>
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Sport Facility</span><b>Futsal, Basket</b></div>
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Minimarket</span><b>2 unit</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PEMASARAN GLOBAL -->
+      <div id="pemasaran-module" class="module-content hidden fade-in">
+        <div class="bg-gradient-to-r from-red-700 to-red-900 text-white rounded-xl shadow-lg p-5 mb-4">
+          <h3 class="text-xl font-bold mb-2"><i class="fas fa-globe-asia mr-2"></i>Pemasaran Global — 14 Negara Tujuan</h3>
+          <p class="text-sm opacity-90">Envirocoal® diekspor ke pembangkit listrik blue-chip, industri semen, dan peleburan logam di Asia Pasifik</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-base font-bold mb-3">Volume Penjualan per Negara (Ton) — FY 2023</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-800 text-white"><tr><th class="px-3 py-2 text-left">Negara</th><th class="px-3 py-2 text-right">FY 2023</th><th class="px-3 py-2 text-right">FY 2022</th><th class="px-3 py-2 text-right">FY 2021</th><th class="px-3 py-2 text-left">Customer Utama</th></tr></thead>
+              <tbody class="divide-y">
+                <tr class="bg-red-50 font-bold"><td class="px-3 py-2">🇮🇩 DOMESTIK</td><td class="px-3 py-2 text-right">15.988.204</td><td class="px-3 py-2 text-right">15.042.286</td><td class="px-3 py-2 text-right">14.441.525</td><td class="px-3 py-2 text-xs">PLTU PLN, Semen, Industri</td></tr>
+                <tr><td class="px-3 py-2">🇨🇳 China</td><td class="px-3 py-2 text-right">12.871.755</td><td class="px-3 py-2 text-right">6.849.977</td><td class="px-3 py-2 text-right">10.076.981</td><td class="px-3 py-2 text-xs">PLTU · Shandong Energy</td></tr>
+                <tr><td class="px-3 py-2">🇲🇾 Malaysia</td><td class="px-3 py-2 text-right">9.522.308</td><td class="px-3 py-2 text-right">8.666.404</td><td class="px-3 py-2 text-right">6.435.443</td><td class="px-3 py-2 text-xs">YTL Power · TNB</td></tr>
+                <tr><td class="px-3 py-2">🇰🇷 Korea Selatan</td><td class="px-3 py-2 text-right">5.389.557</td><td class="px-3 py-2 text-right">5.031.058</td><td class="px-3 py-2 text-right">2.897.716</td><td class="px-3 py-2 text-xs">KOEN · POSCO</td></tr>
+                <tr><td class="px-3 py-2">🇮🇳 India</td><td class="px-3 py-2 text-right">7.030.907</td><td class="px-3 py-2 text-right">7.922.314</td><td class="px-3 py-2 text-right">5.553.909</td><td class="px-3 py-2 text-xs">Adani · Tata Power</td></tr>
+                <tr><td class="px-3 py-2">🇯🇵 Jepang</td><td class="px-3 py-2 text-right">3.230.356</td><td class="px-3 py-2 text-right">4.163.212</td><td class="px-3 py-2 text-right">3.803.496</td><td class="px-3 py-2 text-xs">JERA · Tohoku Electric</td></tr>
+                <tr><td class="px-3 py-2">🇭🇰 Hongkong</td><td class="px-3 py-2 text-right">2.403.344</td><td class="px-3 py-2 text-right">3.034.951</td><td class="px-3 py-2 text-right">1.675.641</td><td class="px-3 py-2 text-xs">CLP Group</td></tr>
+                <tr><td class="px-3 py-2">🇵🇭 Filipina</td><td class="px-3 py-2 text-right">3.478.767</td><td class="px-3 py-2 text-right">3.283.097</td><td class="px-3 py-2 text-right">2.664.734</td><td class="px-3 py-2 text-xs">Maibarara · GNPower</td></tr>
+                <tr><td class="px-3 py-2">🇹🇭 Thailand</td><td class="px-3 py-2 text-right">1.401.641</td><td class="px-3 py-2 text-right">860.531</td><td class="px-3 py-2 text-right">861.854</td><td class="px-3 py-2 text-xs">EGAT · RATCH</td></tr>
+                <tr><td class="px-3 py-2">🇹🇼 Taiwan</td><td class="px-3 py-2 text-right">1.627.307</td><td class="px-3 py-2 text-right">3.650.410</td><td class="px-3 py-2 text-right">1.872.179</td><td class="px-3 py-2 text-xs">Taipower</td></tr>
+                <tr><td class="px-3 py-2">🌏 Lainnya</td><td class="px-3 py-2 text-right">454.812</td><td class="px-3 py-2 text-right">1.742.251</td><td class="px-3 py-2 text-right">1.382.683</td><td class="px-3 py-2 text-xs">Vietnam, Singapura, NZ</td></tr>
+                <tr class="bg-gray-800 text-white font-bold"><td class="px-3 py-2">TOTAL PENJUALAN</td><td class="px-3 py-2 text-right">63.400.000</td><td class="px-3 py-2 text-right">60.246.000</td><td class="px-3 py-2 text-right">51.666.000</td><td class="px-3 py-2 text-xs">14 Negara</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Revenue per Destination (US$ Juta) — 6M 2024</h3>
+            <div class="space-y-2 text-sm">
+              <div><div class="flex justify-between mb-1"><span>🇮🇩 Domestik</span><b>$537,1 jt</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-red-600 h-2 rounded-full" style="width: 20%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>🇨🇳 China</span><b>$425,9 jt</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width: 16%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>🇲🇾 Malaysia</span><b>$418,3 jt</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 16%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>🇯🇵 Jepang</span><b>$290,9 jt</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-pink-500 h-2 rounded-full" style="width: 11%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>🇰🇷 Korea</span><b>$290,1 jt</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-purple-500 h-2 rounded-full" style="width: 11%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>🇮🇳 India</span><b>$239,5 jt</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-green-500 h-2 rounded-full" style="width: 9%"></div></div></div>
+              <div><div class="flex justify-between mb-1"><span>🌏 Lainnya</span><b>$454,7 jt</b></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gray-500 h-2 rounded-full" style="width: 17%"></div></div></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Keunggulan Kompetitif Envirocoal®</h3>
+            <div class="space-y-2 text-sm">
+              <div class="p-3 bg-green-50 rounded-lg border-l-4 border-green-600"><b>Ultra Low Ash (2-2,5%)</b><p class="text-xs text-gray-600 mt-1">Terendah di pasar global · Mengurangi biaya handling abu di Jepang</p></div>
+              <div class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-600"><b>Low Sulfur (0,1-0,2%)</b><p class="text-xs text-gray-600 mt-1">Memenuhi standar emisi ketat Korea, EU, Jepang</p></div>
+              <div class="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-600"><b>Low Nitrogen (1,0%)</b><p class="text-xs text-gray-600 mt-1">Setara Powder River Basin USA · Low NOx emission</p></div>
+              <div class="p-3 bg-amber-50 rounded-lg border-l-4 border-amber-600"><b>Quartile 2 Global Cost Curve</b><p class="text-xs text-gray-600 mt-1">McCloskey by OPIS · Biaya produksi kompetitif</p></div>
+              <div class="p-3 bg-red-50 rounded-lg border-l-4 border-red-600"><b>Merek Terdaftar 13 Negara</b><p class="text-xs text-gray-600 mt-1">Sejak 1990 · Brand recognition global</p></div>
+              <div class="p-3 bg-cyan-50 rounded-lg border-l-4 border-cyan-600"><b>Rantai Pasok Terintegrasi</b><p class="text-xs text-gray-600 mt-1">Tambang → Sungai → Laut · 30+ tahun reliability</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IPO INFO -->
+      <div id="ipo-module" class="module-content hidden fade-in">
+        <div class="adaro-gradient text-white rounded-xl shadow-lg p-6 mb-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs opacity-90">PENAWARAN UMUM PERDANA SAHAM</p>
+              <h3 class="text-3xl font-bold mt-1">PT Adaro Andalan Indonesia Tbk</h3>
+              <p class="text-sm opacity-90 mt-2">Kode Saham: <b>AADI</b> · Bursa Efek Indonesia</p>
+            </div>
+            <i class="fas fa-landmark text-6xl opacity-30"></i>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div class="bg-white rounded-xl shadow-sm p-4 border-t-4 border-red-600"><p class="text-xs text-gray-500">Harga Penawaran</p><p class="text-2xl font-bold text-red-700">Rp 5.550</p><p class="text-[10px] text-gray-500">per saham</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4 border-t-4 border-blue-600"><p class="text-xs text-gray-500">Saham Ditawarkan</p><p class="text-2xl font-bold text-blue-700">778,7 jt</p><p class="text-[10px] text-gray-500">lembar (10%)</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4 border-t-4 border-green-600"><p class="text-xs text-gray-500">Nilai Emisi</p><p class="text-2xl font-bold text-green-700">Rp 4,32 T</p><p class="text-[10px] text-gray-500">Triliun</p></div>
+          <div class="bg-white rounded-xl shadow-sm p-4 border-t-4 border-amber-600"><p class="text-xs text-gray-500">PER (IPO)</p><p class="text-2xl font-bold text-amber-700">2,27x</p><p class="text-[10px] text-gray-500">vs Industri 5,83x</p></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Jadwal IPO</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between p-2 bg-gray-50 rounded"><span>Tanggal Efektif</span><b>26 November 2024</b></div>
+              <div class="flex justify-between p-2 bg-gray-50 rounded"><span>Masa Penawaran</span><b>29 Nov - 3 Des 2024</b></div>
+              <div class="flex justify-between p-2 bg-gray-50 rounded"><span>Penjatahan</span><b>3 Desember 2024</b></div>
+              <div class="flex justify-between p-2 bg-gray-50 rounded"><span>Distribusi Elektronik</span><b>4 Desember 2024</b></div>
+              <div class="flex justify-between p-2 bg-red-50 rounded font-bold"><span>Pencatatan BEI</span><b class="text-red-700">5 Desember 2024</b></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="text-base font-bold mb-3">Struktur Kepemilikan (Proforma)</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between p-2 bg-red-50 rounded"><span>ADRO (Induk)</span><b>90,00%</b></div>
+              <div class="flex justify-between p-2 bg-blue-50 rounded"><span>ASI</span><b>0,00%</b></div>
+              <div class="flex justify-between p-2 bg-green-50 rounded"><span>Masyarakat (Publik)</span><b>10,00%</b></div>
+              <div class="flex justify-between p-2 bg-gray-800 text-white rounded font-bold"><span>Total Saham</span><b>7,79 Miliar lembar</b></div>
+              <div class="flex justify-between p-2 bg-gray-100 rounded"><span>Modal Dasar</span><b>Rp 40 Triliun</b></div>
+              <div class="flex justify-between p-2 bg-gray-100 rounded"><span>Nilai Nominal</span><b>Rp 3.125/lembar</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-base font-bold mb-3">Penggunaan Dana IPO (Rp 4,32 Triliun)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-4 bg-gradient-to-br from-green-500 to-green-700 text-white rounded-lg">
+              <p class="text-xs opacity-90">37,23%</p>
+              <p class="text-xl font-bold mt-1">Rp 1,61 T</p>
+              <p class="text-xs mt-2">Pinjaman ke MBP (Adaro Logistics)</p>
+              <p class="text-[10px] opacity-90 mt-1">Investasi kapal tunda, tongkang, FC baru</p>
+            </div>
+            <div class="p-4 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-lg">
+              <p class="text-xs opacity-90">14,89%</p>
+              <p class="text-xl font-bold mt-1">Rp 643 B</p>
+              <p class="text-xs mt-2">Pelunasan Pinjaman ke AI</p>
+              <p class="text-[10px] opacity-90 mt-1">USD 40 juta · Perjanjian 3 Mei 2024</p>
+            </div>
+            <div class="p-4 bg-gradient-to-br from-amber-500 to-amber-700 text-white rounded-lg">
+              <p class="text-xs opacity-90">47,88%</p>
+              <p class="text-xl font-bold mt-1">Rp 2,07 T</p>
+              <p class="text-xs mt-2">Pelunasan Pinjaman ke ADRO</p>
+              <p class="text-[10px] opacity-90 mt-1">USD 128,6 juta · Optimalisasi kas</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <h3 class="text-base font-bold mb-3">Valuasi & Pembanding</h3>
+          <div class="overflow-x-auto text-sm">
+            <table class="w-full">
+              <thead class="bg-gray-800 text-white"><tr><th class="px-3 py-2 text-left">Emiten</th><th class="px-3 py-2 text-right">PER (x)</th><th class="px-3 py-2 text-right">PBV (x)</th><th class="px-3 py-2 text-left">Keterangan</th></tr></thead>
+              <tbody class="divide-y">
+                <tr><td class="px-3 py-2">BUMI — PT Bumi Resources</td><td class="px-3 py-2 text-right">9,49</td><td class="px-3 py-2 text-right">1,08</td><td class="px-3 py-2 text-xs text-gray-500">Outlier</td></tr>
+                <tr><td class="px-3 py-2">PTBA — PT Bukit Asam</td><td class="px-3 py-2 text-right">5,22</td><td class="px-3 py-2 text-right">1,45</td><td class="px-3 py-2 text-xs text-gray-500">—</td></tr>
+                <tr><td class="px-3 py-2">INDY — PT Indika Energy</td><td class="px-3 py-2 text-right">5,88</td><td class="px-3 py-2 text-right">0,33</td><td class="px-3 py-2 text-xs text-gray-500">—</td></tr>
+                <tr><td class="px-3 py-2">BYAN — PT Bayan Resources</td><td class="px-3 py-2 text-right">41,38</td><td class="px-3 py-2 text-right">16,36</td><td class="px-3 py-2 text-xs text-gray-500">Outlier</td></tr>
+                <tr><td class="px-3 py-2">ITMG — PT Indo Tambangraya</td><td class="px-3 py-2 text-right">6,39</td><td class="px-3 py-2 text-right">0,93</td><td class="px-3 py-2 text-xs text-gray-500">—</td></tr>
+                <tr class="bg-blue-50"><td class="px-3 py-2 font-bold">Rata-rata (excl. outlier)</td><td class="px-3 py-2 text-right font-bold">5,83</td><td class="px-3 py-2 text-right font-bold">0,95</td><td class="px-3 py-2 text-xs">Sektor</td></tr>
+                <tr class="bg-red-600 text-white font-bold"><td class="px-3 py-2">AADI — ADARO ANDALAN</td><td class="px-3 py-2 text-right">2,27</td><td class="px-3 py-2 text-right">1,02</td><td class="px-3 py-2 text-xs">IPO · ATTRACTIVE</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-3 p-3 bg-green-50 border-l-4 border-green-600 rounded text-xs">
+            <p><b>Daya Tarik:</b> PER AADI 2,27x — <b>61% lebih rendah</b> dari rata-rata sektor 5,83x · PBV 1,02x setara sektor · Dividen policy max 45% dari laba bersih mulai 2025</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// Date/Time
+function updateDateTime() {
+  const now = new Date();
+  document.getElementById('current-date').textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+  document.getElementById('current-time').textContent = now.toLocaleTimeString('id-ID');
+}
+updateDateTime();
+setInterval(updateDateTime, 1000);
+
+// Navigation
+const sidebarItems = document.querySelectorAll('.sidebar-item');
+const moduleContents = document.querySelectorAll('.module-content');
+const moduleTitle = document.getElementById('module-title');
+const moduleSubtitle = document.getElementById('module-subtitle');
+const moduleInfo = {
+  'dashboard': { title: 'Dashboard', subtitle: 'Overview Grup Adaro Andalan Indonesia' },
+  'produksi': { title: 'Produksi Tambang', subtitle: 'AI · BC · MIP — 32,74 juta ton (6M 2024)' },
+  'cadangan': { title: 'Cadangan & Sumber Daya', subtitle: 'Laporan JORC Juni 2024 · 917,4 Mt cadangan · 4.102 Mt sumber daya' },
+  'fleet': { title: 'Fleet & Logistik', subtitle: '178+ armada · 771.000 ton/hari kapasitas' },
+  'sdm': { title: 'SDM', subtitle: '3.073 karyawan · 44 TKA · 9 lokasi' },
+  'k3': { title: 'K3LH', subtitle: 'A-ZAM Program · ISO 45001:2018 · PROPER Emas' },
+  'lingkungan': { title: 'Lingkungan', subtitle: 'AMDAL · Reklamasi · Karbon · PROPER Emas' },
+  'keuangan': { title: 'Keuangan', subtitle: 'Laporan Konsolidasian · Audit PwC' },
+  'peta': { title: 'Peta Konsesi', subtitle: '5 Tambang Aktif · 2 Development · 4 Provinsi' },
+  'pit3d': { title: '3D Pit - Tutupan', subtitle: 'Pit Tutupan Utara AI · Cadangan 333,1 Mt' },
+  'rute': { title: 'Rute Barito-Taboneo', subtitle: 'Sungai Barito 220 km · Kelanis → Taboneo → Mother Vessel' },
+  'masterplan': { title: 'Master Plan Site', subtitle: 'Site AI Tabalong & Balangan · 23.942 Ha' },
+  'pemasaran': { title: 'Pemasaran Global', subtitle: 'Envirocoal® · 14 Negara · Blue-chip Customers' },
+  'ipo': { title: 'Info IPO AADI', subtitle: 'Rp 5.550/saham · BEI 5 Desember 2024 · Rp 4,32 T' }
+};
+
+let pit3dInitialized = false;
+
+sidebarItems.forEach(item => {
+  item.addEventListener('click', function(e) {
+    e.preventDefault();
+    const moduleName = this.getAttribute('data-module');
+    sidebarItems.forEach(i => i.classList.remove('active'));
+    this.classList.add('active');
+    moduleContents.forEach(c => c.classList.add('hidden'));
+    document.getElementById(`${moduleName}-module`).classList.remove('hidden');
+    moduleTitle.textContent = moduleInfo[moduleName].title;
+    moduleSubtitle.textContent = moduleInfo[moduleName].subtitle;
+    if (moduleName === 'pit3d' && !pit3dInitialized) {
+      setTimeout(initPit3D, 100);
+      pit3dInitialized = true;
+    }
+  });
+});
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.classList.add('bg-gray-100'); });
+    this.classList.add('active');
+    this.classList.remove('bg-gray-100');
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    document.getElementById('tab-' + this.dataset.tab).classList.remove('hidden');
+  });
+});
+
+// 3D Pit Hole - Tutupan Utara
+function initPit3D() {
+  const container = document.getElementById('pit3d-container');
+  if (!container) return;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87CEEB);
+  scene.fog = new THREE.Fog(0x87CEEB, 800, 1800);
+  const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 3000);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.shadowMap.enabled = true;
+  container.appendChild(renderer.domElement);
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
+  scene.add(ambientLight);
+  const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.0);
+  sunLight.position.set(300, 500, 200);
+  sunLight.castShadow = true;
+  scene.add(sunLight);
+  const fillLight = new THREE.DirectionalLight(0x87CEEB, 0.3);
+  fillLight.position.set(-200, 200, -200);
+  scene.add(fillLight);
+
+  const pitGroup = new THREE.Group();
+  scene.add(pitGroup);
+
+  // Ground with hole
+  const groundShape = new THREE.Shape();
+  groundShape.moveTo(-500, -500);
+  groundShape.lineTo(500, -500);
+  groundShape.lineTo(500, 500);
+  groundShape.lineTo(-500, 500);
+  groundShape.lineTo(-500, -500);
+  const holePath = new THREE.Path();
+  const rimRx = 220, rimRy = 155;
+  for (let i = 0; i <= 64; i++) {
+    const angle = (i / 64) * Math.PI * 2;
+    const x = Math.cos(angle) * rimRx;
+    const y = Math.sin(angle) * rimRy;
+    if (i === 0) holePath.moveTo(x, y); else holePath.lineTo(x, y);
+  }
+  groundShape.holes.push(holePath);
+  const groundGeom = new THREE.ShapeGeometry(groundShape);
+  const groundMat = new THREE.MeshLambertMaterial({ color: 0x6b8e23 });
+  const ground = new THREE.Mesh(groundGeom, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  pitGroup.add(ground);
+
+  // Benches
+  const benches = [
+    { outerRx: 220, outerRy: 155, innerRx: 200, innerRy: 140, y: 0, h: 15, color: 0x8B4513, name: 'Topsoil' },
+    { outerRx: 200, outerRy: 140, innerRx: 182, innerRy: 127, y: -15, h: 15, color: 0xA0522D, name: 'Clay' },
+    { outerRx: 182, outerRy: 127, innerRx: 164, innerRy: 115, y: -30, h: 15, color: 0x9E9E9E, name: 'OB-1' },
+    { outerRx: 164, outerRy: 115, innerRx: 147, innerRy: 103, y: -45, h: 15, color: 0x8a8a8a, name: 'OB-2' },
+    { outerRx: 147, outerRy: 103, innerRx: 131, innerRy: 92, y: -60, h: 15, color: 0x7a7a7a, name: 'OB-3' },
+    { outerRx: 131, outerRy: 92, innerRx: 116, innerRy: 81, y: -75, h: 15, color: 0x6a6a6a, name: 'OB-4' },
+    { outerRx: 116, outerRy: 81, innerRx: 102, innerRy: 71, y: -90, h: 15, color: 0x5a5a5a, name: 'OB-5' },
+    { outerRx: 102, outerRy: 71, innerRx: 89, innerRy: 62, y: -105, h: 15, color: 0x4a4a4a, name: 'Near Coal' },
+    { outerRx: 89, outerRy: 62, innerRx: 78, innerRy: 54, y: -120, h: 15, color: 0x1a1a1a, name: 'COAL SEAM 1', emissive: 0x332200 },
+    { outerRx: 78, outerRy: 54, innerRx: 69, innerRy: 48, y: -135, h: 15, color: 0x5a5a5a, name: 'Interburden' },
+    { outerRx: 69, outerRy: 48, innerRx: 60, innerRy: 42, y: -150, h: 15, color: 0x0f0f0f, name: 'COAL SEAM 2', emissive: 0x332200 },
+    { outerRx: 60, outerRy: 42, innerRx: 52, innerRy: 36, y: -165, h: 15, color: 0x4a4a4a, name: 'Floor' }
+  ];
+
+  benches.forEach(b => {
+    const floorShape = new THREE.Shape();
+    for (let i = 0; i <= 64; i++) {
+      const angle = (i / 64) * Math.PI * 2;
+      const x = Math.cos(angle) * b.outerRx;
+      const y = Math.sin(angle) * b.outerRy;
+      if (i === 0) floorShape.moveTo(x, y); else floorShape.lineTo(x, y);
+    }
+    const hole = new THREE.Path();
+    for (let i = 0; i <= 64; i++) {
+      const angle = (i / 64) * Math.PI * 2;
+      const x = Math.cos(angle) * b.innerRx;
+      const y = Math.sin(angle) * b.innerRy;
+      if (i === 0) hole.moveTo(x, y); else hole.lineTo(x, y);
+    }
+    floorShape.holes.push(hole);
+    const floorGeom = new THREE.ShapeGeometry(floorShape);
+    const floorMat = new THREE.MeshLambertMaterial({ color: b.color, emissive: b.emissive || 0x000000, emissiveIntensity: b.emissive ? 0.3 : 0 });
+    const floor = new THREE.Mesh(floorGeom, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = b.y;
+    floor.receiveShadow = true;
+    pitGroup.add(floor);
+
+    const segments = 64;
+    const riserGeom = new THREE.BufferGeometry();
+    const vertices = [];
+    const indices = [];
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI * 2;
+      const x = Math.cos(angle) * b.innerRx;
+      const z = Math.sin(angle) * b.innerRy;
+      vertices.push(x, b.y, z);
+      vertices.push(x, b.y - b.h, z);
+    }
+    for (let i = 0; i < segments; i++) {
+      const a = i * 2, bIdx = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
+      indices.push(a, bIdx, c); indices.push(bIdx, d, c);
+    }
+    riserGeom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    riserGeom.setIndex(indices);
+    riserGeom.computeVertexNormals();
+    const riserColor = new THREE.Color(b.color).multiplyScalar(0.55);
+    const riserMat = new THREE.MeshLambertMaterial({ color: riserColor, side: THREE.DoubleSide });
+    const riser = new THREE.Mesh(riserGeom, riserMat);
+    riser.castShadow = true; riser.receiveShadow = true;
+    pitGroup.add(riser);
+
+    const contourPoints = [];
+    for (let i = 0; i <= 64; i++) {
+      const angle = (i / 64) * Math.PI * 2;
+      contourPoints.push(new THREE.Vector3(Math.cos(angle) * b.outerRx, b.y + 0.2, Math.sin(angle) * b.outerRy));
+    }
+    const contourGeom = new THREE.BufferGeometry().setFromPoints(contourPoints);
+    const contourMat = new THREE.LineBasicMaterial({ color: b.name.includes('COAL') ? 0xfbbf24 : 0xffffff, linewidth: 2, transparent: true, opacity: 0.9 });
+    pitGroup.add(new THREE.Line(contourGeom, contourMat));
+  });
+
+  // Water pool
+  const waterShape = new THREE.Shape();
+  for (let i = 0; i <= 32; i++) {
+    const angle = (i / 32) * Math.PI * 2;
+    const x = Math.cos(angle) * 40;
+    const y = Math.sin(angle) * 28;
+    if (i === 0) waterShape.moveTo(x, y); else waterShape.lineTo(x, y);
+  }
+  const waterGeom = new THREE.ShapeGeometry(waterShape);
+  const waterMat = new THREE.MeshLambertMaterial({ color: 0x4a90e2, transparent: true, opacity: 0.75, emissive: 0x1e3a8a, emissiveIntensity: 0.2 });
+  const water = new THREE.Mesh(waterGeom, waterMat);
+  water.rotation.x = -Math.PI / 2;
+  water.position.y = -178;
+  pitGroup.add(water);
+
+  // Ramp
+  const rampPoints = [];
+  for (let i = 0; i <= 120; i++) {
+    const t = i / 120;
+    const angle = t * Math.PI * 2.5;
+    const radius = 220 - (t * 170);
+    rampPoints.push(new THREE.Vector3(Math.cos(angle) * radius, -t * 180 + 1, Math.sin(angle) * radius * 0.7));
+  }
+  const rampCurve = new THREE.CatmullRomCurve3(rampPoints);
+  const rampTubeGeom = new THREE.TubeGeometry(rampCurve, 200, 4, 8, false);
+  const rampMat = new THREE.MeshLambertMaterial({ color: 0xd4a574 });
+  const ramp = new THREE.Mesh(rampTubeGeom, rampMat);
+  ramp.castShadow = true; ramp.receiveShadow = true;
+  pitGroup.add(ramp);
+
+  // Labels
+  const createLabel = (text, x, y, z, color = '#ffffff', bgColor = 'rgba(0,0,0,0.75)') => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = bgColor; ctx.fillRect(0, 0, 256, 64);
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.strokeRect(2, 2, 252, 60);
+    ctx.fillStyle = color; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, 128, 32);
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.position.set(x, y, z); sprite.scale.set(45, 11, 1); sprite.renderOrder = 999;
+    pitGroup.add(sprite);
+  };
+  createLabel('+195m (Rim)', 260, 0, 0);
+  createLabel('+165m', 260, -15, 0);
+  createLabel('+135m', 260, -30, 0);
+  createLabel('+105m', 260, -45, 0);
+  createLabel('+75m', 260, -60, 0);
+  createLabel('+45m', 260, -75, 0);
+  createLabel('★ +15m COAL 1', 260, -120, 0, '#fbbf24', 'rgba(120,53,15,0.9)');
+  createLabel('★ COAL SEAM 2', 260, -150, 0, '#fbbf24', 'rgba(120,53,15,0.9)');
+  createLabel('+15m (Floor)', 260, -165, 0);
+  createLabel('PIT TUTUPAN UTARA', 0, 30, 0, '#dc2626', 'rgba(0,0,0,0.9)');
+  createLabel('AI · 333,1 Mt', 0, 15, 0, '#fbbf24', 'rgba(0,0,0,0.9)');
+
+  // Equipment
+  const makeExcavator = (x, y, z) => {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 4), new THREE.MeshLambertMaterial({ color: 0xf59e0b }));
+    body.position.y = 1.5; g.add(body);
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(3, 2, 3), new THREE.MeshLambertMaterial({ color: 0x1f2937 }));
+    cab.position.set(-1, 3.5, 0); g.add(cab);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(8, 0.8, 0.8), new THREE.MeshLambertMaterial({ color: 0xf59e0b }));
+    arm.position.set(5, 2.5, 0); arm.rotation.z = -0.3; g.add(arm);
+    g.position.set(x, y, z); return g;
+  };
+  pitGroup.add(makeExcavator(-50, -120, 30));
+  pitGroup.add(makeExcavator(40, -120, -20));
+
+  // Trees
+  const treeMat = new THREE.MeshLambertMaterial({ color: 0x2d5016 });
+  const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5d4037 });
+  for (let i = 0; i < 80; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 250 + Math.random() * 200;
+    const x = Math.cos(angle) * dist;
+    const z = Math.sin(angle) * dist * 0.8;
+    if ((x*x)/(240*240) + (z*z)/(170*170) < 1) continue;
+    const tree = new THREE.Group();
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 4, 6), trunkMat);
+    trunk.position.y = 2; tree.add(trunk);
+    const leaves = new THREE.Mesh(new THREE.ConeGeometry(3, 7, 6), treeMat);
+    leaves.position.y = 7; tree.add(leaves);
+    tree.position.set(x, 0, z);
+    tree.scale.setScalar(0.8 + Math.random() * 0.5);
+    pitGroup.add(tree);
+  }
+
+  // Rim marker
+  const rimPoints = [];
+  for (let i = 0; i <= 64; i++) {
+    const angle = (i / 64) * Math.PI * 2;
+    rimPoints.push(new THREE.Vector3(Math.cos(angle) * 222, 0.5, Math.sin(angle) * 157));
+  }
+  const rimGeom = new THREE.BufferGeometry().setFromPoints(rimPoints);
+  pitGroup.add(new THREE.Line(rimGeom, new THREE.LineBasicMaterial({ color: 0xdc2626, linewidth: 3 })));
+
+  // Camera controls
+  let spherical = { theta: Math.PI / 4, phi: Math.PI / 3.2, radius: 500 };
+  let autoRotate = true;
+  let isDragging = false, prevMouse = { x: 0, y: 0 };
+  const updateCamera = () => {
+    camera.position.x = spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+    camera.position.y = spherical.radius * Math.cos(spherical.phi) - 50;
+    camera.position.z = spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+    camera.lookAt(0, -90, 0);
+  };
+  updateCamera();
+
+  container.addEventListener('mousedown', (e) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; autoRotate = false; });
+  container.addEventListener('mouseup', () => isDragging = false);
+  container.addEventListener('mouseleave', () => isDragging = false);
+  container.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - prevMouse.x, dy = e.clientY - prevMouse.y;
+    spherical.theta -= dx * 0.008;
+    spherical.phi = Math.max(0.15, Math.min(Math.PI / 2 - 0.05, spherical.phi - dy * 0.008));
+    prevMouse = { x: e.clientX, y: e.clientY };
+    updateCamera();
+  });
+  container.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    spherical.radius = Math.max(200, Math.min(1000, spherical.radius + e.deltaY * 0.5));
+    updateCamera();
+  }, { passive: false });
+
+  document.getElementById('btn-top').addEventListener('click', () => { spherical = { theta: 0, phi: 0.15, radius: 500 }; autoRotate = false; updateCamera(); });
+  document.getElementById('btn-side').addEventListener('click', () => { spherical = { theta: 0, phi: Math.PI / 2 - 0.1, radius: 500 }; autoRotate = false; updateCamera(); });
+  document.getElementById('btn-rotate').addEventListener('click', () => { autoRotate = !autoRotate; });
+  document.getElementById('btn-reset').addEventListener('click', () => { spherical = { theta: Math.PI / 4, phi: Math.PI / 3.2, radius: 500 }; autoRotate = true; updateCamera(); });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    if (autoRotate) { spherical.theta += 0.003; updateCamera(); }
+    water.material.opacity = 0.65 + Math.sin(Date.now() * 0.002) * 0.1;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  });
+}
+</script>
+</body>
+</html>

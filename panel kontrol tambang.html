@@ -1,0 +1,2031 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoalMine Control Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;}
+:root{
+  --bg:#0a0e17;--panel:#111827;--card:#1a2234;--card2:#212b3f;
+  --border:#2a3441;--text:#e5e7eb;--dim:#94a3b8;
+  --accent:#f59e0b;--accent2:#d97706;--green:#10b981;
+  --red:#ef4444;--blue:#3b82f6;--purple:#8b5cf6;
+}
+body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:#3a4757;}
+
+/* LAYOUT */
+.sidebar{width:240px;background:var(--panel);border-right:1px solid var(--border);
+  padding:18px 0;position:fixed;height:100vh;overflow-y:auto;z-index:100;transition:transform .3s;}
+.logo{padding:0 18px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.logo-text h2{font-size:15px;font-weight:700;letter-spacing:.5px;}
+.logo-text p{font-size:10px;color:var(--dim);text-transform:uppercase;}
+.nav-menu{padding:14px 0;list-style:none;}
+.nav-section{padding:14px 18px 6px;font-size:9px;color:var(--dim);
+  text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+.nav-item{padding:9px 18px;display:flex;align-items:center;gap:11px;cursor:pointer;
+  color:var(--dim);transition:all .2s;border-left:3px solid transparent;font-size:12.5px;}
+.nav-item:hover{background:rgba(245,158,11,.05);color:var(--text);}
+.nav-item.active{background:rgba(245,158,11,.1);color:var(--accent);border-left-color:var(--accent);}
+.nav-item .icon{font-size:15px;width:18px;text-align:center;}
+
+.main{margin-left:240px;flex:1;padding:18px 22px;min-height:100vh;width:calc(100% - 240px);}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;
+  padding-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px;}
+.topbar h1{font-size:20px;font-weight:600;}
+.topbar p{color:var(--dim);font-size:11.5px;margin-top:3px;}
+.topbar-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.badge-status{display:flex;align-items:center;gap:6px;padding:6px 12px;
+  background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);
+  border-radius:20px;font-size:11px;color:var(--green);}
+.pulse-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,.7);}
+  50%{opacity:.7;box-shadow:0 0 0 6px rgba(16,185,129,0);}}
+.clock{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums;}
+.clock strong{color:var(--text);}
+.user{padding:6px 12px;background:var(--card);border-radius:20px;border:1px solid var(--border);
+  display:flex;align-items:center;gap:9px;}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;}
+
+/* BUTTONS */
+.btn{padding:8px 14px;background:var(--accent);border:none;border-radius:6px;color:#000;
+  font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;
+  align-items:center;gap:6px;white-space:nowrap;}
+.btn:hover{background:var(--accent2);transform:translateY(-1px);}
+.btn.sec{background:transparent;color:var(--text);border:1px solid var(--border);}
+.btn.sec:hover{background:var(--card2);border-color:var(--accent);color:var(--accent);}
+.btn.danger{background:var(--red);color:#fff;}
+.btn.danger:hover{background:#dc2626;}
+.btn.success{background:var(--green);color:#fff;}
+.btn.success:hover{background:#059669;}
+.btn.sm{padding:5px 10px;font-size:11px;}
+.btn.xs{padding:3px 8px;font-size:10px;border-radius:4px;}
+.btn-group{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));
+  gap:14px;margin-bottom:18px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:16px;position:relative;overflow:hidden;transition:transform .2s;}
+.stat-card:hover{transform:translateY(-2px);border-color:rgba(245,158,11,.3);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent);}
+.stat-card.green::before{background:var(--green);}
+.stat-card.blue::before{background:var(--blue);}
+.stat-card.red::before{background:var(--red);}
+.stat-card.purple::before{background:var(--purple);}
+.stat-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.stat-label{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;}
+.stat-icon{font-size:20px;opacity:.8;}
+.stat-value{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:5px;}
+.stat-value span{font-size:12px;color:var(--dim);font-weight:400;}
+.stat-change{font-size:11px;}
+.stat-change.up{color:var(--green);}
+.stat-change.down{color:var(--red);}
+
+/* PANEL */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;}
+.panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;}
+.panel-title{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.panel-title .dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:none;}
+
+.grid-2{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;}
+.grid-2e{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:16px;}
+
+/* TABLES */
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);max-height:520px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;padding:10px 12px;color:var(--dim);font-weight:600;text-transform:uppercase;
+  font-size:10px;letter-spacing:.5px;background:var(--panel);border-bottom:1px solid var(--border);
+  white-space:nowrap;position:sticky;top:0;z-index:1;}
+td{padding:10px 12px;border-bottom:1px solid rgba(42,52,65,.5);white-space:nowrap;}
+tbody tr:hover td{background:rgba(255,255,255,.02);}
+tbody tr:last-child td{border-bottom:none;}
+
+.badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:600;}
+.badge.green{background:rgba(16,185,129,.15);color:var(--green);}
+.badge.yellow{background:rgba(245,158,11,.15);color:var(--accent);}
+.badge.red{background:rgba(239,68,68,.15);color:var(--red);}
+.badge.blue{background:rgba(59,130,246,.15);color:var(--blue);}
+.badge.purple{background:rgba(139,92,246,.15);color:var(--purple);}
+.badge.gray{background:rgba(148,163,184,.15);color:var(--dim);}
+
+/* EQUIPMENT LIST */
+.eq-list{display:flex;flex-direction:column;gap:9px;max-height:400px;overflow-y:auto;padding-right:4px;}
+.eq-item{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;
+  padding:10px 12px;background:rgba(255,255,255,.02);border-radius:8px;
+  border:1px solid transparent;transition:all .2s;cursor:pointer;}
+.eq-item:hover{border-color:var(--border);background:rgba(255,255,255,.04);}
+.eq-icon{width:34px;height:34px;background:rgba(59,130,246,.1);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;}
+.eq-name{font-size:12.5px;font-weight:500;}
+.eq-meta{font-size:10.5px;color:var(--dim);margin-top:2px;}
+
+/* ALERTS */
+.alerts{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;padding-right:4px;}
+.alert{display:flex;gap:10px;padding:10px;background:rgba(255,255,255,.02);border-radius:6px;
+  border-left:3px solid var(--accent);align-items:center;}
+.alert.danger{border-left-color:var(--red);}
+.alert.info{border-left-color:var(--blue);}
+.alert.success{border-left-color:var(--green);}
+.alert-icon{font-size:16px;}
+.alert-title{font-size:12px;font-weight:500;}
+.alert-time{font-size:10px;color:var(--dim);margin-top:3px;}
+
+/* PROGRESS */
+.progress-item{margin-bottom:13px;}
+.progress-header{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;}
+.progress-header span:last-child{color:var(--dim);font-variant-numeric:tabular-nums;}
+.progress-bar{height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+
+/* MAP */
+.map-box{height:340px;background:linear-gradient(135deg,#0f1720 0%,#1a2234 100%);
+  border-radius:8px;position:relative;overflow:hidden;border:1px solid var(--border);}
+.map-grid{position:absolute;inset:0;
+  background-image:linear-gradient(rgba(245,158,11,.05) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(245,158,11,.05) 1px,transparent 1px);
+  background-size:32px 32px;}
+.map-marker{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 10px var(--green);cursor:pointer;transition:transform .2s;z-index:2;}
+.map-marker:hover{transform:scale(1.6);z-index:10;}
+.map-marker.warn{background:var(--accent);box-shadow:0 0 10px var(--accent);}
+.map-marker.danger{background:var(--red);box-shadow:0 0 10px var(--red);}
+.map-marker.blue{background:var(--blue);box-shadow:0 0 10px var(--blue);}
+.map-marker::after{content:attr(data-label);position:absolute;left:18px;top:-4px;
+  font-size:10px;white-space:nowrap;color:var(--text);background:rgba(0,0,0,.85);
+  padding:3px 8px;border-radius:4px;opacity:0;transition:opacity .2s;pointer-events:none;}
+.map-marker:hover::after{opacity:1;}
+
+/* FORM */
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11.5px;color:var(--dim);margin-bottom:6px;font-weight:500;}
+.form-group label .req{color:var(--red);}
+.form-control{width:100%;padding:9px 12px;background:var(--panel);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);font-size:12.5px;font-family:inherit;transition:border-color .2s;}
+.form-control:focus{outline:none;border-color:var(--accent);}
+select.form-control{cursor:pointer;}
+textarea.form-control{resize:vertical;min-height:80px;font-family:inherit;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;
+  align-items:center;justify-content:center;z-index:1000;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.modal.lg{max-width:800px;}
+.modal.xl{max-width:1100px;}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;
+  background:var(--card);z-index:2;}
+.modal-header h3{font-size:15px;font-weight:600;}
+.modal-close{background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;
+  width:30px;height:30px;border-radius:6px;transition:all .2s;display:flex;
+  align-items:center;justify-content:center;}
+.modal-close:hover{background:rgba(239,68,68,.1);color:var(--red);}
+.modal-body{padding:20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);
+  display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:var(--card);}
+
+/* TOAST */
+.toast-wrap{position:fixed;top:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:10px;}
+.toast{padding:12px 18px;background:var(--card);border:1px solid var(--border);border-radius:8px;
+  border-left:4px solid var(--green);min-width:260px;box-shadow:0 10px 30px rgba(0,0,0,.4);
+  animation:slideIn .3s ease;font-size:12.5px;display:flex;align-items:center;gap:10px;}
+.toast.error{border-left-color:var(--red);}
+.toast.warn{border-left-color:var(--accent);}
+.toast.info{border-left-color:var(--blue);}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* TABS */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;
+  overflow-x:auto;padding-bottom:0;}
+.tab{padding:9px 16px;background:transparent;border:none;color:var(--dim);font-size:12.5px;
+  cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;
+  font-weight:500;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* STUDIO */
+.studio-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  padding:14px;background:var(--card2);border-radius:10px;margin-bottom:16px;
+  border:1px solid var(--border);}
+.record-actions{display:flex;gap:4px;}
+
+/* SEARCH */
+.search-bar{position:relative;flex:1;min-width:180px;max-width:320px;}
+.search-bar input{width:100%;padding:8px 12px 8px 32px;background:var(--panel);
+  border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;}
+.search-bar input:focus{outline:none;border-color:var(--accent);}
+.search-bar::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  font-size:12px;opacity:.5;}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px;}
+.kpi{background:var(--card2);padding:14px;border-radius:8px;border:1px solid var(--border);}
+.kpi-label{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.kpi-value{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;}
+.kpi-value.green{color:var(--green);}
+.kpi-value.red{color:var(--red);}
+.kpi-value.blue{color:var(--blue);}
+.kpi-value.yellow{color:var(--accent);}
+
+.empty{text-align:center;padding:40px 20px;color:var(--dim);}
+.empty-icon{font-size:42px;margin-bottom:10px;opacity:.5;}
+
+.menu-toggle{display:none;background:var(--card);border:1px solid var(--border);
+  color:var(--text);padding:8px 12px;border-radius:6px;cursor:pointer;font-size:14px;}
+
+/* ERROR OVERLAY */
+#error-box{position:fixed;bottom:10px;left:10px;right:10px;background:rgba(239,68,68,.95);
+  color:#fff;padding:12px 16px;border-radius:8px;z-index:9999;font-size:12px;
+  font-family:monospace;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+
+@media(max-width:1200px){.grid-3{grid-template-columns:1fr 1fr;}}
+@media(max-width:1024px){.grid-2,.grid-2e{grid-template-columns:1fr;}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;width:100%;padding:14px;}
+  .grid-3,.form-row{grid-template-columns:1fr;}
+  .topbar h1{font-size:17px;}
+  .menu-toggle{display:block;}
+}
+</style>
+</head>
+<body>
+
+<div id="error-box"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="logo">
+    <div class="logo-icon">⛏️</div>
+    <div class="logo-text">
+      <h2 id="brandName">COALMINE</h2>
+      <p>Control Panel</p>
+    </div>
+  </div>
+  <ul class="nav-menu">
+    <li class="nav-section">Operasional</li>
+    <li class="nav-item active" data-page="dashboard"><span class="icon">📊</span> Dashboard</li>
+    <li class="nav-item" data-page="production"><span class="icon">🏗️</span> Produksi</li>
+    <li class="nav-item" data-page="equipment"><span class="icon">🚛</span> Peralatan</li>
+    <li class="nav-item" data-page="fleet"><span class="icon">🚜</span> Fleet Tracking</li>
+    <li class="nav-item" data-page="safety"><span class="icon">🦺</span> Keselamatan K3</li>
+    <li class="nav-item" data-page="workers"><span class="icon">👷</span> Karyawan</li>
+    <li class="nav-item" data-page="inventory"><span class="icon">📦</span> Inventori</li>
+    <li class="nav-section">Manajemen</li>
+    <li class="nav-item" data-page="finance"><span class="icon">💰</span> Keuangan</li>
+    <li class="nav-item" data-page="reports"><span class="icon">📄</span> Laporan</li>
+    <li class="nav-item" data-page="alerts"><span class="icon">🔔</span> Peringatan</li>
+    <li class="nav-section">Sistem</li>
+    <li class="nav-item" data-page="studio"><span class="icon">🎨</span> Studio Editor</li>
+    <li class="nav-item" data-page="settings"><span class="icon">⚙️</span> Pengaturan</li>
+  </ul>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:240px;">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageSubtitle">Ringkasan operasional tambang batu bara</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="badge-status"><span class="pulse-dot"></span> Online</div>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="user">
+        <div class="avatar" id="userAvatar">AD</div>
+        <div>
+          <div style="font-size:11.5px;font-weight:600;" id="userName">Admin</div>
+          <div style="font-size:10px;color:var(--dim);" id="userRole">Supervisor</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="pageContent"></div>
+</main>
+
+<div class="modal-overlay" id="modal-overlay"></div>
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+/* =========================================================
+   GLOBAL ERROR HANDLER
+========================================================= */
+window.onerror = function(msg, url, line, col, error) {
+  var box = document.getElementById('error-box');
+  if (box) {
+    box.textContent = '⚠ Error: ' + msg + ' (baris ' + line + ')';
+    box.style.display = 'block';
+    setTimeout(function(){ box.style.display = 'none'; }, 12000);
+  }
+  console.error('CoalMine Error:', msg, 'line', line);
+  return false;
+};
+
+/* =========================================================
+   DATABASE
+========================================================= */
+var DB_KEY = 'coalmine_db_v3';
+
+var seedData = {
+  production: [
+    {id:'P001', date:'2024-06-10', pit:'Pit A', material:'Coal', tonnage:1250, quality:'Premium', operator:'Budi Santoso', shift:'Pagi'},
+    {id:'P002', date:'2024-06-10', pit:'Pit B', material:'Coal', tonnage:980, quality:'Medium', operator:'Ahmad Wijaya', shift:'Pagi'},
+    {id:'P003', date:'2024-06-10', pit:'Pit A', material:'Overburden', tonnage:3400, quality:'-', operator:'Rudi Hartono', shift:'Siang'},
+    {id:'P004', date:'2024-06-09', pit:'Pit C', material:'Coal', tonnage:1120, quality:'Premium', operator:'Joko Susilo', shift:'Pagi'},
+    {id:'P005', date:'2024-06-09', pit:'Pit B', material:'Coal', tonnage:890, quality:'Medium', operator:'Siti Nurhaliza', shift:'Siang'},
+    {id:'P006', date:'2024-06-08', pit:'Pit A', material:'Coal', tonnage:1340, quality:'Premium', operator:'Hendra Gunawan', shift:'Pagi'},
+    {id:'P007', date:'2024-06-08', pit:'Pit C', material:'Coal', tonnage:760, quality:'Low', operator:'Agus Setiawan', shift:'Malam'}
+  ],
+  equipment: [
+    {id:'EXC-001', name:'Excavator CAT 6015 #01', type:'Excavator', brand:'Caterpillar', year:2020, status:'Aktif', location:'Pit A', runtime:12450, lastMaint:'2024-05-15', nextMaint:'2024-07-15'},
+    {id:'DT-012', name:'Dump Truck Komatsu HD785', type:'Dump Truck', brand:'Komatsu', year:2019, status:'Aktif', location:'Hauling Route 2', runtime:18720, lastMaint:'2024-05-20', nextMaint:'2024-06-20'},
+    {id:'BD-003', name:'Bulldozer CAT D11', type:'Bulldozer', brand:'Caterpillar', year:2018, status:'Warning', location:'Pit B', runtime:22150, lastMaint:'2024-04-10', nextMaint:'2024-06-10'},
+    {id:'DT-008', name:'Dump Truck Volvo A60H', type:'Dump Truck', brand:'Volvo', year:2021, status:'Aktif', location:'Hauling Route 1', runtime:9820, lastMaint:'2024-05-25', nextMaint:'2024-07-25'},
+    {id:'CR-001', name:'Crusher Primary #01', type:'Crusher', brand:'Metso', year:2017, status:'Maintenance', location:'Stockpile', runtime:35400, lastMaint:'2024-06-10', nextMaint:'2024-08-10'},
+    {id:'DR-002', name:'Drill Rig Atlas Copco', type:'Drill Rig', brand:'Atlas Copco', year:2022, status:'Aktif', location:'Pit C', runtime:6420, lastMaint:'2024-05-28', nextMaint:'2024-07-28'},
+    {id:'LD-005', name:'Loader WA800-3', type:'Loader', brand:'Komatsu', year:2019, status:'Offline', location:'Workshop', runtime:16890, lastMaint:'2024-04-05', nextMaint:'2024-06-05'},
+    {id:'CV-001', name:'Conveyor Belt System', type:'Conveyor', brand:'Continental', year:2020, status:'Aktif', location:'Stockpile', runtime:28600, lastMaint:'2024-05-30', nextMaint:'2024-07-30'}
+  ],
+  fleet: [
+    {id:'FL001', vehicleId:'DT-012', driver:'Ahmad Wijaya', lat:-2.1542, lng:115.3221, speed:35, fuel:78, status:'Moving', route:'Hauling Route 2'},
+    {id:'FL002', vehicleId:'DT-008', driver:'Siti Nurhaliza', lat:-2.1610, lng:115.3305, speed:0, fuel:45, status:'Loading', route:'Hauling Route 1'},
+    {id:'FL003', vehicleId:'DT-015', driver:'Budi Santoso', lat:-2.1488, lng:115.3189, speed:42, fuel:62, status:'Moving', route:'Hauling Route 2'},
+    {id:'FL004', vehicleId:'DT-020', driver:'Rudi Hartono', lat:-2.1702, lng:115.3410, speed:0, fuel:22, status:'Idle', route:'Pit C'},
+    {id:'FL005', vehicleId:'EXC-001', driver:'Joko Susilo', lat:-2.1500, lng:115.3250, speed:0, fuel:85, status:'Operating', route:'Pit A'},
+    {id:'FL006', vehicleId:'LD-005', driver:'Hendra Gunawan', lat:-2.1580, lng:115.3350, speed:0, fuel:12, status:'Maintenance', route:'Workshop'}
+  ],
+  workers: [
+    {id:'W001', name:'Budi Santoso', role:'Operator Excavator', dept:'Operasional', shift:'Pagi', phone:'0812-1111-2222', certExpiry:'2025-03-15', status:'Aktif'},
+    {id:'W002', name:'Ahmad Wijaya', role:'Driver Dump Truck', dept:'Hauling', shift:'Pagi', phone:'0812-2222-3333', certExpiry:'2025-06-20', status:'Aktif'},
+    {id:'W003', name:'Rudi Hartono', role:'Operator Bulldozer', dept:'Operasional', shift:'Siang', phone:'0812-3333-4444', certExpiry:'2024-12-01', status:'Aktif'},
+    {id:'W004', name:'Siti Nurhaliza', role:'Driver Dump Truck', dept:'Hauling', shift:'Siang', phone:'0812-4444-5555', certExpiry:'2025-08-10', status:'Aktif'},
+    {id:'W005', name:'Joko Susilo', role:'Drill Operator', dept:'Drilling', shift:'Pagi', phone:'0812-5555-6666', certExpiry:'2025-02-28', status:'Aktif'},
+    {id:'W006', name:'Hendra Gunawan', role:'Loader Operator', dept:'Operasional', shift:'Malam', phone:'0812-6666-7777', certExpiry:'2024-11-15', status:'Cuti'},
+    {id:'W007', name:'Agus Setiawan', role:'Supervisor', dept:'Operasional', shift:'Pagi', phone:'0812-7777-8888', certExpiry:'2026-01-20', status:'Aktif'},
+    {id:'W008', name:'Dedi Kurniawan', role:'Safety Officer', dept:'K3', shift:'Pagi', phone:'0812-8888-9999', certExpiry:'2025-09-05', status:'Aktif'}
+  ],
+  safety: [
+    {id:'S001', date:'2024-06-10', type:'Near Miss', severity:'Rendah', location:'Pit A', description:'Alat berat hampir bersenggolan', status:'Closed', reporter:'Dedi Kurniawan'},
+    {id:'S002', date:'2024-06-08', type:'Minor Injury', severity:'Sedang', location:'Workshop', description:'Pekerja tergores saat perbaikan conveyor', status:'Investigasi', reporter:'Dedi Kurniawan'},
+    {id:'S003', date:'2024-06-05', type:'Property Damage', severity:'Sedang', location:'Hauling Route 1', description:'Dump truck menabrak barrier', status:'Closed', reporter:'Agus Setiawan'},
+    {id:'S004', date:'2024-06-01', type:'Safety Observation', severity:'Rendah', location:'Stockpile', description:'Pekerja tidak menggunakan APD lengkap', status:'Closed', reporter:'Dedi Kurniawan'}
+  ],
+  inventory: [
+    {id:'I001', name:'Solar (HSD)', category:'Bahan Bakar', stock:12500, unit:'Liter', minStock:5000, location:'Fuel Station A', price:14500},
+    {id:'I002', name:'Oli Mesin SAE 15W-40', category:'Pelumas', stock:340, unit:'Liter', minStock:100, location:'Warehouse 1', price:65000},
+    {id:'I003', name:'Filter Udara CAT', category:'Sparepart', stock:45, unit:'Pcs', minStock:20, location:'Warehouse 1', price:850000},
+    {id:'I004', name:'Ban Dump Truck 24.00R35', category:'Sparepart', stock:8, unit:'Pcs', minStock:12, location:'Warehouse 2', price:45000000},
+    {id:'I005', name:'Helm Safety Proyek', category:'APD', stock:180, unit:'Pcs', minStock:100, location:'Warehouse 3', price:125000},
+    {id:'I006', name:'Hydraulic Oil ISO 46', category:'Pelumas', stock:520, unit:'Liter', minStock:200, location:'Warehouse 1', price:42000}
+  ],
+  finance: [
+    {id:'FN001', date:'2024-06-10', type:'Pemasukan', category:'Penjualan Batubara', description:'Penjualan 5,000 ton ke PT. PLN', amount:4250000000},
+    {id:'FN002', date:'2024-06-10', type:'Pengeluaran', category:'Bahan Bakar', description:'Pembelian solar 20,000 liter', amount:290000000},
+    {id:'FN003', date:'2024-06-09', type:'Pengeluaran', category:'Gaji', description:'Gaji karyawan mingguan', amount:850000000},
+    {id:'FN004', date:'2024-06-08', type:'Pemasukan', category:'Penjualan Batubara', description:'Penjualan 3,200 ton ke PT. Semen Indonesia', amount:2720000000},
+    {id:'FN005', date:'2024-06-07', type:'Pengeluaran', category:'Maintenance', description:'Perbaikan Crusher Primary', amount:175000000},
+    {id:'FN006', date:'2024-06-06', type:'Pengeluaran', category:'Operasional', description:'Biaya operasional tambang mingguan', amount:420000000}
+  ],
+  alerts: [
+    {id:'A001', type:'danger', icon:'🚨', title:'Suhu mesin Bulldozer BD-003 melebihi batas', time:new Date(Date.now()-120000).toISOString(), resolved:false},
+    {id:'A002', type:'warn', icon:'⚠️', title:'Jadwal maintenance Crusher Primary dalam 30 menit', time:new Date(Date.now()-900000).toISOString(), resolved:false},
+    {id:'A003', type:'info', icon:'ℹ️', title:'Shift pagi dimulai - 45 pekerja check-in', time:new Date(Date.now()-3600000).toISOString(), resolved:false},
+    {id:'A004', type:'success', icon:'✅', title:'Target produksi harian tercapai 92%', time:new Date(Date.now()-7200000).toISOString(), resolved:true},
+    {id:'A005', type:'warn', icon:'⛽', title:'Stok solar di Fuel Station A tersisa 15%', time:new Date(Date.now()-10800000).toISOString(), resolved:false}
+  ],
+  settings: {
+    companyName: 'PT. CoalMine Nusantara',
+    brandName: 'COALMINE',
+    userName: 'Admin',
+    userRole: 'Supervisor',
+    currency: 'Rp',
+    monthlyTarget: 312500
+  }
+};
+
+var DB;
+function loadDB() {
+  try {
+    var raw = localStorage.getItem(DB_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      // ensure all keys exist
+      Object.keys(seedData).forEach(function(k){
+        if (!parsed[k]) parsed[k] = JSON.parse(JSON.stringify(seedData[k]));
+      });
+      return parsed;
+    }
+  } catch(e) { console.warn('localStorage error:', e); }
+  return JSON.parse(JSON.stringify(seedData));
+}
+function saveDB() {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(DB)); }
+  catch(e) { console.warn('Cannot save:', e); }
+}
+function resetDB() {
+  if (!confirm('Reset semua data ke default?')) return;
+  DB = JSON.parse(JSON.stringify(seedData));
+  saveDB();
+  renderPage(currentPage);
+  toast('Data direset ke default', 'info');
+}
+
+DB = loadDB();
+
+/* =========================================================
+   UTILITIES
+========================================================= */
+function uid(prefix){ prefix = prefix || 'X'; return prefix + Math.random().toString(36).substring(2,8).toUpperCase(); }
+function fmt(n){ try{ return new Intl.NumberFormat('id-ID').format(n||0); }catch(e){ return String(n||0); } }
+function fmtCur(n){ return (DB.settings.currency||'Rp') + ' ' + fmt(n); }
+function fmtDate(d){
+  if(!d) return '-';
+  try{
+    var dt = new Date(d);
+    if(isNaN(dt.getTime())) return String(d);
+    return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+  }catch(e){ return String(d); }
+}
+function fmtDateTime(d){
+  if(!d) return '-';
+  try{
+    var dt = new Date(d);
+    if(isNaN(dt.getTime())) return String(d);
+    return dt.toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  }catch(e){ return String(d); }
+}
+function timeAgo(iso){
+  try{
+    var s = Math.floor((Date.now() - new Date(iso).getTime())/1000);
+    if(s < 0) s = 0;
+    if(s < 60) return s + ' detik lalu';
+    if(s < 3600) return Math.floor(s/60) + ' menit lalu';
+    if(s < 86400) return Math.floor(s/3600) + ' jam lalu';
+    return Math.floor(s/86400) + ' hari lalu';
+  }catch(e){ return '-'; }
+}
+function esc(s){
+  return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function(m){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+  });
+}
+function toast(msg, type){
+  type = type || 'success';
+  var wrap = document.getElementById('toast-wrap');
+  if(!wrap) return;
+  var el = document.createElement('div');
+  el.className = 'toast ' + type;
+  var icons = {success:'✅', error:'❌', warn:'⚠️', info:'ℹ️'};
+  el.innerHTML = '<span>' + (icons[type]||'ℹ️') + '</span><span>' + esc(msg) + '</span>';
+  wrap.appendChild(el);
+  setTimeout(function(){ el.remove(); }, 3500);
+}
+
+/* =========================================================
+   CLOCK
+========================================================= */
+function updateClock(){
+  var now = new Date();
+  var t = now.toLocaleTimeString('id-ID',{hour12:false});
+  var d = now.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var el = document.getElementById('clock');
+  if(el) el.innerHTML = '<strong>' + t + '</strong> WIB · ' + d;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* =========================================================
+   SIDEBAR TOGGLE
+========================================================= */
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+function showModal(opts){
+  var overlay = document.getElementById('modal-overlay');
+  var sizeCls = opts.size ? ' ' + opts.size : '';
+  var footerHtml = opts.footer ? '<div class="modal-footer">' + opts.footer + '</div>' : '';
+  overlay.innerHTML =
+    '<div class="modal' + sizeCls + '">' +
+      '<div class="modal-header">' +
+        '<h3>' + esc(opts.title) + '</h3>' +
+        '<button class="modal-close" onclick="closeModal()">×</button>' +
+      '</div>' +
+      '<div class="modal-body">' + opts.body + '</div>' +
+      footerHtml +
+    '</div>';
+  overlay.classList.add('show');
+}
+function closeModal(){
+  var overlay = document.getElementById('modal-overlay');
+  overlay.classList.remove('show');
+  overlay.innerHTML = '';
+}
+document.getElementById('modal-overlay').addEventListener('click', function(e){
+  if(e.target.id === 'modal-overlay') closeModal();
+});
+
+/* =========================================================
+   ROUTER
+========================================================= */
+var currentPage = 'dashboard';
+var activeCharts = [];
+
+var pageMeta = {
+  dashboard: {t:'Dashboard', s:'Ringkasan operasional tambang batu bara'},
+  production: {t:'Produksi', s:'Manajemen data produksi batubara'},
+  equipment: {t:'Peralatan', s:'Manajemen armada & equipment'},
+  fleet: {t:'Fleet Tracking', s:'Pelacakan kendaraan operasional'},
+  safety: {t:'Keselamatan K3', s:'Monitoring insiden & keselamatan kerja'},
+  workers: {t:'Karyawan', s:'Manajemen sumber daya manusia'},
+  inventory: {t:'Inventori', s:'Manajemen stok material & sparepart'},
+  finance: {t:'Keuangan', s:'Laporan keuangan & biaya operasional'},
+  reports: {t:'Laporan', s:'Generate dan analisis laporan'},
+  alerts: {t:'Peringatan', s:'Semua notifikasi & alert sistem'},
+  studio: {t:'Studio Editor', s:'Editor lengkap untuk semua data aplikasi'},
+  settings: {t:'Pengaturan', s:'Konfigurasi sistem & preferensi'}
+};
+
+function go(page){
+  var item = document.querySelector('.nav-item[data-page="' + page + '"]');
+  if(item) item.click();
+}
+
+document.querySelectorAll('.nav-item').forEach(function(item){
+  item.addEventListener('click', function(){
+    document.querySelectorAll('.nav-item').forEach(function(i){ i.classList.remove('active'); });
+    item.classList.add('active');
+    currentPage = item.getAttribute('data-page');
+    var meta = pageMeta[currentPage] || pageMeta.dashboard;
+    document.getElementById('pageTitle').textContent = meta.t;
+    document.getElementById('pageSubtitle').textContent = meta.s;
+    var sb = document.getElementById('sidebar');
+    if(sb) sb.classList.remove('open');
+    renderPage(currentPage);
+  });
+});
+
+function renderPage(page){
+  try {
+    activeCharts.forEach(function(c){ try { c.destroy(); } catch(e){} });
+    activeCharts = [];
+    var el = document.getElementById('pageContent');
+    var renderer = pages[page] || pages.dashboard;
+    el.innerHTML = renderer();
+    if (postRender[page]) {
+      try { postRender[page](); } catch(e){ console.warn('postRender error:', e); }
+    }
+  } catch(e) {
+    console.error('renderPage error:', e);
+    document.getElementById('pageContent').innerHTML =
+      '<div class="panel" style="color:var(--red);"><strong>Error:</strong> ' + esc(e.message) + '</div>';
+  }
+}
+
+/* =========================================================
+   HELPER BADGES
+========================================================= */
+function statusBadge(s){
+  var map = {'Aktif':'green','Warning':'yellow','Offline':'red','Maintenance':'blue'};
+  return '<span class="badge ' + (map[s]||'gray') + '">' + esc(s) + '</span>';
+}
+function fleetStatusBadge(s){
+  var map = {'Moving':'green','Loading':'blue','Idle':'yellow','Operating':'purple','Maintenance':'red'};
+  return '<span class="badge ' + (map[s]||'gray') + '">' + esc(s) + '</span>';
+}
+function qualityBadge(q){
+  var map = {'Premium':'green','Medium':'yellow','Low':'red'};
+  return '<span class="badge ' + (map[q]||'gray') + '">' + esc(q) + '</span>';
+}
+function severityBadge(s){
+  var map = {'Rendah':'green','Sedang':'yellow','Tinggi':'red'};
+  return '<span class="badge ' + (map[s]||'gray') + '">' + esc(s) + '</span>';
+}
+function eqIcon(type){
+  var map = {'Excavator':'🚜','Dump Truck':'🚛','Bulldozer':'🚜','Crusher':'⚙️','Drill Rig':'🔧','Loader':'🚜','Conveyor':'⚙️'};
+  return map[type] || '🚧';
+}
+
+/* =========================================================
+   PAGES
+========================================================= */
+var pages = {};
+var postRender = {};
+
+/* -------- DASHBOARD -------- */
+pages.dashboard = function(){
+  var today = new Date().toISOString().slice(0,10);
+  var todayProd = DB.production.filter(function(p){ return p.date===today && p.material==='Coal'; })
+                              .reduce(function(s,p){ return s + Number(p.tonnage||0); }, 0);
+  var monthProd = DB.production.filter(function(p){ return p.material==='Coal'; })
+                              .reduce(function(s,p){ return s + Number(p.tonnage||0); }, 0);
+  var target = DB.settings.monthlyTarget || 1;
+  var pct = ((monthProd/target)*100).toFixed(1);
+  var activeEq = DB.equipment.filter(function(e){ return e.status==='Aktif'; }).length;
+  var incidents = DB.safety.filter(function(s){ return s.status!=='Closed'; }).length;
+  var unresolved = DB.alerts.filter(function(a){ return !a.resolved; }).length;
+
+  var depts = [
+    {n:'Pit A - Ekstraksi', p: Math.min(100, Math.round(todayProd/1400*100)), c:'var(--green)'},
+    {n:'Pit B - Ekstraksi', p: Math.min(100, Math.round(todayProd/1200*100)), c:'var(--accent)'},
+    {n:'Hauling & Transport', p: 85, c:'var(--blue)'},
+    {n:'Stockpile & Port', p: 67, c:'var(--accent)'},
+    {n:'Maintenance', p: 45, c:'var(--red)'}
+  ];
+
+  var eqHtml = DB.equipment.slice(0,6).map(function(eq){
+    return '<div class="eq-item" onclick="go(\'equipment\')">' +
+      '<div class="eq-icon">' + eqIcon(eq.type) + '</div>' +
+      '<div><div class="eq-name">' + esc(eq.name) + '</div>' +
+      '<div class="eq-meta">' + esc(eq.id) + ' · ' + esc(eq.location) + ' · ' + fmt(eq.runtime) + 'h</div></div>' +
+      '<div>' + statusBadge(eq.status) + '</div>' +
+    '</div>';
+  }).join('');
+
+  var alertsHtml = DB.alerts.slice(0,6).map(function(a){
+    var cls = a.type === 'warn' ? '' : a.type;
+    return '<div class="alert ' + cls + '">' +
+      '<div class="alert-icon">' + (a.icon || 'ℹ️') + '</div>' +
+      '<div style="flex:1;">' +
+        '<div class="alert-title">' + esc(a.title) + '</div>' +
+        '<div class="alert-time">' + timeAgo(a.time) + '</div>' +
+      '</div></div>';
+  }).join('');
+
+  var fleetMarkers = DB.fleet.slice(0,10).map(function(f){
+    var x = 10 + ((Number(f.lng||115.32) - 115.30)/0.05) * 80;
+    var y = 10 + ((Number(f.lat||-2.16) + 2.18)/0.05) * 80;
+    x = Math.max(2, Math.min(96, x));
+    y = Math.max(2, Math.min(96, y));
+    var cls = f.status==='Maintenance' ? 'danger' : (f.status==='Idle' ? 'warn' : (f.status==='Operating' ? 'blue' : ''));
+    return '<div class="map-marker ' + cls + '" style="left:' + x + '%;top:' + y + '%" ' +
+      'data-label="' + esc(f.vehicleId) + ' · ' + esc(f.driver) + '"></div>';
+  }).join('');
+
+  var deptsHtml = depts.map(function(d){
+    return '<div class="progress-item">' +
+      '<div class="progress-header"><span>' + esc(d.n) + '</span><span>' + d.p + '%</span></div>' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + d.p + '%;background:' + d.c + ';"></div></div>' +
+    '</div>';
+  }).join('');
+
+  var prodRows = DB.production.slice(0,8).map(function(p){
+    return '<tr>' +
+      '<td style="font-family:monospace;color:var(--accent);">' + esc(p.id) + '</td>' +
+      '<td>' + fmtDate(p.date) + '</td>' +
+      '<td>' + esc(p.pit) + '</td>' +
+      '<td>' + esc(p.material) + '</td>' +
+      '<td>' + esc(p.operator) + '</td>' +
+      '<td>' + esc(p.shift) + '</td>' +
+      '<td>' + (p.quality !== '-' ? qualityBadge(p.quality) : '-') + '</td>' +
+      '<td style="font-variant-numeric:tabular-nums;">' + fmt(p.tonnage) + ' ton</td>' +
+    '</tr>';
+  }).join('');
+
+  return '' +
+    '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-header"><div class="stat-label">Produksi Hari Ini</div><div class="stat-icon">⛏️</div></div>' +
+        '<div class="stat-value">' + fmt(todayProd) + ' <span>ton</span></div>' +
+        '<div class="stat-change up">▲ ' + DB.production.filter(function(p){return p.date===today;}).length + ' entri tercatat</div></div>' +
+      '<div class="stat-card green"><div class="stat-header"><div class="stat-label">Target Bulanan</div><div class="stat-icon">🎯</div></div>' +
+        '<div class="stat-value">' + pct + ' <span>%</span></div>' +
+        '<div class="stat-change up">' + fmt(monthProd) + ' / ' + fmt(target) + ' ton</div></div>' +
+      '<div class="stat-card blue"><div class="stat-header"><div class="stat-label">Peralatan Aktif</div><div class="stat-icon">🚛</div></div>' +
+        '<div class="stat-value">' + activeEq + ' <span>/ ' + DB.equipment.length + '</span></div>' +
+        '<div class="stat-change up">' + (DB.equipment.length ? (activeEq/DB.equipment.length*100).toFixed(1) : 0) + '% operational</div></div>' +
+      '<div class="stat-card red"><div class="stat-header"><div class="stat-label">Insiden K3 Aktif</div><div class="stat-icon">⚠️</div></div>' +
+        '<div class="stat-value">' + incidents + '</div>' +
+        '<div class="stat-change ' + (unresolved > 0 ? 'down' : 'up') + '">' + unresolved + ' alert belum ditangani</div></div>' +
+    '</div>' +
+
+    '<div class="grid-2">' +
+      '<div class="panel">' +
+        '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Produksi Batubara 7 Hari</div>' +
+        '<span style="color:var(--accent);font-size:11px;cursor:pointer;" onclick="go(\'production\')">Lihat Detail →</span></div>' +
+        '<canvas id="ch-prod" height="90"></canvas>' +
+      '</div>' +
+      '<div class="panel">' +
+        '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Distribusi Kualitas</div></div>' +
+        '<canvas id="ch-quality" height="200"></canvas>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="grid-2e">' +
+      '<div class="panel">' +
+        '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Status Peralatan</div>' +
+        '<span style="color:var(--accent);font-size:11px;cursor:pointer;" onclick="go(\'equipment\')">Semua →</span></div>' +
+        '<div class="eq-list">' + eqHtml + '</div>' +
+      '</div>' +
+      '<div class="panel">' +
+        '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Peringatan Terbaru</div>' +
+        '<span style="color:var(--accent);font-size:11px;cursor:pointer;" onclick="go(\'alerts\')">Semua →</span></div>' +
+        '<div class="alerts">' + alertsHtml + '</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="grid-2">' +
+      '<div class="panel">' +
+        '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Peta Lokasi Tambang</div>' +
+        '<span style="color:var(--accent);font-size:11px;cursor:pointer;" onclick="go(\'fleet\')">Fleet →</span></div>' +
+        '<div class="map-box"><div class="map-grid"></div>' + fleetMarkers + '</div>' +
+      '</div>' +
+      '<div class="panel">' +
+        '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Progress Departemen</div></div>' +
+        deptsHtml +
+      '</div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Log Produksi Terbaru</div>' +
+      '<button class="btn sec sm" onclick="exportCSV(\'production\')">⬇ Export CSV</button></div>' +
+      '<div class="table-wrap"><table>' +
+        '<thead><tr><th>ID</th><th>Tanggal</th><th>Pit</th><th>Material</th><th>Operator</th><th>Shift</th><th>Kualitas</th><th>Tonase</th></tr></thead>' +
+        '<tbody>' + prodRows + '</tbody>' +
+      '</table></div>' +
+    '</div>';
+};
+
+postRender.dashboard = function(){
+  if(typeof Chart === 'undefined') return;
+  var dailyMap = {};
+  DB.production.filter(function(p){ return p.material==='Coal'; }).forEach(function(p){
+    dailyMap[p.date] = (dailyMap[p.date]||0) + Number(p.tonnage||0);
+  });
+  var labels = [], data = [];
+  for(var i=6;i>=0;i--){
+    var d = new Date(); d.setDate(d.getDate()-i);
+    var iso = d.toISOString().slice(0,10);
+    labels.push(d.toLocaleDateString('id-ID',{day:'2-digit',month:'short'}));
+    data.push(dailyMap[iso]||0);
+  }
+
+  var el1 = document.getElementById('ch-prod');
+  if(el1){
+    activeCharts.push(new Chart(el1, {
+      type:'line',
+      data:{
+        labels: labels,
+        datasets:[
+          {label:'Aktual', data:data, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.1)',
+            tension:.4, fill:true, borderWidth:2, pointBackgroundColor:'#f59e0b', pointRadius:4},
+          {label:'Target (1200)', data:labels.map(function(){return 1200;}), borderColor:'#3b82f6',
+            borderDash:[5,5], tension:.4, borderWidth:1.5, pointRadius:0}
+        ]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{labels:{color:'#94a3b8',font:{size:11},boxWidth:12}}},
+        scales:{
+          x:{grid:{color:'rgba(42,52,65,.5)'},ticks:{color:'#94a3b8',font:{size:10}}},
+          y:{grid:{color:'rgba(42,52,65,.5)'},ticks:{color:'#94a3b8',font:{size:10}}}
+        }
+      }
+    }));
+  }
+
+  var q = {Premium:0, Medium:0, Low:0};
+  DB.production.forEach(function(p){ if(q[p.quality] !== undefined) q[p.quality] += Number(p.tonnage||0); });
+  var el2 = document.getElementById('ch-quality');
+  if(el2){
+    activeCharts.push(new Chart(el2, {
+      type:'doughnut',
+      data:{
+        labels:['Premium','Medium','Low'],
+        datasets:[{data:[q.Premium,q.Medium,q.Low], backgroundColor:['#10b981','#f59e0b','#3b82f6'], borderWidth:0, cutout:'65%'}]
+      },
+      options:{responsive:true, plugins:{legend:{position:'bottom', labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:10}}}}
+    }));
+  }
+};
+
+/* -------- PRODUCTION -------- */
+pages.production = function(){
+  var total = DB.production.reduce(function(s,p){ return s + Number(p.tonnage||0); }, 0);
+  var coal = DB.production.filter(function(p){return p.material==='Coal';}).reduce(function(s,p){ return s + Number(p.tonnage||0); }, 0);
+  var ob = DB.production.filter(function(p){return p.material==='Overburden';}).reduce(function(s,p){ return s + Number(p.tonnage||0); }, 0);
+  var avg = DB.production.length ? Math.round(total/DB.production.length) : 0;
+
+  var rows = DB.production.map(function(p){
+    return '<tr>' +
+      '<td style="font-family:monospace;color:var(--accent);">' + esc(p.id) + '</td>' +
+      '<td>' + fmtDate(p.date) + '</td>' +
+      '<td>' + esc(p.pit) + '</td>' +
+      '<td>' + esc(p.material) + '</td>' +
+      '<td>' + esc(p.operator) + '</td>' +
+      '<td>' + esc(p.shift) + '</td>' +
+      '<td>' + (p.quality !== '-' ? qualityBadge(p.quality) : '-') + '</td>' +
+      '<td style="font-variant-numeric:tabular-nums;">' + fmt(p.tonnage) + '</td>' +
+      '<td><div class="record-actions">' +
+        '<button class="btn sec xs" onclick="editRecord(\'production\',\'' + p.id + '\')">✏️</button>' +
+        '<button class="btn danger xs" onclick="deleteRecord(\'production\',\'' + p.id + '\')">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  return '' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kpi-label">Total Entri</div><div class="kpi-value">' + DB.production.length + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Total Batubara</div><div class="kpi-value green">' + fmt(coal) + ' ton</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Total Overburden</div><div class="kpi-value yellow">' + fmt(ob) + ' ton</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Rata-rata/Entri</div><div class="kpi-value blue">' + fmt(avg) + ' ton</div></div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Tren Produksi Harian</div></div>' +
+      '<canvas id="ch-prod-page" height="70"></canvas>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Data Produksi (' + DB.production.length + ')</div>' +
+      '<div class="btn-group">' +
+        '<div class="search-bar"><input type="text" placeholder="Cari..." oninput="filterTable(this,\'tbl-production\')"></div>' +
+        '<button class="btn" onclick="editRecord(\'production\')">+ Tambah</button>' +
+        '<button class="btn sec" onclick="exportCSV(\'production\')">⬇ CSV</button>' +
+        '<button class="btn sec" onclick="exportJSON(\'production\')">⬇ JSON</button>' +
+        '<button class="btn sec" onclick="importData(\'production\')">⬆ Import</button>' +
+      '</div></div>' +
+      '<div class="table-wrap"><table id="tbl-production">' +
+        '<thead><tr><th>ID</th><th>Tanggal</th><th>Pit</th><th>Material</th><th>Operator</th><th>Shift</th><th>Kualitas</th><th>Tonase</th><th>Aksi</th></tr></thead>' +
+        '<tbody>' + (rows || '<tr><td colspan="9" class="empty">Belum ada data</td></tr>') + '</tbody>' +
+      '</table></div>' +
+    '</div>';
+};
+
+postRender.production = function(){
+  if(typeof Chart === 'undefined') return;
+  var dailyMap = {};
+  DB.production.forEach(function(p){ dailyMap[p.date] = (dailyMap[p.date]||0) + Number(p.tonnage||0); });
+  var dates = Object.keys(dailyMap).sort();
+  var el = document.getElementById('ch-prod-page');
+  if(!el) return;
+  activeCharts.push(new Chart(el, {
+    type:'bar',
+    data:{
+      labels: dates.map(function(d){ return fmtDate(d); }),
+      datasets:[{label:'Total Tonase', data:dates.map(function(d){ return dailyMap[d]; }), backgroundColor:'rgba(245,158,11,.7)', borderRadius:6, borderSkipped:false}]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:10}}},
+        y:{grid:{color:'rgba(42,52,65,.5)'},ticks:{color:'#94a3b8',font:{size:10}}}
+      }
+    }
+  }));
+};
+
+/* -------- EQUIPMENT -------- */
+pages.equipment = function(){
+  var byStatus = {};
+  DB.equipment.forEach(function(e){ byStatus[e.status] = (byStatus[e.status]||0)+1; });
+
+  var cards = DB.equipment.slice(0,4).map(function(eq){
+    var pct = Math.min(100, Math.round((eq.runtime||0)/500));
+    return '<div class="stat-card">' +
+      '<div class="stat-header"><div class="stat-label">' + esc(eq.id) + '</div><div class="stat-icon">' + eqIcon(eq.type) + '</div></div>' +
+      '<div style="font-size:13px;font-weight:600;margin-bottom:4px;">' + esc(eq.name) + '</div>' +
+      '<div style="font-size:11px;color:var(--dim);margin-bottom:10px;">' + esc(eq.location) + '</div>' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;background:var(--accent);"></div></div>' +
+      '<div style="display:flex;justify-content:space-between;margin-top:6px;">' +
+        '<span style="font-size:10px;color:var(--dim);">Runtime ' + fmt(eq.runtime) + 'h</span>' +
+        statusBadge(eq.status) +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var rows = DB.equipment.map(function(e){
+    return '<tr>' +
+      '<td style="font-family:monospace;color:var(--accent);">' + esc(e.id) + '</td>' +
+      '<td>' + esc(e.name) + '</td>' +
+      '<td>' + esc(e.type) + '</td>' +
+      '<td>' + esc(e.brand) + '</td>' +
+      '<td>' + e.year + '</td>' +
+      '<td>' + esc(e.location) + '</td>' +
+      '<td style="font-variant-numeric:tabular-nums;">' + fmt(e.runtime) + 'h</td>' +
+      '<td>' + fmtDate(e.nextMaint) + '</td>' +
+      '<td>' + statusBadge(e.status) + '</td>' +
+      '<td><div class="record-actions">' +
+        '<button class="btn sec xs" onclick="editRecord(\'equipment\',\'' + e.id + '\')">✏️</button>' +
+        '<button class="btn danger xs" onclick="deleteRecord(\'equipment\',\'' + e.id + '\')">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  return '' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kpi-label">Total Unit</div><div class="kpi-value">' + DB.equipment.length + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Aktif</div><div class="kpi-value green">' + (byStatus['Aktif']||0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Warning</div><div class="kpi-value yellow">' + (byStatus['Warning']||0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Maintenance</div><div class="kpi-value blue">' + (byStatus['Maintenance']||0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Offline</div><div class="kpi-value red">' + (byStatus['Offline']||0) + '</div></div>' +
+    '</div>' +
+
+    '<div class="grid-4">' + cards + '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Daftar Peralatan (' + DB.equipment.length + ')</div>' +
+      '<div class="btn-group">' +
+        '<div class="search-bar"><input type="text" placeholder="Cari..." oninput="filterTable(this,\'tbl-equipment\')"></div>' +
+        '<button class="btn" onclick="editRecord(\'equipment\')">+ Tambah</button>' +
+        '<button class="btn sec" onclick="exportCSV(\'equipment\')">⬇ CSV</button>' +
+        '<button class="btn sec" onclick="importData(\'equipment\')">⬆ Import</button>' +
+      '</div></div>' +
+      '<div class="table-wrap"><table id="tbl-equipment">' +
+        '<thead><tr><th>ID</th><th>Nama</th><th>Tipe</th><th>Merek</th><th>Tahun</th><th>Lokasi</th><th>Runtime</th><th>Next Maint</th><th>Status</th><th>Aksi</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table></div>' +
+    '</div>';
+};
+
+/* -------- FLEET -------- */
+pages.fleet = function(){
+  var moving = DB.fleet.filter(function(f){return f.status==='Moving';}).length;
+  var idle = DB.fleet.filter(function(f){return f.status==='Idle';}).length;
+  var lowFuel = DB.fleet.filter(function(f){return f.fuel < 25;}).length;
+
+  var markers = DB.fleet.map(function(f){
+    var x = 10 + ((Number(f.lng||115.32) - 115.30)/0.05) * 80;
+    var y = 10 + ((Number(f.lat||-2.16) + 2.18)/0.05) * 80;
+    x = Math.max(2, Math.min(96, x));
+    y = Math.max(2, Math.min(96, y));
+    var cls = f.status==='Maintenance' ? 'danger' : (f.status==='Idle' ? 'warn' : (f.status==='Operating' ? 'blue' : ''));
+    return '<div class="map-marker ' + cls + '" style="left:' + x + '%;top:' + y + '%" ' +
+      'data-label="' + esc(f.vehicleId) + ' · ' + esc(f.driver) + ' · ' + (f.speed||0) + 'km/h"></div>';
+  }).join('');
+
+  var rows = DB.fleet.map(function(f){
+    var fuelColor = f.fuel < 25 ? 'var(--red)' : (f.fuel < 50 ? 'var(--accent)' : 'var(--green)');
+    return '<tr>' +
+      '<td style="font-family:monospace;color:var(--accent);">' + esc(f.id) + '</td>' +
+      '<td><strong>' + esc(f.vehicleId) + '</strong></td>' +
+      '<td>' + esc(f.driver) + '</td>' +
+      '<td style="font-size:11px;color:var(--dim);">' + Number(f.lat||0).toFixed(4) + ', ' + Number(f.lng||0).toFixed(4) + '</td>' +
+      '<td>' + (f.speed||0) + ' km/h</td>' +
+      '<td><div class="progress-bar" style="width:60px;display:inline-block;vertical-align:middle;">' +
+        '<div class="progress-fill" style="width:' + f.fuel + '%;background:' + fuelColor + ';"></div></div>' +
+        '<span style="font-size:11px;margin-left:6px;">' + f.fuel + '%</span></td>' +
+      '<td>' + esc(f.route) + '</td>' +
+      '<td>' + fleetStatusBadge(f.status) + '</td>' +
+      '<td><div class="record-actions">' +
+        '<button class="btn sec xs" onclick="editRecord(\'fleet\',\'' + f.id + '\')">✏️</button>' +
+        '<button class="btn danger xs" onclick="deleteRecord(\'fleet\',\'' + f.id + '\')">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  return '' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kpi-label">Kendaraan</div><div class="kpi-value">' + DB.fleet.length + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Sedang Bergerak</div><div class="kpi-value green">' + moving + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Idle</div><div class="kpi-value yellow">' + idle + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">BBM Rendah</div><div class="kpi-value red">' + lowFuel + '</div></div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Peta Live Tracking</div>' +
+      '<button class="btn sec sm" onclick="renderPage(\'fleet\')">🔄 Refresh</button></div>' +
+      '<div class="map-box" style="height:420px;"><div class="map-grid"></div>' + markers + '</div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Data Fleet (' + DB.fleet.length + ')</div>' +
+      '<div class="btn-group">' +
+        '<button class="btn" onclick="editRecord(\'fleet\')">+ Tambah</button>' +
+        '<button class="btn sec" onclick="exportCSV(\'fleet\')">⬇ CSV</button>' +
+        '<button class="btn sec" onclick="importData(\'fleet\')">⬆ Import</button>' +
+      '</div></div>' +
+      '<div class="table-wrap"><table>' +
+        '<thead><tr><th>ID</th><th>Kendaraan</th><th>Driver</th><th>Koordinat</th><th>Kecepatan</th><th>BBM</th><th>Rute</th><th>Status</th><th>Aksi</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table></div>' +
+    '</div>';
+};
+
+/* -------- SAFETY -------- */
+pages.safety = function(){
+  var open = DB.safety.filter(function(s){return s.status!=='Closed';}).length;
+  var closed = DB.safety.filter(function(s){return s.status==='Closed';}).length;
+
+  var rows = DB.safety.map(function(s){
+    return '<tr>' +
+      '<td style="font-family:monospace;color:var(--accent);">' + esc(s.id) + '</td>' +
+      '<td>' + fmtDate(s.date) + '</td>' +
+      '<td>' + esc(s.type) + '</td>' +
+      '<td>' + severityBadge(s.severity) + '</td>' +
+      '<td>' + esc(s.location) + '</td>' +
+      '<td style="max-width:280px;white-space:normal;">' + esc(s.description) + '</td>' +
+      '<td>' + esc(s.reporter) + '</td>' +
+      '<td>' + (s.status==='Closed' ? '<span class="badge green">Closed</span>' : '<span class="badge yellow">Investigasi</span>') + '</td>' +
+      '<td><div class="record-actions">' +
+        '<button class="btn sec xs" onclick="editRecord(\'safety\',\'' + s.id + '\')">✏️</button>' +
+        '<button class="btn danger xs" onclick="deleteRecord(\'safety\',\'' + s.id + '\')">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  return '' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kpi-label">Total Insiden</div><div class="kpi-value">' + DB.safety.length + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Dalam Investigasi</div><div class="kpi-value yellow">' + open + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Selesai</div><div class="kpi-value green">' + closed + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Hari Tanpa Kecelakaan</div><div class="kpi-value blue">45</div></div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Log Insiden K3 (' + DB.safety.length + ')</div>' +
+      '<div class="btn-group">' +
+        '<div class="search-bar"><input type="text" placeholder="Cari..." oninput="filterTable(this,\'tbl-safety\')"></div>' +
+        '<button class="btn" onclick="editRecord(\'safety\')">+ Tambah</button>' +
+        '<button class="btn sec" onclick="exportCSV(\'safety\')">⬇ CSV</button>' +
+        '<button class="btn sec" onclick="importData(\'safety\')">⬆ Import</button>' +
+      '</div></div>' +
+      '<div class="table-wrap"><table id="tbl-safety">' +
+        '<thead><tr><th>ID</th><th>Tanggal</th><th>Tipe</th><th>Severity</th><th>Lokasi</th><th>Deskripsi</th><th>Reporter</th><th>Status</th><th>Aksi</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table></div>' +
+    '</div>';
+};
+
+/* -------- WORKERS -------- */
+pages.workers = function(){
+  var active = DB.workers.filter(function(w){return w.status==='Aktif';}).length;
+  var cuti = DB.workers.filter(function(w){return w.status==='Cuti';}).length;
+  var depts = [];
+  DB.workers.forEach(function(w){ if(depts.indexOf(w.dept) === -1) depts.push(w.dept); });
+  var soon = DB.workers.filter(function(w){
+    var d = new Date(w.certExpiry);
+    var diff = (d - new Date()) / 86400000;
+    return diff > 0 && diff < 90;
+  }).length;
+
+  var deptHtml = depts.map(function(d){
+    var count = DB.workers.filter(function(w){return w.dept===d;}).length;
+    var pct = DB.workers.length ? (count/DB.workers.length*100).toFixed(0) : 0;
+    return '<div class="progress-item">' +
+      '<div class="progress-header"><span>' + esc(d) + '</span><span>' + count + ' orang (' + pct + '%)</span></div>' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;background:var(--accent);"></div></div>' +
+    '</div>';
+  }).join('');
+
+  var shiftHtml = ['Pagi','Siang','Malam'].map(function(s){
+    var count = DB.workers.filter(function(w){return w.shift===s;}).length;
+    var pct = DB.workers.length ? (count/DB.workers.length*100).toFixed(0) : 0;
+    var color = s==='Pagi' ? 'var(--green)' : (s==='Siang' ? 'var(--accent)' : 'var(--blue)');
+    return '<div class="progress-item">' +
+      '<div class="progress-header"><span>Shift ' + s + '</span><span>' + count + ' orang</span></div>' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;background:' + color + ';"></div></div>' +
+    '</div>';
+  }).join('');
+
+  var rows = DB.workers.map(function(w){
+    var statusCls = w.status==='Aktif' ? 'green' : (w.status==='Cuti' ? 'yellow' : 'gray');
+    return '<tr>' +
+      '<td style="font-family:monospace;color:var(--accent);">' + esc(w.id) + '</td>' +
+      '<td><strong>' + esc(w.name) + '</strong></td>' +
+      '<td>' + esc(w.role) + '</td>' +
+      '<td>' + esc(w.dept) + '</td>' +
+      '<td>' + esc(w.shift) + '</td>' +
+      '<td>' + esc(w.phone) + '</td>' +
+      '<td>' + fmtDate(w.certExpiry) + '</td>' +
+      '<td><span class="badge ' + statusCls + '">' + esc(w.status) + '</span></td>' +
+      '<td><div class="record-actions">' +
+        '<button class="btn sec xs" onclick="editRecord(\'workers\',\'' + w.id + '\')">✏️</button>' +
+        '<button class="btn danger xs" onclick="deleteRecord(\'workers\',\'' + w.id + '\')">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  return '' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kpi-label">Total Karyawan</div><div class="kpi-value">' + DB.workers.length + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Aktif</div><div class="kpi-value green">' + active + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Cuti</div><div class="kpi-value yellow">' + cuti + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Sertifikat <90hari</div><div class="kpi-value red">' + soon + '</div></div>' +
+    '</div>' +
+
+    '<div class="grid-2e">' +
+      '<div class="panel"><div class="panel-header"><div class="panel-title"><span class="dot"></span>Distribusi Departemen</div></div>' + deptHtml + '</div>' +
+      '<div class="panel"><div class="panel-header"><div class="panel-title"><span class="dot"></span>Distribusi Shift</div></div>' + shiftHtml + '</div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Data Karyawan (' + DB.workers.length + ')</div>' +
+      '<div class="btn-group">' +
+        '<div class="search-bar"><input type="text" placeholder="Cari..." oninput="filterTable(this,\'tbl-workers\')"></div>' +
+        '<button class="btn" onclick="editRecord(\'workers\')">+ Tambah</button>' +
+        '<button class="btn sec" onclick="exportCSV(\'workers\')">⬇ CSV</button>' +
+        '<button class="btn sec" onclick="importData(\'workers\')">⬆ Import</button>' +
+      '</div></div>' +
+      '<div class="table-wrap"><table id="tbl-workers">' +
+        '<thead><tr><th>ID</th><th>Nama</th><th>Jabatan</th><th>Departemen</th><th>Shift</th><th>Telepon</th><th>Sertifikat</th><th>Status</th><th>Aksi</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table></div>' +
+    '</div>';
+};
+
+/* -------- INVENTORY -------- */
+pages.inventory = function(){
+  var lowStock = DB.inventory.filter(function(i){return i.stock < i.minStock;}).length;
+  var totalValue = DB.inventory.reduce(function(s,i){ return s + Number(i.stock||0)*Number(i.price||0); }, 0);
+  var cats = [];
+  DB.inventory.forEach(function(i){ if(cats.indexOf(i.category) === -1) cats.push(i.category); });
+
+  var rows = DB.inventory.map(function(i){
+    return '<tr>' +
+      '<td style="font-family:monospace;color:var(--accent);">' + esc(i.id) + '</td>' +
+      '<td><strong>' + esc(i.name) + '</strong></td>' +
+      '<td>' + esc(i.category) + '</td>' +
+      '<td style="color:' + (i.stock<i.minStock?'var(--red)':'var(--text)') + ';font-weight:600;">' + fmt(i.stock) + '</td>' +
+      '<td>' + fmt(i.minStock) + '</td>' +
+      '<td>' + esc(i.unit) + '</td>' +
+      '<td>' + esc(i.location) + '</td>' +
+      '<td>' + fmtCur(i.price) + '</td>' +
+      '<td>' + fmtCur(Number(i.stock||0)*Number(i.price||0)) + '</td>' +
+      '<td><div class="record-actions">' +
+        '<button class="btn sec xs" onclick="editRecord(\'inventory\',\'' + i.id + '\')">✏️</button>' +
+        '<button class="btn danger xs" onclick="deleteRecord(\'inventory\',\'' + i.id + '\')">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  return '' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kpi-label">Total Item</div><div class="kpi-value">' + DB.inventory.length + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Stok Rendah</div><div class="kpi-value red">' + lowStock + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Nilai Total</div><div class="kpi-value green">' + fmtCur(totalValue) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Kategori</div><div class="kpi-value blue">' + cats.length + '</div></div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Stok Inventori (' + DB.inventory.length + ')</div>' +
+      '<div class="btn-group">' +
+        '<div class="search-bar"><input type="text" placeholder="Cari item..." oninput="filterTable(this,\'tbl-inventory\')"></div>' +
+        '<button class="btn" onclick="editRecord(\'inventory\')">+ Tambah</button>' +
+        '<button class="btn sec" onclick="exportCSV(\'inventory\')">⬇ CSV</button>' +
+        '<button class="btn sec" onclick="importData(\'inventory\')">⬆ Import</button>' +
+      '</div></div>' +
+      '<div class="table-wrap"><table id="tbl-inventory">' +
+        '<thead><tr><th>ID</th><th>Nama Item</th><th>Kategori</th><th>Stok</th><th>Min</th><th>Satuan</th><th>Lokasi</th><th>Harga</th><th>Total</th><th>Aksi</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table></div>' +
+    '</div>';
+};
+
+/* -------- FINANCE -------- */
+pages.finance = function(){
+  var income = DB.finance.filter(function(f){return f.type==='Pemasukan';}).reduce(function(s,f){ return s + Number(f.amount||0); }, 0);
+  var expense = DB.finance.filter(function(f){return f.type==='Pengeluaran';}).reduce(function(s,f){ return s + Number(f.amount||0); }, 0);
+  var profit = income - expense;
+
+  var rows = DB.finance.map(function(f){
+    return '<tr>' +
+      '<td style="font-family:monospace;color:var(--accent);">' + esc(f.id) + '</td>' +
+      '<td>' + fmtDate(f.date) + '</td>' +
+      '<td>' + (f.type==='Pemasukan' ? '<span class="badge green">Pemasukan</span>' : '<span class="badge red">Pengeluaran</span>') + '</td>' +
+      '<td>' + esc(f.category) + '</td>' +
+      '<td style="max-width:280px;white-space:normal;">' + esc(f.description) + '</td>' +
+      '<td style="font-variant-numeric:tabular-nums;font-weight:600;color:' + (f.type==='Pemasukan'?'var(--green)':'var(--red)') + ';">' +
+        (f.type==='Pemasukan' ? '+' : '-') + ' ' + fmtCur(f.amount) + '</td>' +
+      '<td><div class="record-actions">' +
+        '<button class="btn sec xs" onclick="editRecord(\'finance\',\'' + f.id + '\')">✏️</button>' +
+        '<button class="btn danger xs" onclick="deleteRecord(\'finance\',\'' + f.id + '\')">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  return '' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kpi-label">Total Pemasukan</div><div class="kpi-value green">' + fmtCur(income) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Total Pengeluaran</div><div class="kpi-value red">' + fmtCur(expense) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Laba Bersih</div><div class="kpi-value ' + (profit>=0?'green':'red') + '">' + fmtCur(profit) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Margin</div><div class="kpi-value blue">' + (income ? (profit/income*100).toFixed(1) : 0) + '%</div></div>' +
+    '</div>' +
+
+    '<div class="grid-2e">' +
+      '<div class="panel"><div class="panel-header"><div class="panel-title"><span class="dot"></span>Arus Kas</div></div>' +
+        '<canvas id="ch-finance" height="120"></canvas></div>' +
+      '<div class="panel"><div class="panel-header"><div class="panel-title"><span class="dot"></span>Pengeluaran per Kategori</div></div>' +
+        '<canvas id="ch-expense" height="120"></canvas></div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Transaksi Keuangan (' + DB.finance.length + ')</div>' +
+      '<div class="btn-group">' +
+        '<div class="search-bar"><input type="text" placeholder="Cari..." oninput="filterTable(this,\'tbl-finance\')"></div>' +
+        '<button class="btn" onclick="editRecord(\'finance\')">+ Tambah</button>' +
+        '<button class="btn sec" onclick="exportCSV(\'finance\')">⬇ CSV</button>' +
+        '<button class="btn sec" onclick="importData(\'finance\')">⬆ Import</button>' +
+      '</div></div>' +
+      '<div class="table-wrap"><table id="tbl-finance">' +
+        '<thead><tr><th>ID</th><th>Tanggal</th><th>Tipe</th><th>Kategori</th><th>Deskripsi</th><th>Jumlah</th><th>Aksi</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table></div>' +
+    '</div>';
+};
+
+postRender.finance = function(){
+  if(typeof Chart === 'undefined') return;
+  var byDate = {};
+  DB.finance.forEach(function(f){
+    if(!byDate[f.date]) byDate[f.date] = {in:0, out:0};
+    if(f.type === 'Pemasukan') byDate[f.date].in += Number(f.amount||0);
+    else byDate[f.date].out += Number(f.amount||0);
+  });
+  var dates = Object.keys(byDate).sort();
+  var el1 = document.getElementById('ch-finance');
+  if(el1){
+    activeCharts.push(new Chart(el1, {
+      type:'line',
+      data:{
+        labels: dates.map(function(d){ return fmtDate(d); }),
+        datasets:[
+          {label:'Pemasukan', data:dates.map(function(d){ return byDate[d].in; }), borderColor:'#10b981',
+            backgroundColor:'rgba(16,185,129,.1)', tension:.4, fill:true, borderWidth:2},
+          {label:'Pengeluaran', data:dates.map(function(d){ return byDate[d].out; }), borderColor:'#ef4444',
+            backgroundColor:'rgba(239,68,68,.1)', tension:.4, fill:true, borderWidth:2}
+        ]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{labels:{color:'#94a3b8',font:{size:11},boxWidth:12}}},
+        scales:{
+          x:{grid:{color:'rgba(42,52,65,.5)'},ticks:{color:'#94a3b8',font:{size:10}}},
+          y:{grid:{color:'rgba(42,52,65,.5)'},ticks:{color:'#94a3b8',font:{size:10},callback:function(v){return (v/1000000).toFixed(0)+'M';}}}
+        }
+      }
+    }));
+  }
+
+  var byCat = {};
+  DB.finance.filter(function(f){return f.type==='Pengeluaran';}).forEach(function(f){
+    byCat[f.category] = (byCat[f.category]||0) + Number(f.amount||0);
+  });
+  var el2 = document.getElementById('ch-expense');
+  if(el2){
+    activeCharts.push(new Chart(el2, {
+      type:'doughnut',
+      data:{
+        labels: Object.keys(byCat),
+        datasets:[{data:Object.values(byCat), backgroundColor:['#f59e0b','#3b82f6','#10b981','#ef4444','#8b5cf6','#ec4899'], borderWidth:0, cutout:'65%'}]
+      },
+      options:{responsive:true, plugins:{legend:{position:'bottom', labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:10}}}}
+    }));
+  }
+};
+
+/* -------- REPORTS -------- */
+pages.reports = function(){
+  var reportCards = [
+    {label:'Laporan Produksi', icon:'🏗️', desc:'Total ' + DB.production.length + ' entri produksi', tbl:'production', cls:''},
+    {label:'Laporan Peralatan', icon:'🚛', desc:'Total ' + DB.equipment.length + ' unit equipment', tbl:'equipment', cls:'green'},
+    {label:'Laporan Karyawan', icon:'👷', desc:'Total ' + DB.workers.length + ' karyawan', tbl:'workers', cls:'blue'},
+    {label:'Laporan K3', icon:'🦺', desc:DB.safety.length + ' insiden tercatat', tbl:'safety', cls:'red'},
+    {label:'Laporan Keuangan', icon:'💰', desc:DB.finance.length + ' transaksi', tbl:'finance', cls:'purple'},
+    {label:'Laporan Inventori', icon:'📦', desc:DB.inventory.length + ' item stok', tbl:'inventory', cls:''}
+  ];
+
+  var cardsHtml = reportCards.map(function(r){
+    return '<div class="stat-card ' + r.cls + '">' +
+      '<div class="stat-header"><div class="stat-label">' + r.label + '</div><div class="stat-icon">' + r.icon + '</div></div>' +
+      '<div style="font-size:12px;color:var(--dim);margin-bottom:12px;">' + r.desc + '</div>' +
+      '<div class="btn-group">' +
+        '<button class="btn" onclick="exportCSV(\'' + r.tbl + '\')">⬇ CSV</button>' +
+        '<button class="btn sec" onclick="printReport(\'' + r.tbl + '\')">🖨 PDF</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  return '' +
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Generate Laporan</div></div>' +
+      '<div class="grid-3">' + cardsHtml + '</div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Export Semua Data</div></div>' +
+      '<p style="color:var(--dim);font-size:12.5px;margin-bottom:14px;">Download keseluruhan database dalam format JSON atau CSV.</p>' +
+      '<div class="btn-group">' +
+        '<button class="btn success" onclick="exportAll()">⬇ Export Semua (JSON)</button>' +
+        '<button class="btn success" onclick="exportAllCSV()">⬇ Export Semua (CSV)</button>' +
+        '<button class="btn sec" onclick="printFullReport()">🖨 Cetak Laporan Lengkap</button>' +
+      '</div>' +
+    '</div>';
+};
+
+/* -------- ALERTS -------- */
+pages.alerts = function(){
+  var unresolved = DB.alerts.filter(function(a){return !a.resolved;}).length;
+  var resolved = DB.alerts.filter(function(a){return a.resolved;}).length;
+  var critical = DB.alerts.filter(function(a){return a.type==='danger';}).length;
+
+  var alertsHtml = DB.alerts.map(function(a){
+    var cls = a.type === 'warn' ? '' : a.type;
+    var resolveBtn = !a.resolved ? '<button class="btn success xs" onclick="resolveAlert(\'' + a.id + '\')">✓ Resolve</button>' : '';
+    return '<div class="alert ' + cls + '" style="opacity:' + (a.resolved ? 0.55 : 1) + ';">' +
+      '<div class="alert-icon">' + (a.icon||'ℹ️') + '</div>' +
+      '<div style="flex:1;">' +
+        '<div class="alert-title">' + esc(a.title) + '</div>' +
+        '<div class="alert-time">' + timeAgo(a.time) + (a.resolved ? ' · <span class="badge green">Resolved</span>' : '') + '</div>' +
+      '</div>' +
+      '<div class="btn-group">' + resolveBtn +
+        '<button class="btn danger xs" onclick="deleteRecord(\'alerts\',\'' + a.id + '\')">🗑</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  return '' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kpi-label">Total Alert</div><div class="kpi-value">' + DB.alerts.length + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Belum Ditangani</div><div class="kpi-value red">' + unresolved + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Sudah Ditangani</div><div class="kpi-value green">' + resolved + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Kritis</div><div class="kpi-value yellow">' + critical + '</div></div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Semua Peringatan</div>' +
+      '<div class="btn-group">' +
+        '<button class="btn" onclick="editRecord(\'alerts\')">+ Tambah Alert</button>' +
+        '<button class="btn sec" onclick="clearResolved()">🧹 Hapus Resolved</button>' +
+        '<button class="btn sec" onclick="exportCSV(\'alerts\')">⬇ CSV</button>' +
+      '</div></div>' +
+      '<div class="alerts" style="max-height:none;">' + alertsHtml + '</div>' +
+    '</div>';
+};
+
+/* -------- STUDIO -------- */
+var studioTables = ['production','equipment','fleet','workers','safety','inventory','finance','alerts'];
+
+pages.studio = function(){
+  var tabs = studioTables.map(function(t, i){
+    return '<button class="tab' + (i===0?' active':'') + '" onclick="switchStudioTab(\'' + t + '\',this)">' +
+      t.charAt(0).toUpperCase() + t.slice(1) + ' (' + (DB[t] ? DB[t].length : 0) + ')</button>';
+  }).join('');
+
+  return '' +
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>🎨 Studio Editor</div></div>' +
+      '<p style="color:var(--dim);font-size:12.5px;margin-bottom:16px;">' +
+        'Editor lengkap untuk mengelola SEMUA data aplikasi. Pilih tabel di bawah untuk melihat, menambah, mengedit, menghapus, atau mengimpor/mengekspor data.' +
+      '</p>' +
+      '<div class="studio-toolbar">' +
+        '<button class="btn success" onclick="exportAll()">⬇ Export Semua (JSON)</button>' +
+        '<button class="btn sec" onclick="importData(\'all\')">⬆ Import Semua (JSON)</button>' +
+        '<button class="btn sec" onclick="exportAllCSV()">⬇ Export Semua (CSV)</button>' +
+        '<button class="btn danger" onclick="resetDB()">🗑 Reset Data Default</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="tabs" id="studio-tabs">' + tabs + '</div>' +
+      '<div id="studio-content"></div>' +
+    '</div>';
+};
+
+postRender.studio = function(){
+  renderStudioTable('production');
+};
+
+function switchStudioTab(tbl, btn){
+  document.querySelectorAll('#studio-tabs .tab').forEach(function(t){ t.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  renderStudioTable(tbl);
+}
+
+function renderStudioTable(tbl){
+  var rows = DB[tbl] || [];
+  var cols = rows.length ? Object.keys(rows[0]) : [];
+  var content = document.getElementById('studio-content');
+  if(!content) return;
+
+  var headerHtml = cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '<th>Aksi</th>';
+
+  var bodyHtml = rows.map(function(r){
+    var cells = cols.map(function(c){
+      var val = formatCell(c, r[c]);
+      return '<td style="max-width:240px;white-space:normal;overflow:hidden;text-overflow:ellipsis;">' + val + '</td>';
+    }).join('');
+    return '<tr>' + cells +
+      '<td><div class="record-actions">' +
+        '<button class="btn sec xs" onclick="editRecord(\'' + tbl + '\',\'' + r.id + '\')">✏️ Edit</button>' +
+        '<button class="btn danger xs" onclick="deleteRecord(\'' + tbl + '\',\'' + r.id + '\')">🗑 Hapus</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  if(!bodyHtml) {
+    bodyHtml = '<tr><td colspan="' + (cols.length+1) + '" class="empty">' +
+      '<div class="empty-icon">📭</div>Belum ada data. Klik "Tambah Record".</td></tr>';
+  }
+
+  content.innerHTML =
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">' +
+      '<div class="search-bar"><input type="text" placeholder="Cari..." oninput="filterTable(this,\'studio-tbl\')"></div>' +
+      '<button class="btn" onclick="editRecord(\'' + tbl + '\')">+ Tambah Record</button>' +
+      '<button class="btn sec" onclick="exportCSV(\'' + tbl + '\')">⬇ Export CSV</button>' +
+      '<button class="btn sec" onclick="exportJSON(\'' + tbl + '\')">⬇ Export JSON</button>' +
+      '<button class="btn sec" onclick="importData(\'' + tbl + '\')">⬆ Import Data</button>' +
+    '</div>' +
+    '<div class="table-wrap" style="max-height:600px;">' +
+      '<table id="studio-tbl"><thead><tr>' + headerHtml + '</tr></thead>' +
+      '<tbody>' + bodyHtml + '</tbody></table>' +
+    '</div>' +
+    '<div style="margin-top:12px;font-size:11.5px;color:var(--dim);">' +
+      '<strong>' + rows.length + '</strong> record · Tabel: <code>' + tbl + '</code>' +
+    '</div>';
+}
+
+function formatCell(key, val){
+  if(val === null || val === undefined) return '-';
+  if(typeof val === 'boolean') return val ? '✅' : '❌';
+  var keyLower = String(key).toLowerCase();
+  if(keyLower.indexOf('date') !== -1 || keyLower.indexOf('time') !== -1){
+    if(String(val).indexOf('T') !== -1) return fmtDateTime(val);
+    return fmtDate(val);
+  }
+  if(typeof val === 'number' && (keyLower.indexOf('amount') !== -1 || keyLower.indexOf('price') !== -1)){
+    return fmtCur(val);
+  }
+  return esc(val);
+}
+
+/* -------- SETTINGS -------- */
+pages.settings = function(){
+  var s = DB.settings;
+  return '' +
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Informasi Perusahaan</div></div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label>Nama Perusahaan</label><input class="form-control" id="set-company" value="' + esc(s.companyName) + '"></div>' +
+        '<div class="form-group"><label>Brand Aplikasi</label><input class="form-control" id="set-brand" value="' + esc(s.brandName) + '"></div>' +
+        '<div class="form-group"><label>Nama Pengguna</label><input class="form-control" id="set-user" value="' + esc(s.userName) + '"></div>' +
+        '<div class="form-group"><label>Role</label><input class="form-control" id="set-role" value="' + esc(s.userRole) + '"></div>' +
+        '<div class="form-group"><label>Mata Uang</label><input class="form-control" id="set-cur" value="' + esc(s.currency) + '"></div>' +
+        '<div class="form-group"><label>Target Bulanan (ton)</label><input type="number" class="form-control" id="set-target" value="' + (s.monthlyTarget||0) + '"></div>' +
+      '</div>' +
+      '<button class="btn" onclick="saveSettings()">💾 Simpan Pengaturan</button>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Backup & Restore</div></div>' +
+      '<p style="color:var(--dim);font-size:12.5px;margin-bottom:14px;">Kelola data aplikasi Anda. Semua data disimpan di browser (localStorage).</p>' +
+      '<div class="btn-group">' +
+        '<button class="btn success" onclick="exportAll()">⬇ Backup Data (JSON)</button>' +
+        '<button class="btn sec" onclick="importData(\'all\')">⬆ Restore Data (JSON)</button>' +
+        '<button class="btn danger" onclick="resetDB()">🗑 Reset ke Default</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="panel">' +
+      '<div class="panel-header"><div class="panel-title"><span class="dot"></span>Informasi Sistem</div></div>' +
+      '<table style="width:100%;">' +
+        '<tr><td style="color:var(--dim);padding:6px 0;">Versi Aplikasi</td><td style="font-weight:600;">v3.0 Stable</td></tr>' +
+        '<tr><td style="color:var(--dim);padding:6px 0;">Total Record</td><td style="font-weight:600;">' +
+          Object.keys(DB).filter(function(k){ return Array.isArray(DB[k]); }).reduce(function(s,k){ return s + DB[k].length; }, 0) + ' data</td></tr>' +
+        '<tr><td style="color:var(--dim);padding:6px 0;">Storage</td><td style="font-weight:600;">localStorage (' + (JSON.stringify(DB).length/1024).toFixed(1) + ' KB)</td></tr>' +
+        '<tr><td style="color:var(--dim);padding:6px 0;">Modul Aktif</td><td style="font-weight:600;">' + Object.keys(pages).length + ' modul</td></tr>' +
+      '</table>' +
+    '</div>';
+};
+
+/* =========================================================
+   SCHEMA & CRUD
+========================================================= */
+var schema = {
+  production: {
+    title: 'Produksi', idPrefix: 'P',
+    fields: [
+      {k:'date', l:'Tanggal', t:'date', req:true},
+      {k:'pit', l:'Pit', t:'select', opts:['Pit A','Pit B','Pit C','Pit D'], req:true},
+      {k:'material', l:'Material', t:'select', opts:['Coal','Overburden','Topsoil','Waste'], req:true},
+      {k:'tonnage', l:'Tonase (ton)', t:'number', req:true},
+      {k:'quality', l:'Kualitas', t:'select', opts:['Premium','Medium','Low','-']},
+      {k:'operator', l:'Operator', t:'text', req:true},
+      {k:'shift', l:'Shift', t:'select', opts:['Pagi','Siang','Malam']}
+    ]
+  },
+  equipment: {
+    title: 'Peralatan', idPrefix: 'EQ',
+    fields: [
+      {k:'name', l:'Nama Peralatan', t:'text', req:true},
+      {k:'type', l:'Tipe', t:'select', opts:['Excavator','Dump Truck','Bulldozer','Crusher','Drill Rig','Loader','Conveyor']},
+      {k:'brand', l:'Merek', t:'text'},
+      {k:'year', l:'Tahun', t:'number'},
+      {k:'location', l:'Lokasi', t:'text'},
+      {k:'runtime', l:'Runtime (jam)', t:'number'},
+      {k:'lastMaint', l:'Maintenance Terakhir', t:'date'},
+      {k:'nextMaint', l:'Maintenance Berikutnya', t:'date'},
+      {k:'status', l:'Status', t:'select', opts:['Aktif','Warning','Offline','Maintenance']}
+    ]
+  },
+  fleet: {
+    title: 'Fleet', idPrefix: 'FL',
+    fields: [
+      {k:'vehicleId', l:'ID Kendaraan', t:'text', req:true},
+      {k:'driver', l:'Driver', t:'text', req:true},
+      {k:'lat', l:'Latitude', t:'number'},
+      {k:'lng', l:'Longitude', t:'number'},
+      {k:'speed', l:'Kecepatan (km/h)', t:'number'},
+      {k:'fuel', l:'BBM (%)', t:'number'},
+      {k:'status', l:'Status', t:'select', opts:['Moving','Loading','Idle','Operating','Maintenance']},
+      {k:'route', l:'Rute', t:'text'}
+    ]
+  },
+  workers: {
+    title: 'Karyawan', idPrefix: 'W',
+    fields: [
+      {k:'name', l:'Nama Lengkap', t:'text', req:true},
+      {k:'role', l:'Jabatan', t:'text'},
+      {k:'dept', l:'Departemen', t:'select', opts:['Operasional','Hauling','Drilling','K3','Maintenance','Admin']},
+      {k:'shift', l:'Shift', t:'select', opts:['Pagi','Siang','Malam']},
+      {k:'phone', l:'Telepon', t:'text'},
+      {k:'certExpiry', l:'Sertifikat Expired', t:'date'},
+      {k:'status', l:'Status', t:'select', opts:['Aktif','Cuti','Nonaktif']}
+    ]
+  },
+  safety: {
+    title: 'Insiden K3', idPrefix: 'S',
+    fields: [
+      {k:'date', l:'Tanggal', t:'date', req:true},
+      {k:'type', l:'Tipe Insiden', t:'select', opts:['Near Miss','Minor Injury','Major Injury','Property Damage','Safety Observation'], req:true},
+      {k:'severity', l:'Severity', t:'select', opts:['Rendah','Sedang','Tinggi']},
+      {k:'location', l:'Lokasi', t:'text'},
+      {k:'description', l:'Deskripsi', t:'textarea'},
+      {k:'reporter', l:'Pelapor', t:'text'},
+      {k:'status', l:'Status', t:'select', opts:['Investigasi','Closed']}
+    ]
+  },
+  inventory: {
+    title: 'Inventori', idPrefix: 'I',
+    fields: [
+      {k:'name', l:'Nama Item', t:'text', req:true},
+      {k:'category', l:'Kategori', t:'select', opts:['Bahan Bakar','Pelumas','Sparepart','APD','Konsumsi']},
+      {k:'stock', l:'Stok', t:'number'},
+      {k:'unit', l:'Satuan', t:'text'},
+      {k:'minStock', l:'Min. Stok', t:'number'},
+      {k:'location', l:'Lokasi', t:'text'},
+      {k:'price', l:'Harga Satuan', t:'number'}
+    ]
+  },
+  finance: {
+    title: 'Keuangan', idPrefix: 'FN',
+    fields: [
+      {k:'date', l:'Tanggal', t:'date', req:true},
+      {k:'type', l:'Tipe', t:'select', opts:['Pemasukan','Pengeluaran'], req:true},
+      {k:'category', l:'Kategori', t:'text'},
+      {k:'description', l:'Deskripsi', t:'textarea'},
+      {k:'amount', l:'Jumlah', t:'number', req:true}
+    ]
+  },
+  alerts: {
+    title: 'Alert', idPrefix: 'A',
+    fields: [
+      {k:'title', l:'Judul', t:'text', req:true},
+      {k:'type', l:'Tipe', t:'select', opts:['success','info','warn','danger']},
+      {k:'icon', l:'Icon (emoji)', t:'text'},
+      {k:'time', l:'Waktu (ISO)', t:'text'},
+      {k:'resolved', l:'Sudah Ditangani', t:'checkbox'}
+    ]
+  }
+};
+
+function editRecord(tbl, id){
+  var sch = schema[tbl];
+  if(!sch){ toast('Schema tidak ditemukan', 'error'); return; }
+  var record = id ? DB[tbl].find(function(r){ return r.id === id; }) : null;
+
+  var fieldsHtml = sch.fields.map(function(f){
+    var val = '';
+    if(record){
+      val = (record[f.k] === null || record[f.k] === undefined) ? '' : record[f.k];
+    } else {
+      if(f.t === 'date') val = new Date().toISOString().slice(0,10);
+      else if(f.k === 'time') val = new Date().toISOString();
+    }
+
+    var label = '<label>' + f.l + (f.req ? ' <span class="req">*</span>' : '') + '</label>';
+
+    if(f.t === 'select'){
+      var opts = '<option value="">-- Pilih --</option>';
+      opts += f.opts.map(function(o){
+        return '<option value="' + esc(o) + '"' + (o == val ? ' selected' : '') + '>' + esc(o) + '</option>';
+      }).join('');
+      return '<div class="form-group">' + label + '<select class="form-control" id="fld-' + f.k + '">' + opts + '</select></div>';
+    }
+    if(f.t === 'textarea'){
+      return '<div class="form-group">' + label + '<textarea class="form-control" id="fld-' + f.k + '">' + esc(val) + '</textarea></div>';
+    }
+    if(f.t === 'checkbox'){
+      return '<div class="form-group"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;">' +
+        '<input type="checkbox" id="fld-' + f.k + '"' + (val ? ' checked' : '') + ' style="width:auto;">' + f.l + '</label></div>';
+    }
+    return '<div class="form-group">' + label + '<input type="' + f.t + '" class="form-control" id="fld-' + f.k + '" value="' + esc(val) + '"></div>';
+  }).join('');
+
+  showModal({
+    title: (record ? '✏️ Edit ' : '➕ Tambah ') + sch.title,
+    body: '<div class="form-row">' + fieldsHtml + '</div>',
+    footer: '<button class="btn sec" onclick="closeModal()">Batal</button>' +
+            '<button class="btn" onclick="saveRecord(\'' + tbl + '\',' + (id ? "'" + id + "'" : 'null') + ')">💾 Simpan</button>',
+    size: 'lg'
+  });
+}
+
+function saveRecord(tbl, id){
+  var sch = schema[tbl];
+  if(!sch){ toast('Schema tidak ditemukan', 'error'); return; }
+  var data = {};
+  var valid = true;
+  sch.fields.forEach(function(f){
+    var el = document.getElementById('fld-' + f.k);
+    if(!el) return;
+    var val;
+    if(f.t === 'checkbox') val = el.checked;
+    else if(f.t === 'number') val = el.value === '' ? 0 : Number(el.value);
+    else val = el.value;
+
+    if(f.req && (val === '' || val === undefined || val === null)){
+      valid = false;
+      toast('Field "' + f.l + '" wajib diisi', 'error');
+      el.focus();
+      return;
+    }
+    data[f.k] = val;
+  });
+  if(!valid) return;
+
+  if(id){
+    var idx = DB[tbl].findIndex(function(r){ return r.id === id; });
+    if(idx >= 0){
+      var merged = {};
+      Object.keys(DB[tbl][idx]).forEach(function(k){ merged[k] = DB[tbl][idx][k]; });
+      Object.keys(data).forEach(function(k){ merged[k] = data[k]; });
+      DB[tbl][idx] = merged;
+    }
+    toast('Record berhasil diperbarui');
+  } else {
+    data.id = uid(sch.idPrefix);
+    DB[tbl].push(data);
+    toast('Record baru berhasil ditambahkan');
+  }
+  saveDB();
+  closeModal();
+  renderPage(currentPage);
+}
+
+function deleteRecord(tbl, id){
+  if(!confirm('Hapus record dengan ID ' + id + '?')) return;
+  DB[tbl] = DB[tbl].filter(function(r){ return r.id !== id; });
+  saveDB();
+  toast('Record dihapus', 'warn');
+  renderPage(currentPage);
+}
+
+function resolveAlert(id){
+  var a = DB.alerts.find(function(x){ return x.id === id; });
+  if(a){ a.resolved = true; saveDB(); toast('Alert ditandai selesai'); renderPage(currentPage); }
+}
+
+function clearResolved(){
+  var before = DB.alerts.length;
+  DB.alerts = DB.alerts.filter(function(a){ return !a.resolved; });
+  var removed = before - DB.alerts.length;
+  if(removed > 0){
+    saveDB();
+    toast(removed + ' alert dihapus', 'warn');
+    renderPage(currentPage);
+  } else {
+    toast('Tidak ada alert yang sudah resolved', 'info');
+  }
+}
+
+/* =========================================================
+   EXPORT / IMPORT
+========================================================= */
+function downloadFile(name, content, mime){
+  mime = mime || 'application/json';
+  try{
+    var blob = new Blob([content], {type: mime});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 500);
+  } catch(e){
+    toast('Gagal download: ' + e.message, 'error');
+  }
+}
+
+function exportAll(){
+  var stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+  downloadFile('coalmine-backup-' + stamp + '.json', JSON.stringify(DB, null, 2));
+  toast('Backup lengkap berhasil didownload');
+}
+
+function exportJSON(tbl){
+  if(!DB[tbl]){ toast('Tabel tidak ditemukan', 'error'); return; }
+  var stamp = new Date().toISOString().slice(0,10);
+  downloadFile(tbl + '-' + stamp + '.json', JSON.stringify(DB[tbl], null, 2));
+  toast('Export ' + tbl + ' ke JSON berhasil');
+}
+
+function exportCSV(tbl){
+  var rows = DB[tbl];
+  if(!rows || rows.length === 0){ toast('Tidak ada data untuk diexport', 'warn'); return; }
+  var cols = Object.keys(rows[0]);
+  var escCSV = function(v){
+    var s = String(v === null || v === undefined ? '' : v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  var csv = cols.join(',') + '\n' + rows.map(function(r){
+    return cols.map(function(c){ return escCSV(r[c]); }).join(',');
+  }).join('\n');
+  var stamp = new Date().toISOString().slice(0,10);
+  downloadFile(tbl + '-' + stamp + '.csv', '\ufeff' + csv, 'text/csv;charset=utf-8');
+  toast('Export ' + tbl + ' ke CSV berhasil');
+}
+
+function exportAllCSV(){
+  var out = '';
+  studioTables.forEach(function(t){
+    if(!DB[t]) return;
+    out += '\n===== ' + t.toUpperCase() + ' =====\n';
+    var rows = DB[t];
+    if(rows.length){
+      var cols = Object.keys(rows[0]);
+      out += cols.join(',') + '\n';
+      rows.forEach(function(r){
+        out += cols.map(function(c){
+          var s = String(r[c] === null || r[c] === undefined ? '' : r[c]);
+          return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        }).join(',') + '\n';
+      });
+    }
+  });
+  var stamp = new Date().toISOString().slice(0,10);
+  downloadFile('coalmine-all-' + stamp + '.csv', '\ufeff' + out, 'text/csv;charset=utf-8');
+  toast('Export semua data ke CSV berhasil');
+}
+
+function importData(tbl){
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,.csv';
+  input.onchange = function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        var data;
+        if(file.name.toLowerCase().endsWith('.csv')){
+          data = parseCSV(ev.target.result);
+        } else {
+          data = JSON.parse(ev.target.result);
+        }
+        if(tbl === 'all'){
+          if(Array.isArray(data)){ toast('Format harus object dengan key tabel', 'error'); return; }
+          Object.keys(data).forEach(function(k){
+            if(DB[k] !== undefined) DB[k] = data[k];
+          });
+          saveDB();
+          toast('Semua data berhasil diimport');
+          renderPage(currentPage);
+        } else {
+          if(!Array.isArray(data)){ toast('Format JSON harus array', 'error'); return; }
+          if(confirm('Import ' + data.length + ' record ke tabel ' + tbl + '?\nData lama akan digantikan.')){
+            DB[tbl] = data;
+            saveDB();
+            toast(data.length + ' record diimport ke ' + tbl);
+            renderPage(currentPage);
+          }
+        }
+      } catch(err){
+        toast('Gagal parse file: ' + err.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function parseCSV(text){
+  var lines = text.replace(/^\ufeff/, '').split(/\r?\n/).filter(function(l){ return l.trim(); });
+  if(lines.length < 2) return [];
+  var parseLine = function(line){
+    var res = [], cur = '', inQ = false;
+    for(var i = 0; i < line.length; i++){
+      var ch = line[i];
+      if(inQ){
+        if(ch === '"'){
+          if(line[i+1] === '"'){ cur += '"'; i++; }
+          else inQ = false;
+        } else cur += ch;
+      } else {
+        if(ch === '"') inQ = true;
+        else if(ch === ','){ res.push(cur); cur = ''; }
+        else cur += ch;
+      }
+    }
+    res.push(cur);
+    return res;
+  };
+  var headers = parseLine(lines[0]);
+  return lines.slice(1).map(function(l){
+    var vals = parseLine(l);
+    var obj = {};
+    headers.forEach(function(h, i){
+      var v = vals[i];
+      if(v === '' || v === undefined){ obj[h] = ''; return; }
+      var n = Number(v);
+      if(!isNaN(n) && /^-?\d*\.?\d+$/.test(v)) obj[h] = n;
+      else if(v === 'true') obj[h] = true;
+      else if(v === 'false') obj[h] = false;
+      else obj[h] = v;
+    });
+    return obj;
+  });
+}
+
+/* =========================================================
+   PRINT
+========================================================= */
+function printReport(tbl){
+  var rows = DB[tbl];
+  if(!rows || !rows.length){ toast('Tidak ada data', 'warn'); return; }
+  var cols = Object.keys(rows[0]);
+  var win = window.open('', '_blank');
+  if(!win){ toast('Popup diblokir browser', 'error'); return; }
+  var html = '<html><head><title>Laporan ' + tbl + '</title><style>' +
+    'body{font-family:Arial,sans-serif;padding:24px;color:#111;}' +
+    'h1{font-size:20px;margin-bottom:4px;}' +
+    '.meta{color:#666;font-size:12px;margin-bottom:18px;}' +
+    'table{width:100%;border-collapse:collapse;font-size:11px;}' +
+    'th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;}' +
+    'th{background:#f3f4f6;font-weight:700;}' +
+    'tr:nth-child(even){background:#fafafa;}' +
+    '@media print{.no-print{display:none;}}' +
+    '</style></head><body>' +
+    '<h1>Laporan ' + tbl.toUpperCase() + ' - ' + esc(DB.settings.companyName) + '</h1>' +
+    '<div class="meta">Dicetak: ' + new Date().toLocaleString('id-ID') + ' · Total: ' + rows.length + ' record</div>' +
+    '<table><thead><tr>' + cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead>' +
+    '<tbody>' + rows.map(function(r){
+      return '<tr>' + cols.map(function(c){ return '<td>' + esc(r[c]) + '</td>'; }).join('') + '</tr>';
+    }).join('') + '</tbody></table>' +
+    '<button class="no-print" style="margin-top:16px;padding:8px 16px;cursor:pointer;" onclick="window.print()">🖨 Print / Save as PDF</button>' +
+    '</body></html>';
+  win.document.write(html);
+  win.document.close();
+}
+
+function printFullReport(){
+  var win = window.open('', '_blank');
+  if(!win){ toast('Popup diblokir browser', 'error'); return; }
+  var sections = studioTables.map(function(tbl){
+    var rows = DB[tbl];
+    if(!rows || !rows.length) return '';
+    var cols = Object.keys(rows[0]);
+    return '<h2 style="margin-top:24px;font-size:15px;border-bottom:2px solid #333;padding-bottom:4px;">' +
+      tbl.toUpperCase() + ' (' + rows.length + ')</h2>' +
+      '<table><thead><tr>' + cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead>' +
+      '<tbody>' + rows.map(function(r){
+        return '<tr>' + cols.map(function(c){ return '<td>' + esc(r[c]) + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</tbody></table>';
+  }).join('');
+
+  var html = '<html><head><title>Laporan Lengkap</title><style>' +
+    'body{font-family:Arial,sans-serif;padding:20px;color:#111;font-size:11px;}' +
+    'h1{font-size:22px;margin-bottom:6px;}' +
+    '.meta{color:#666;font-size:12px;margin-bottom:20px;}' +
+    'table{width:100%;border-collapse:collapse;margin-top:8px;}' +
+    'th,td{border:1px solid #ccc;padding:5px 7px;text-align:left;}' +
+    'th{background:#e5e7eb;font-weight:700;}' +
+    '@media print{.no-print{display:none;}}' +
+    '</style></head><body>' +
+    '<h1>' + esc(DB.settings.companyName) + '</h1>' +
+    '<div class="meta">Laporan Lengkap Operasional · Dicetak: ' + new Date().toLocaleString('id-ID') + '</div>' +
+    sections +
+    '<button class="no-print" style="margin-top:24px;padding:10px 20px;font-size:13px;cursor:pointer;" onclick="window.print()">🖨 Print / Save as PDF</button>' +
+    '</body></html>';
+  win.document.write(html);
+  win.document.close();
+}
+
+/* =========================================================
+   FILTER TABLE
+========================================================= */
+function filterTable(input, tableId){
+  var q = input.value.toLowerCase();
+  var tbl = document.getElementById(tableId);
+  if(!tbl) return;
+  var rows = tbl.querySelectorAll('tbody tr');
+  rows.forEach(function(r){
+    r.style.display = r.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+  });
+}
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+function saveSettings(){
+  DB.settings.companyName = document.getElementById('set-company').value;
+  DB.settings.brandName = document.getElementById('set-brand').value;
+  DB.settings.userName = document.getElementById('set-user').value;
+  DB.settings.userRole = document.getElementById('set-role').value;
+  DB.settings.currency = document.getElementById('set-cur').value;
+  DB.settings.monthlyTarget = Number(document.getElementById('set-target').value) || 0;
+  saveDB();
+  applySettings();
+  toast('Pengaturan disimpan');
+}
+
+function applySettings(){
+  var s = DB.settings || {};
+  var brandEl = document.getElementById('brandName');
+  var userEl = document.getElementById('userName');
+  var roleEl = document.getElementById('userRole');
+  var avEl = document.getElementById('userAvatar');
+  if(brandEl) brandEl.textContent = s.brandName || 'COALMINE';
+  if(userEl) userEl.textContent = s.userName || 'Admin';
+  if(roleEl) roleEl.textContent = s.userRole || 'Supervisor';
+  if(avEl) avEl.textContent = (s.userName || 'AD').split(' ').map(function(w){ return w[0] || ''; }).slice(0,2).join('').toUpperCase();
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+try {
+  applySettings();
+  renderPage('dashboard');
+} catch(e){
+  console.error('Init error:', e);
+  var pc = document.getElementById('pageContent');
+  if(pc) pc.innerHTML = '<div class="panel" style="color:var(--red);"><strong>Init error:</strong> ' + esc(e.message) + '</div>';
+}
+
+/* =========================================================
+   LIVE SIMULATION
+========================================================= */
+setInterval(function(){
+  var changed = false;
+  DB.fleet.forEach(function(f){
+    if(f.status === 'Moving'){
+      f.lat = (Number(f.lat)||0) + (Math.random()-0.5)*0.0002;
+      f.lng = (Number(f.lng)||0) + (Math.random()-0.5)*0.0002;
+      f.speed = Math.max(0, Math.min(60, (Number(f.speed)||0) + Math.round((Math.random()-0.5)*6)));
+      f.fuel = Math.max(0, Number(f.fuel||0) - Math.random()*0.02);
+      changed = true;
+    }
+  });
+  if(changed) saveDB();
+}, 3000);
+
+setInterval(function(){
+  if(currentPage === 'fleet') renderPage('fleet');
+}, 5000);
+
+setInterval(function(){
+  if(Math.random() < 0.15){
+    var samples = [
+      {type:'warn', icon:'⚠️', title:'Suhu mesin EXC-001 mendekati batas (98°C)'},
+      {type:'info', icon:'ℹ️', title:'Update status kendaraan DT-012 - memasuki Pit A'},
+      {type:'warn', icon:'⛽', title:'Level BBM DT-008 di bawah 30%'},
+      {type:'success', icon:'✅', title:'Target shift pagi tercapai'},
+      {type:'danger', icon:'🚨', title:'Deteksi gerakan tidak wajar di area terbatas'}
+    ];
+    var a = samples[Math.floor(Math.random()*samples.length)];
+    a.id = uid('A');
+    a.time = new Date().toISOString();
+    a.resolved = false;
+    DB.alerts.unshift(a);
+    if(DB.alerts.length > 30) DB.alerts = DB.alerts.slice(0,30);
+    saveDB();
+    if(currentPage === 'dashboard' || currentPage === 'alerts') renderPage(currentPage);
+  }
+}, 20000);
+</script>
+</body>
+</html>

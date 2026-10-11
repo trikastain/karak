@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AURUM — Sistem Manajemen Tambang Emas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.2/apexcharts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.2/math.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#141210; --bg2:#1c1916; --panel:#211d19; --line:#3a332c;
+    --ink:#efe9df; --ink-dim:#a89f92; --ink-dimmer:#726a5f;
+    --gold:#c99a3f; --gold-soft:#8a6b30;
+    --ok:#5f8c5a; --warn:#c78a3a; --bad:#a5473a; --info:#4d7a91;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#f4f1ea; --bg2:#ece7dc; --panel:#fffdf9; --line:#ddd5c4;
+      --ink:#211d19; --ink-dim:#5c554a; --ink-dimmer:#8a8072;
+      --gold:#96712a; --gold-soft:#c99a3f;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141210; --bg2:#1c1916; --panel:#211d19; --line:#3a332c;
+    --ink:#efe9df; --ink-dim:#a89f92; --ink-dimmer:#726a5f;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:env(safe-area-inset-top,0px)}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;
+    display:flex; overflow:hidden;
+  }
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+
+  /* ---- Sidebar ---- */
+  #sidebar{
+    width:270px; min-width:270px; background:var(--bg2); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; height:100%;
+  }
+  #brand{
+    padding:22px 20px 18px; border-bottom:1px solid var(--line); position:relative; overflow:hidden;
+  }
+  #brand::before{
+    content:''; position:absolute; inset:0; opacity:.5; pointer-events:none;
+    background:
+      repeating-linear-gradient(115deg, transparent 0 18px, rgba(201,154,63,0.05) 18px 19px),
+      repeating-linear-gradient(115deg, transparent 0 30px, rgba(201,154,63,0.04) 30px 31px);
+  }
+  #brand .mark{font-family:"Georgia",serif; font-size:26px; letter-spacing:0.5px; color:var(--gold); position:relative}
+  #brand .sub{font-family:-apple-system,Segoe UI,sans-serif; font-size:11px; color:var(--ink-dimmer); margin-top:3px; letter-spacing:.2px; position:relative}
+  #brand svg{position:absolute; right:14px; top:16px; width:34px; height:34px; opacity:.55}
+  #navwrap{overflow-y:auto; flex:1; padding:10px 0 20px}
+  .navgroup{margin-top:14px}
+  .navgroup h4{
+    font-family:-apple-system,Segoe UI,sans-serif; font-size:10.5px; font-weight:600;
+    color:var(--ink-dimmer); padding:4px 20px; margin:0 0 2px; letter-spacing:.4px;
+  }
+  .navitem{
+    display:flex; align-items:center; gap:10px; padding:7px 20px; cursor:pointer;
+    font-family:-apple-system,Segoe UI,sans-serif; font-size:13.5px; color:var(--ink-dim);
+    border-left:2px solid transparent;
+  }
+  .navitem:hover{background:rgba(201,154,63,0.07); color:var(--ink)}
+  .navitem.active{background:rgba(201,154,63,0.13); color:var(--gold); border-left-color:var(--gold)}
+  .navitem .ic{width:16px; text-align:center; opacity:.85; font-size:13px}
+
+  /* ---- Main ---- */
+  #main{flex:1; height:100%; overflow-y:auto; padding:26px 34px 60px}
+  #topbar{
+    display:flex; justify-content:space-between; align-items:baseline;
+    border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:22px;
+  }
+  #topbar .crumb{font-family:-apple-system,Segoe UI,sans-serif; font-size:11px; color:var(--ink-dimmer); letter-spacing:.3px}
+  #topbar h1{font-size:28px; font-weight:400; margin:2px 0 0; color:var(--ink)}
+  #topbar .meta{font-family:-apple-system,Segoe UI,sans-serif; font-size:12px; color:var(--ink-dim); text-align:right}
+
+  .kpirow{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:24px}
+  .kpi{background:var(--panel); border:1px solid var(--line); padding:16px 18px}
+  .kpi .lbl{font-family:-apple-system,Segoe UI,sans-serif; font-size:11px; color:var(--ink-dimmer); letter-spacing:.2px}
+  .kpi .val{font-size:26px; margin-top:6px; color:var(--ink)}
+  .kpi .val small{font-size:13px; color:var(--ink-dim); font-family:-apple-system,Segoe UI,sans-serif}
+  .kpi .tag{display:inline-block; margin-top:8px; font-family:-apple-system,Segoe UI,sans-serif; font-size:10.5px; padding:2px 8px; border-radius:2px}
+  .tag.ok{background:rgba(95,140,90,.18); color:var(--ok)}
+  .tag.warn{background:rgba(199,138,58,.18); color:var(--warn)}
+  .tag.bad{background:rgba(165,71,58,.18); color:var(--bad)}
+  .tag.info{background:rgba(77,122,145,.18); color:var(--info)}
+
+  .desc{font-size:15px; line-height:1.65; color:var(--ink-dim); max-width:640px; margin-bottom:22px}
+
+  table{width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); font-family:-apple-system,Segoe UI,sans-serif; font-size:13px}
+  th{text-align:left; padding:10px 14px; color:var(--ink-dimmer); font-weight:600; font-size:11px; border-bottom:1px solid var(--line); letter-spacing:.2px}
+  td{padding:10px 14px; border-bottom:1px solid var(--line); color:var(--ink-dim)}
+  tr:last-child td{border-bottom:none}
+  .status-dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px}
+  .d-ok{background:var(--ok)} .d-warn{background:var(--warn)} .d-bad{background:var(--bad)} .d-info{background:var(--info)}
+
+  .tablewrap{overflow-x:auto; border:1px solid var(--line)}
+  .tablewrap table{border:none}
+
+  #searchbox{width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:8px 12px; margin:0 20px 4px; width:calc(100% - 40px); font-family:-apple-system,Segoe UI,sans-serif; font-size:12.5px}
+  #searchbox::placeholder{color:var(--ink-dimmer)}
+
+  .homegrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px}
+  .homecard{background:var(--panel); border:1px solid var(--line); padding:16px 18px; cursor:pointer}
+  .homecard:hover{border-color:var(--gold-soft)}
+  .homecard h3{margin:0 0 4px; font-size:15px; font-weight:500; color:var(--ink)}
+  .homecard p{margin:0; font-family:-apple-system,Segoe UI,sans-serif; font-size:12px; color:var(--ink-dimmer)}
+  .homecard .n{font-family:-apple-system,Segoe UI,sans-serif; font-size:10.5px; color:var(--gold); letter-spacing:.3px}
+
+  .chartgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; margin-bottom:24px}
+  .chartbox{background:var(--panel); border:1px solid var(--line); padding:16px 18px}
+  .chartbox h4{margin:0 0 10px; font-size:13px; font-weight:600; color:var(--ink-dim); font-family:-apple-system,Segoe UI,sans-serif}
+  .chart-canvas-wrap{width:100%}
+  .btn-secondary{background:transparent; color:var(--gold); border:1px solid var(--gold-soft); padding:11px 22px; font-family:-apple-system,Segoe UI,sans-serif; font-size:13.5px; font-weight:600; cursor:pointer}
+  .btn-secondary:hover{background:rgba(201,154,63,0.1)}
+  .calcgrid{display:grid; grid-template-columns:1fr 1fr; gap:22px; max-width:720px}
+  .calcform label{display:block; font-family:-apple-system,Segoe UI,sans-serif; font-size:11.5px; color:var(--ink-dimmer); margin:12px 0 4px}
+  .calcform input{width:100%; background:var(--panel); border:1px solid var(--line); color:var(--ink); padding:9px 12px; font-size:14px; font-family:-apple-system,Segoe UI,sans-serif}
+  .calcresult{background:var(--panel); border:1px solid var(--line); padding:18px 20px}
+  .calcresult .row{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-family:-apple-system,Segoe UI,sans-serif; font-size:13px}
+  .calcresult .row:last-child{border-bottom:none}
+  .calcresult .row b{color:var(--gold); font-size:15px}
+  #csvimport{font-family:-apple-system,Segoe UI,sans-serif; font-size:12px; color:var(--ink-dim); margin-bottom:16px; display:block}
+
+  .editorlist{display:flex; flex-direction:column; gap:2px}
+  .editorcat{margin-top:18px; margin-bottom:6px; font-family:-apple-system,Segoe UI,sans-serif; font-size:11px; color:var(--gold); letter-spacing:.3px; text-transform:uppercase}
+  .editorrow{display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:12px; align-items:center; padding:8px 14px; background:var(--panel); border:1px solid var(--line); border-top:none; font-family:-apple-system,Segoe UI,sans-serif; font-size:12.5px}
+  .editorrow:first-of-type,.editorgroup .editorrow:nth-child(1){border-top:1px solid var(--line)}
+  .editorrow .mtitle{color:var(--ink)}
+  .editorrow .klabel{color:var(--ink-dimmer); font-size:11.5px}
+  .editorrow input{background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:6px 9px; font-size:12.5px; width:100%; font-family:-apple-system,Segoe UI,sans-serif}
+  .editorrow input:focus{outline:1px solid var(--gold); border-color:var(--gold)}
+  #savenote{font-family:-apple-system,Segoe UI,sans-serif; font-size:11.5px; color:var(--ok); height:16px; margin:10px 0 0}
+
+  .replist{display:flex; flex-direction:column; gap:10px; margin-bottom:20px}
+  .repcat h4{font-family:-apple-system,Segoe UI,sans-serif; font-size:11px; color:var(--ink-dimmer); letter-spacing:.3px; margin:14px 0 6px}
+  .repitem{display:flex; align-items:center; gap:9px; padding:5px 0; font-family:-apple-system,Segoe UI,sans-serif; font-size:13px; color:var(--ink-dim)}
+  .repitem input{accent-color:var(--gold)}
+  #genpdfbtn{
+    background:var(--gold); color:#1c1410; border:none; padding:11px 22px; font-family:-apple-system,Segoe UI,sans-serif;
+    font-size:13.5px; font-weight:600; cursor:pointer; letter-spacing:.2px;
+  }
+  #genpdfbtn:hover{background:var(--gold-soft)}
+  .repactions{display:flex; align-items:center; gap:14px; margin-top:6px; position:sticky; bottom:0; background:var(--bg); padding:14px 0}
+  .repcount{font-family:-apple-system,Segoe UI,sans-serif; font-size:12px; color:var(--ink-dimmer)}
+  .rep-toggle-all{font-family:-apple-system,Segoe UI,sans-serif; font-size:11.5px; color:var(--gold); cursor:pointer; text-decoration:underline; margin-left:12px}
+
+  .dm-ribbon{display:flex; border:1px solid var(--line); border-bottom:none; background:var(--bg2)}
+  .dm-tab{padding:9px 16px; font-family:-apple-system,Segoe UI,sans-serif; font-size:12px; color:var(--ink-dim); border-right:1px solid var(--line); cursor:default}
+  .dm-tab.active{color:var(--gold); background:var(--panel); border-bottom:2px solid var(--gold)}
+  .dm-workspace{display:grid; grid-template-columns:190px 1fr 190px; border:1px solid var(--line); min-height:300px}
+  .dm-side{background:var(--panel); border-right:1px solid var(--line); padding:10px 0; overflow-y:auto}
+  .dm-side:last-child{border-right:none; border-left:1px solid var(--line)}
+  .dm-panel-title{font-family:-apple-system,Segoe UI,sans-serif; font-size:10.5px; color:var(--gold); text-transform:uppercase; letter-spacing:.3px; padding:6px 12px; border-bottom:1px solid var(--line); margin-bottom:2px}
+  .dm-list{margin-bottom:10px}
+  .dm-item{font-family:-apple-system,Segoe UI,sans-serif; font-size:11.5px; color:var(--ink-dim); padding:4px 12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .dm-item input{margin-right:5px; vertical-align:middle}
+  .dm-canvas{position:relative; background:var(--bg); display:flex; align-items:center; justify-content:center; overflow:hidden}
+  .dm-canvas-label{position:absolute; bottom:8px; left:12px; font-family:-apple-system,Segoe UI,sans-serif; font-size:10.5px; color:var(--ink-dimmer)}
+  .dm-proptable{width:100%; font-family:-apple-system,Segoe UI,sans-serif; font-size:11.5px; border-collapse:collapse}
+  .dm-proptable td{padding:5px 12px; color:var(--ink-dim); border-bottom:1px solid var(--line)}
+  .dm-proptable td:first-child{color:var(--ink-dimmer)}
+  .dm-cmdlog{background:#0d0b09; border:1px solid var(--line); border-top:none; padding:10px 14px; font-family:"SF Mono",Consolas,monospace; font-size:11px; color:#8fae7a; max-height:120px; overflow-y:auto}
+  :root:not([data-theme="dark"]) .dm-cmdlog{background:#1c1712; color:#a7c491}
+
+  @media(max-width:820px){
+    #sidebar{position:fixed; z-index:20; transform:translateX(-100%); transition:transform .2s}
+    #sidebar.open{transform:translateX(0)}
+    #main{width:100%}
+    #menubtn{display:inline-block !important}
+  }
+  #menubtn{display:none; background:none; border:1px solid var(--line); color:var(--ink); padding:6px 10px; font-size:14px; cursor:pointer; margin-bottom:10px}
+  .note{font-family:-apple-system,Segoe UI,sans-serif;font-size:12px;line-height:1.5;color:var(--ink-dimmer);border-left:2px solid var(--gold-soft);padding:2px 0 2px 10px;margin:-10px 0 20px;max-width:720px}
+  .col{display:flex;flex-direction:column;gap:10px;min-width:0}
+  .sg{display:grid;grid-template-columns:250px minmax(0,1fr) 260px;gap:10px;margin-bottom:10px}
+  .sg2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:10px;margin-bottom:10px}
+  .pn{background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;min-width:0;font-family:-apple-system,Segoe UI,sans-serif;font-size:12px;color:var(--ink-dim)}
+  .pn>h5{margin:0;padding:7px 12px;font-size:12px;font-weight:600;color:var(--gold);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .pn .bd{padding:6px 0;overflow:auto;max-height:270px}
+  .tr{display:flex;gap:6px;align-items:center;padding:3px 10px;cursor:pointer;white-space:nowrap}
+  .tr:hover{background:rgba(201,154,63,.08)} .tr.on{background:rgba(201,154,63,.16);color:var(--gold)}
+  .tr i{font-style:normal;color:var(--ink-dimmer);margin-left:auto;font-size:10.5px}
+  .lay{display:grid;grid-template-columns:auto auto 24px 1fr;gap:6px;align-items:center;padding:3px 10px}
+  .lnm{cursor:pointer} .lnm:hover{color:var(--gold)}
+  .ib{background:none;border:1px solid var(--line);color:var(--ink-dim);cursor:pointer;padding:1px 5px;font-size:12px;line-height:1.4}
+  .ib.off{opacity:.35}
+  .lay input[type=color]{width:24px;height:22px;padding:0;border:1px solid var(--line);background:none}
+  .lay input[disabled]{opacity:.3}
+  .ptitle{padding:8px 10px 3px;font-size:11px;font-weight:600;color:var(--ink-dimmer)}
+  .stp{padding:2px 10px;color:var(--ink-dimmer)} .stp.done{color:var(--ink-dim)} .stp b{display:inline-block;width:14px;color:var(--ok)}
+  #v3{flex:1;min-height:470px;position:relative;background:var(--bg)} #v3 canvas{display:block;touch-action:none}
+  .lgd{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 12px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-dimmer)}
+  .lgd i{display:inline-block;width:14px;height:9px;margin-left:6px}
+  .lgd span:last-child{margin-left:auto}
+  .empty{padding:14px;color:var(--ink-dimmer);line-height:1.5}
+  .pt{width:100%;border-collapse:collapse;border:none;background:transparent;font-size:11.5px}
+  .pt th{padding:5px 10px;font-size:11px;position:sticky;top:0;background:var(--panel)} .pt td{padding:4px 10px;border-bottom:1px solid var(--line)}
+  .pt td:first-child{color:var(--ink-dimmer)}
+  .pt tr[data-h]{cursor:pointer} .pt tr.on td{background:rgba(201,154,63,.14);color:var(--gold)}
+  .chip{display:inline-block;width:9px;height:9px;margin-right:6px;vertical-align:baseline}
+  .bt{background:transparent;color:var(--gold);border:1px solid var(--gold-soft);padding:4px 10px;cursor:pointer;font:600 11.5px -apple-system,Segoe UI,sans-serif}
+  .bt:hover,.bt.act{background:rgba(201,154,63,.15)}
+  .cm{padding:8px 12px;border-bottom:1px solid var(--line)} .cm b{display:block;color:var(--ink);margin-bottom:4px}
+  .ci{display:flex;gap:6px;margin-bottom:6px} .cm label{display:block;font-size:11px;color:var(--ink-dimmer);flex:1;min-width:0}
+  .cm input,.dhbar select{background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:3px 6px;width:100%;font-size:12px}
+  .cm input[type=range]{padding:0;margin:4px 0 6px}
+  .dhbar{display:flex;gap:6px;padding:8px 12px;align-items:center;flex-wrap:wrap} .dhbar select{width:auto;margin-left:auto}
+  .dhsum{padding:2px 12px 8px;color:var(--ink-dimmer)} .dhtb{max-height:230px;overflow:auto}
+  .con{background:#0d0b09;font:11px "SF Mono",Consolas,monospace;color:#8fae7a;padding:10px 12px;max-height:290px;overflow:auto;flex:1;min-height:200px}
+  .con div{margin-bottom:3px;line-height:1.45} .con span{color:#6a6357} .con .warn{color:#d9a24a} .con .err{color:#d9705f}
+  .gt{overflow-x:auto;padding:0 12px} .gr{display:grid;grid-template-columns:210px repeat(12,minmax(38px,1fr));border-bottom:1px solid var(--line);align-items:center;min-width:700px}
+  .gr>div{padding:4px 4px;text-align:center} .gr>div:first-child{text-align:left} .gh{color:var(--ink-dimmer);font-weight:600}
+  .gn{text-align:left!important} .gb{height:14px;padding:0!important;border-radius:1px}
+  .gb.a{background:var(--gold)} .gb.b{background:var(--info)} .gb.c{background:var(--gold-soft)} .gb.d{background:var(--ok)}
+  .schc{padding:6px 12px 0}
+  @media(max-width:1180px){.sg,.sg2{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="brand">
+    <svg viewBox="0 0 40 40" fill="none"><path d="M6 28 L14 12 L20 22 L26 8 L34 28 Z" stroke="#c99a3f" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <div class="mark">AURUM</div>
+    <div class="sub">Sistem Manajemen Tambang Emas · 50 Modul</div>
+  </div>
+  <input id="searchbox" placeholder="Cari modul...">
+  <div id="navwrap"></div>
+</nav>
+
+<main id="main">
+  <button id="menubtn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ Menu</button>
+  <div id="content"></div>
+</main>
+
+<script>
+const CATS = [
+  ["Ringkasan", ["dashboard"]],
+  ["Produksi & Operasional", ["produksi-harian","cadangan-emas","peledakan","pengolahan","logistik-tambang","rencana-tambang"]],
+  ["K3 & Keselamatan", ["insiden-k3","apd","inspeksi-alat","pelatihan-k3","audit-keselamatan","tanggap-darurat"]],
+  ["Lingkungan", ["kualitas-air","kualitas-udara","reklamasi-lahan","limbah-b3","biodiversitas","monitoring-tailing"]],
+  ["SDM", ["data-karyawan","absensi","payroll","pelatihan-sdm","kontrak-kerja"]],
+  ["Keuangan", ["cashflow","biaya-operasional","royalti-pajak","anggaran","laporan-keuangan"]],
+  ["Aset & Peralatan", ["alat-berat","maintenance","inventaris","bahan-bakar","spare-part"]],
+  ["Geologi & Eksplorasi", ["data-bor","model-cadangan","peta-geologi","sampling"]],
+  ["Pemodelan & Desain Tambang", ["pemodelan-geologi","estimasi-sumberdaya","desain-tambang","optimasi-penjadwalan","studio-desain"]],
+  ["Komunitas & CSR", ["program-csr","hubungan-masyarakat","keluhan-warga"]],
+  ["Manajemen & Pelaporan", ["laporan-pemerintah"]],
+  ["Alat & Laporan", ["editor-data","buat-laporan","kalkulator"]]
+];
+
+const MOD = {
+  "dashboard":{t:"Ringkasan Eksekutif",d:"Ikhtisar seluruh operasi tambang: produksi, kepatuhan izin, keselamatan, dan keuangan dalam satu pandangan.",kpi:[["Produksi Bulan Ini","1.240 oz","ok","+6% dari bulan lalu"],["Status Izin Aktif","18/20","warn","2 izin mendekati jatuh tempo"],["Hari Tanpa Insiden K3","47 hari","ok","Target: 90 hari"],["Cashflow Operasional","Rp 42,3 M","info","Bulan berjalan"]],
+    charts:[
+      {type:"line",title:"Tren Produksi Emas (oz) — 6 Bulan Terakhir",labels:["Apr","Mei","Jun","Jul","Agu","Sep"],data:[[1050,1080,1120,1150,1190,1240]],names:["Produksi (oz)"]},
+      {type:"doughnut",title:"Status Izin",labels:["Aktif","Mendekati Jatuh Tempo","Kedaluwarsa"],data:[[16,2,2]]}
+    ]},
+
+  "produksi-harian":{t:"Produksi Harian",d:"Pencatatan tonase bijih, kadar emas (grade), dan hasil olahan harian dari tiap panel tambang.",kpi:[["Tonase Hari Ini","3.850 t","ok",""],["Rata-rata Kadar","2,1 g/t","info",""],["Emas Terekstraksi Hari Ini","41,3 oz","ok",""]],rows:[["Panel A-01","3.850 t","2,1 g/t","On track"],["Panel A-02","2.900 t","1,8 g/t","On track"],["Panel B-05","0 t","-","Perawatan alat"]],
+    charts:[{type:"bar",title:"Tonase per Panel (7 Hari Terakhir, rata-rata)",labels:["A-01","A-02","A-03","B-01","B-05","C-02"],data:[[3850,2900,3100,2650,0,3400]],names:["Ton/hari"]}]},
+  "cadangan-emas":{t:"Estimasi Cadangan",d:"Estimasi cadangan terbukti dan terkira berdasarkan model blok terbaru dari data geologi.",kpi:[["Cadangan Terbukti (Proven)","1.820.000 oz","ok",""],["Cadangan Terkira (Probable)","910.000 oz","info",""],["Total Cadangan","2.730.000 oz","ok",""],["Umur Tambang Tersisa","13,8 tahun","warn","Pada laju produksi saat ini"]],rows:[["Panel A (01-06)","640.000 oz","2,4 g/t","Proven"],["Panel B (01-05)","510.000 oz","2,0 g/t","Proven"],["Panel C (01-04)","670.000 oz","1,9 g/t","Probable"],["Zona Ekstensi Timur","910.000 oz","1,7 g/t","Probable"]]},
+  "peledakan":{t:"Rencana & Realisasi Peledakan",d:"Jadwal peledakan (blasting) per panel, volume bahan peledak, dan hasil fragmentasi batuan.",kpi:[["Peledakan Bulan Ini","22 kali","info",""],["Efisiensi Fragmentasi","87%","ok",""]]},
+  "pengolahan":{t:"Pabrik Pengolahan (Processing Plant)",d:"Kinerja pabrik pengolahan: throughput, recovery rate, dan konsumsi reagen (sianida/karbon).",kpi:[["Throughput","4.100 t/hari","ok",""],["Recovery Rate","91,2%","ok",""],["Downtime Pabrik","3,4%","warn",""],["Biaya Proses per Ton","Rp 185.000","info",""],["Konsumsi Sianida","0,42 kg/t","info",""]],rows:[["Crushing & Grinding","4.100 t","98,5% uptime","Normal"],["Leaching (CIL)","91,2% recovery","24 tangki aktif","Normal"],["Refining","41,3 oz/hari","99,1% kemurnian","Normal"]]},
+  "logistik-tambang":{t:"Logistik & Rantai Pasok",d:"Pengelolaan pengiriman material, bahan bakar, dan hasil tambang antar lokasi.",kpi:[["Pengiriman Aktif","6","info",""],["Keterlambatan","1","warn",""]]},
+  "rencana-tambang":{t:"Rencana Tambang (Mine Plan)",d:"Rencana jangka pendek dan panjang penambangan tiap panel, termasuk urutan ekstraksi.",kpi:[["Panel Aktif","50","info",""],["Kepatuhan Rencana","94%","ok",""]]},
+
+  "insiden-k3":{t:"Catatan Insiden K3",d:"Log kejadian near-miss, insiden ringan, dan kecelakaan kerja beserta tindak lanjutnya.",kpi:[["Insiden Bulan Ini","2","warn",""],["Near-miss Dilaporkan","14","info",""],["Hari Tanpa LTI","47","ok","Lost Time Injury"]],
+    charts:[{type:"bar",title:"Insiden vs Near-miss per Bulan",labels:["Apr","Mei","Jun","Jul","Agu","Sep"],data:[[3,1,4,2,3,2],[10,12,9,15,13,14]],names:["Insiden","Near-miss"]}]},
+  "apd":{t:"Alat Pelindung Diri (APD)",d:"Inventaris dan kepatuhan penggunaan APD oleh pekerja tambang.",kpi:[["Kepatuhan APD","96%","ok",""],["Stok Helm/Rompi","Cukup","ok",""]]},
+  "inspeksi-alat":{t:"Inspeksi Kelayakan Alat",d:"Jadwal dan hasil inspeksi rutin kelayakan alat berat dan alat angkut.",kpi:[["Alat Diinspeksi Bulan Ini","32","info",""],["Alat Tidak Laik","2","bad",""]]},
+  "pelatihan-k3":{t:"Pelatihan Keselamatan Kerja",d:"Jadwal pelatihan K3 wajib dan sertifikasi kompetensi pekerja tambang.",kpi:[["Pekerja Tersertifikasi","91%","ok",""],["Pelatihan Terjadwal","4","info",""]]},
+  "audit-keselamatan":{t:"Audit Keselamatan Internal",d:"Hasil audit keselamatan berkala terhadap seluruh panel dan fasilitas tambang.",kpi:[["Skor Audit Terakhir","88/100","ok",""],["Temuan Terbuka","5","warn",""]]},
+  "tanggap-darurat":{t:"Rencana Tanggap Darurat",d:"Prosedur dan kesiapan tim tanggap darurat untuk kecelakaan, longsor, dan kebakaran.",kpi:[["Simulasi Terakhir","2 bulan lalu","info",""],["Tim Siaga","24 orang","ok",""]]},
+
+  "kualitas-air":{t:"Pemantauan Kualitas Air",d:"Hasil uji kualitas air sungai dan air limpasan tambang dibanding baku mutu.",kpi:[["Titik Pantau","6","info",""],["Melebihi Baku Mutu","0","ok",""]],
+    charts:[{type:"line",title:"pH Air Limpasan vs Baku Mutu",labels:["Apr","Mei","Jun","Jul","Agu","Sep"],data:[[7.1,7.0,6.9,7.2,7.1,7.0],[6,6,6,6,6,6],[9,9,9,9,9,9]],names:["pH Terukur","Batas Bawah","Batas Atas"]}]},
+  "kualitas-udara":{t:"Pemantauan Kualitas Udara",d:"Pengukuran debu (PM10) dan emisi dari aktivitas tambang dan pengolahan.",kpi:[["Rata-rata PM10","62 µg/m³","ok",""]]},
+  "reklamasi-lahan":{t:"Reklamasi & Revegetasi Lahan",d:"Progres reklamasi lahan bekas tambang sesuai rencana pascatambang.",kpi:[["Lahan Direklamasi","310 ha","info",""],["Target Tahunan","85%","warn",""]]},
+  "limbah-b3":{t:"Pengelolaan Limbah B3",d:"Pencatatan dan pelaporan limbah bahan berbahaya dan beracun (oli bekas, sianida, dll).",kpi:[["Limbah Tersimpan","Sesuai TPS","ok",""],["Manifest Bulan Ini","18","info",""]]},
+  "biodiversitas":{t:"Monitoring Keanekaragaman Hayati",d:"Pemantauan flora-fauna di area konsesi dan zona penyangga.",kpi:[["Survei Terakhir","3 bulan lalu","info",""]]},
+  "monitoring-tailing":{t:"Monitoring Kolam Tailing",d:"Pengawasan struktur dan kestabilan bendungan tailing (tailing storage facility).",kpi:[["Status Struktur","Stabil","ok",""],["Inspeksi Terakhir","Minggu ini","ok",""]]},
+
+  "data-karyawan":{t:"Data Karyawan",d:"Basis data seluruh karyawan tetap, kontrak, dan mitra kerja tambang.",kpi:[["Total Karyawan","842 orang","info",""],["Karyawan Lokal","598 orang (71%)","ok",""],["Karyawan Tetap","611 orang","info",""],["Karyawan Kontrak","231 orang","info",""]],rows:[["Operasional Tambang","412 orang","49%"],["Pengolahan (Plant)","156 orang","18,5%"],["K3 & Lingkungan","64 orang","7,6%"],["Administrasi & Keuangan","98 orang","11,6%"],["Teknik & Geologi","112 orang","13,3%"]]},
+  "absensi":{t:"Absensi & Shift Kerja",d:"Pencatatan kehadiran dan pengaturan shift kerja tambang (siang/malam).",kpi:[["Kehadiran Hari Ini","808 dari 842 (96%)","ok",""],["Shift Siang","421 orang","info",""],["Shift Malam","387 orang","info",""],["Tidak Hadir","34 orang","warn",""]]},
+  "payroll":{t:"Penggajian (Payroll)",d:"Pengelolaan gaji, tunjangan, dan lembur karyawan tambang.",kpi:[["Total Payroll Bulan Ini","Rp 8.900.000.000","info",""],["Rata-rata Gaji Pokok","Rp 7.850.000","info",""],["Total Lembur","Rp 620.000.000","warn",""]],rows:[["Gaji Pokok","Rp 6.610.000.000","74,3%"],["Tunjangan Tetap","Rp 1.190.000.000","13,4%"],["Lembur","Rp 620.000.000","7,0%"],["BPJS & Asuransi","Rp 480.000.000","5,3%"]]},
+  "pelatihan-sdm":{t:"Pelatihan & Pengembangan SDM",d:"Program pelatihan teknis dan pengembangan karir karyawan.",kpi:[["Pelatihan Berjalan","3 program","info",""],["Peserta Terlatih (YTD)","286 orang","ok",""],["Anggaran Pelatihan","Rp 740.000.000","info",""]]},
+  "kontrak-kerja":{t:"Kontrak Kerja & Perjanjian",d:"Dokumen kontrak kerja karyawan dan perjanjian dengan kontraktor.",kpi:[["Kontrak Jatuh Tempo (90 hari)","6 kontrak","warn",""],["Kontrak Aktif","842 kontrak","info",""]]},
+
+  "cashflow":{t:"Arus Kas (Cashflow)",d:"Pemantauan arus kas masuk dan keluar operasional tambang.",kpi:[["Saldo Kas","Rp 42,3 M","ok",""],["Arus Kas Bulan Ini","+Rp 3,1 M","ok",""]],
+    charts:[{type:"line",title:"Arus Kas Bulanan (Rp Miliar)",labels:["Apr","Mei","Jun","Jul","Agu","Sep"],data:[[35.2,37.8,38.5,40.1,39.2,42.3]],names:["Saldo Kas"]}]},
+  "biaya-operasional":{t:"Biaya Operasional",d:"Rincian biaya produksi, bahan bakar, tenaga kerja, dan pemeliharaan.",kpi:[["Total Biaya Bulan Ini","Rp 31,6 M","info",""],["Biaya per Ton Bijih","Rp 410.000","info",""],["Biaya per Ounce (AISC)","USD 1.180","warn","All-In Sustaining Cost"]],rows:[["Tenaga Kerja","Rp 8.900.000.000","28,2%"],["Bahan Bakar & Energi","Rp 6.750.000.000","21,4%"],["Pemeliharaan Alat","Rp 5.200.000.000","16,5%"],["Reagen & Bahan Proses","Rp 4.100.000.000","13,0%"],["Lainnya","Rp 6.650.000.000","20,9%"]],
+    charts:[{type:"doughnut",title:"Komposisi Biaya Operasional",labels:["Tenaga Kerja","Bahan Bakar","Pemeliharaan","Reagen","Lainnya"],data:[[28.2,21.4,16.5,13.0,20.9]]}]},
+  "royalti-pajak":{t:"Royalti & Pajak Pertambangan",d:"Perhitungan dan pembayaran royalti (PNBP) serta pajak daerah/pusat.",kpi:[["Royalti Bulan Ini (3,75%)","Rp 1.230.000.000","info",""],["PPh Badan (YTD)","Rp 12.750.000.000","info",""],["Status Pembayaran","Lunas","ok",""]],rows:[["Royalti Produksi (PNBP)","Rp 1.230.000.000","Lunas"],["Pajak Air Permukaan","Rp 84.000.000","Lunas"],["Pajak Daerah (Alat Berat)","Rp 156.000.000","Lunas"]]},
+  "anggaran":{t:"Anggaran Tahunan",d:"Perbandingan anggaran RKAB dengan realisasi belanja tahun berjalan.",kpi:[["Total Anggaran 2026","Rp 480 M","info",""],["Realisasi s/d September","Rp 292,8 M (61%)","warn",""],["Sisa Anggaran","Rp 187,2 M","info",""]],rows:[["Belanja Modal (Capex)","Rp 210 M","58%"],["Belanja Operasional (Opex)","Rp 240 M","64%"],["Eksplorasi Lanjutan","Rp 30 M","55%"]]},
+  "laporan-keuangan":{t:"Laporan Keuangan",d:"Laporan laba rugi, neraca, dan arus kas periodik untuk manajemen dan pemegang saham.",kpi:[["Pendapatan (YTD)","Rp 186 M","ok",""],["Beban Pokok Produksi (YTD)","Rp 118 M","info",""],["Laba Operasional (YTD)","Rp 51 M","ok",""],["Margin Operasional","27,4%","ok",""]],rows:[["Pendapatan Penjualan Emas","Rp 186.000.000.000",""],["Beban Pokok Produksi","Rp 118.000.000.000",""],["Beban Umum & Administrasi","Rp 17.000.000.000",""],["Laba Operasional","Rp 51.000.000.000",""]]},
+
+  "alat-berat":{t:"Alat Berat & Kendaraan Tambang",d:"Data armada excavator, dump truck, dan alat berat lain per panel.",kpi:[["Unit Beroperasi","38 dari 42 (90,5%)","warn",""],["Rata-rata Utilisasi","82,3%","ok",""]],rows:[["Excavator EX-12","Panel A-01","Beroperasi"],["Dump Truck DT-07","Panel B-03","Perawatan"],["Bulldozer BD-02","Panel A-04","Beroperasi"]],
+    charts:[{type:"bar",title:"Utilisasi Alat per Kategori (%)",labels:["Excavator","Dump Truck","Bulldozer","Drill Rig","Genset"],data:[[88,79,84,76,95]],names:["Utilisasi %"]}]},
+  "maintenance":{t:"Pemeliharaan Alat (Maintenance)",d:"Jadwal perawatan preventif dan riwayat perbaikan alat tambang.",kpi:[["Maintenance Terjadwal","9 unit","info",""],["Alat Dalam Perbaikan","3 unit","warn",""],["Biaya Maintenance Bulan Ini","Rp 1.850.000.000","info",""]],rows:[["Excavator EX-12","Servis 500 jam","Terjadwal 27 Sep"],["Dump Truck DT-07","Ganti ban & rem","Berlangsung"],["Genset G-02","Servis rutin","Terjadwal 30 Sep"]]},
+  "inventaris":{t:"Inventaris & Gudang",d:"Stok suku cadang, material, dan perlengkapan operasional di gudang.",kpi:[["Total Item Terdaftar","1.240 SKU","info",""],["Item Stok Rendah","5 item","warn",""],["Nilai Inventaris","Rp 14,2 M","info",""]]},
+  "bahan-bakar":{t:"Konsumsi Bahan Bakar",d:"Pemantauan pemakaian solar untuk alat berat dan genset pembangkit.",kpi:[["Konsumsi Harian","18.400 liter","info",""],["Konsumsi Bulan Ini","552.000 liter","info",""],["Biaya Bulan Ini","Rp 6.750.000.000","warn",""]]},
+  "spare-part":{t:"Manajemen Suku Cadang",d:"Pelacakan ketersediaan dan pemesanan suku cadang alat berat.",kpi:[["Pesanan Tertunda","2 pesanan","warn",""],["Nilai Pesanan Tertunda","Rp 890.000.000","info",""]]},
+
+  "data-bor":{t:"Data Pemboran (Drilling)",d:"Hasil pemboran eksplorasi dan pemboran produksi untuk pemodelan cadangan.",kpi:[["Total Lubang Bor","1.240 lubang","info",""],["Meter Bor Bulan Ini","3.100 m","ok",""],["Rata-rata Kedalaman","148 m","info",""]],rows:[["DDH-1189","152 m","2,3 g/t rata-rata"],["DDH-1190","140 m","1,9 g/t rata-rata"],["DDH-1191","165 m","2,6 g/t rata-rata"]]},
+  "model-cadangan":{t:"Model Blok Cadangan",d:"Model geologi 3D untuk estimasi cadangan dan perencanaan tambang.",kpi:[["Update Terakhir","6 minggu lalu","info",""],["Jumlah Blok Model","48.600 blok","info",""],["Cut-off Grade","0,5 g/t","info",""]]},
+  "peta-geologi":{t:"Peta Geologi & Struktur",d:"Peta sebaran mineralisasi, litologi, dan struktur geologi area konsesi.",kpi:[["Peta Tersedia","12 lapisan","info",""],["Luas Area Terpetakan","2.450 ha","info",""]]},
+  "sampling":{t:"Sampling & Uji Laboratorium",d:"Pengujian kadar emas dari sampel inti bor dan hasil produksi di laboratorium.",kpi:[["Sampel Diuji Bulan Ini","210 sampel","info",""],["Rata-rata Kadar Sampel","2,1 g/t","info",""],["QA/QC Lolos","98,6%","ok",""]]},
+
+  "program-csr":{t:"Program CSR",d:"Program tanggung jawab sosial perusahaan bagi masyarakat sekitar tambang.",kpi:[["Program Berjalan","6","info",""],["Anggaran CSR","Rp 2,1 M","info",""]]},
+  "hubungan-masyarakat":{t:"Hubungan Masyarakat",d:"Pengelolaan komunikasi dan kemitraan dengan masyarakat serta pemerintah desa/daerah.",kpi:[["Pertemuan Bulan Ini","4","info",""]]},
+  "keluhan-warga":{t:"Pengaduan & Keluhan Warga",d:"Pencatatan dan penyelesaian keluhan masyarakat terkait dampak operasional tambang.",kpi:[["Keluhan Terbuka","1","warn",""],["Rata-rata Penyelesaian","6 hari","ok",""]]},
+
+  "laporan-pemerintah":{t:"Pelaporan ke Pemerintah",d:"Rekap pelaporan wajib ke Kementerian ESDM, Dinas ESDM Provinsi, dan KLHK.",kpi:[["Laporan Tepat Waktu","100%","ok",""],["Laporan Berikutnya","14 hari lagi","info",""]],rows:[["Laporan Produksi Bulanan","ESDM","Terkirim"],["Laporan RKL-RPL Triwulan","KLHK","Dalam proses"],["Laporan Realisasi RKAB","Dinas ESDM Provinsi","Terkirim"]]}
+};
+
+const ICONS = {"Ringkasan":"◆","Produksi & Operasional":"⛏","K3 & Keselamatan":"⚑","Lingkungan":"❧","SDM":"⚉","Keuangan":"◈","Aset & Peralatan":"⚙","Geologi & Eksplorasi":"⬢","Pemodelan & Desain Tambang":"◫","Komunitas & CSR":"⌂","Manajemen & Pelaporan":"▤","Alat & Laporan":"✎"};
+
+MOD["pemodelan-geologi"] = {t:"Pemodelan Geologi (Geological Modelling)", d:"Mengolah data pemboran (drillhole), melakukan korelasi litologi, membangun model urutan stratigrafi, serta interpretasi struktur sesar secara implisit (implicit modelling) — mengikuti alur kerja seperti pada Datamine Studio.", kpi:[["Drillhole Terproses","1.240 lubang","ok",""],["Unit Litologi Termodelkan","6 unit stratigrafi","info",""],["Struktur Sesar Teridentifikasi","4 struktur","warn",""],["Metode Pemodelan","Implicit Modelling","info",""]]};
+MOD["estimasi-sumberdaya"] = {t:"Estimasi Sumber Daya (Resource Estimation)", d:"Analisis geostatistik, pembuatan model blok (block model), serta perhitungan kadar dan volume endapan mineral secara akurat menggunakan metode interpolasi kadar.", kpi:[["Jumlah Blok Model","48.600 blok","info",""],["Metode Interpolasi","Ordinary Kriging","info",""],["Search Ellipse","150×150×50 m","info",""],["Validasi Swath Plot","Lolos","ok",""]]};
+MOD["desain-tambang"] = {t:"Desain Tambang (Mine Design)", d:"Merancang geometri pit terbuka (open pit design), jalan angkut (haul road), tahapan penambangan (pushback/phase), serta desain terowongan untuk tambang bawah tanah (underground).", kpi:[["Tahapan Pit (Pushback)","3 fase","info",""],["Sudut Lereng Keseluruhan","42°","info",""],["Lebar Jalan Angkut","30 m","info",""],["Panjang Desain Terowongan UG","1.850 m","info",""]]};
+MOD["optimasi-penjadwalan"] = {t:"Optimasi & Penjadwalan (Optimization & Scheduling)", d:"Menentukan batas pit akhir yang paling ekonomis (pit optimization) serta menyusun jadwal produksi dari harian hingga jangka panjang.", kpi:[["NPV Pit Optimal","USD 186 juta","ok",""],["Strip Ratio Rata-rata","4,2 : 1","info",""],["Horizon Jadwal","10 tahun","info",""],["Periode Jadwal Aktif","Bulanan","info",""]],
+  charts:[{type:"bar",title:"Rencana Produksi 5 Tahun (kt bijih)",labels:["2026","2027","2028","2029","2030"],data:[[1450,1520,1600,1580,1490]],names:["Produksi (kt)"]}]};
+MOD["studio-desain"] = {t:"Studio Desain (Datamine-style)", d:"Antarmuka kerja bergaya Datamine Studio: Ribbon Bar di atas, Graphics Window 3D di tengah, serta panel Project Files, Sheets, dan Properties yang dapat digeser (dockable) di sekelilingnya."};
+
+MOD["editor-data"] = {t:"Editor Data", d:"Ubah angka dan nilai pada seluruh modul secara manual. Perubahan tersimpan otomatis di perangkat ini.", kpi:[]};
+MOD["buat-laporan"] = {t:"Buat Laporan", d:"Pilih modul yang ingin disertakan, lalu buat laporan dalam bentuk PDF atau Excel untuk diunduh atau dicetak.", kpi:[]};
+MOD["kalkulator"] = {t:"Kalkulator Volume & Tonase", d:"Menghitung volume galian, tonase, dan estimasi kandungan emas dari dimensi blok menggunakan Math.js.", kpi:[]};
+
+function buildNav(filter){
+  const wrap = document.getElementById('navwrap');
+  wrap.innerHTML = '';
+  CATS.forEach(([cat, ids])=>{
+    const shown = ids.filter(id => !filter || MOD[id].t.toLowerCase().includes(filter) || id.includes(filter));
+    if(!shown.length) return;
+    const g = document.createElement('div'); g.className='navgroup';
+    const h = document.createElement('h4'); h.textContent = cat; g.appendChild(h);
+    shown.forEach(id=>{
+      const item = document.createElement('div');
+      item.className = 'navitem' + (id===current ? ' active' : '');
+      item.innerHTML = `<span class="ic">${ICONS[cat]||'·'}</span><span>${MOD[id].t}</span>`;
+      item.onclick = ()=>render(id);
+      g.appendChild(item);
+    });
+    wrap.appendChild(g);
+  });
+}
+
+let current = 'dashboard';
+let chartInstances = [];
+const GOLD_PALETTE = ['#c99a3f','#4d7a91','#5f8c5a','#a5473a','#8a6b30','#c78a3a'];
+
+function loadOverrides(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('aurum-kpi-overrides-v2')||'{}');
+    Object.keys(saved).forEach(id=>{ if(MOD[id]) MOD[id].kpi = saved[id]; });
+  }catch(e){}
+}
+function saveOverrides(){
+  try{
+    const out = {};
+    Object.keys(MOD).forEach(id=>{ if(MOD[id].kpi && MOD[id].kpi.length) out[id]=MOD[id].kpi; });
+    localStorage.setItem('aurum-kpi-overrides-v2', JSON.stringify(out));
+  }catch(e){}
+}
+loadOverrides();
+
+function destroyCharts(){ chartInstances.forEach(ch=>{try{ch.destroy()}catch(e){}}); chartInstances=[]; }
+
+function drawCharts(list,pre){
+  pre=pre||'chart-';
+  if(!list||!window.ApexCharts) return;
+  const cs=getComputedStyle(document.documentElement), ink=cs.getPropertyValue('--ink-dim').trim()||'#8a8072', ln=cs.getPropertyValue('--line').trim()||'#3a332c';
+  const isDark=(matchMedia('(prefers-color-scheme: dark)').matches && !document.documentElement.hasAttribute('data-theme'))||document.documentElement.getAttribute('data-theme')==='dark';
+  list.forEach((cfg,i)=>{
+    const el=document.getElementById(pre+i); if(!el) return;
+    const dn=cfg.type==='doughnut', mx=!!cfg.types, ns=cfg.names||[];
+    const fmt=v=>v==null?'–':Number(v).toLocaleString('id-ID',{maximumFractionDigits:2})+(cfg.unit||'');
+    const o={chart:{type:dn?'donut':(mx?'line':cfg.type),height:cfg.h||250,stacked:!!cfg.stacked,background:'transparent',toolbar:{show:false},fontFamily:'inherit',foreColor:ink},
+      colors:cfg.colors||GOLD_PALETTE,theme:{mode:isDark?'dark':'light'},grid:{borderColor:ln,strokeDashArray:3},
+      legend:{show:dn||ns.length>1,position:'bottom',fontSize:'11px'},tooltip:{theme:isDark?'dark':'light',y:{formatter:fmt}}};
+    if(dn){
+      o.series=cfg.data[0]; o.labels=cfg.labels; o.stroke={width:1,colors:[cs.getPropertyValue('--panel').trim()||'#211d19']};
+      o.dataLabels={enabled:true,style:{fontSize:'10.5px'}};
+      o.plotOptions={pie:{donut:{size:'62%',labels:{show:true,value:{formatter:v=>fmt(+v)},total:{show:true,label:cfg.total||'Total',formatter:w=>fmt(w.globals.seriesTotals.reduce((a,b)=>a+b,0))}}}}};
+    } else {
+      const tp=j=>mx?cfg.types[j]:cfg.type;
+      o.series=cfg.data.map((d,j)=>({name:ns[j],type:mx?cfg.types[j]:undefined,data:d}));
+      o.xaxis={categories:cfg.labels,axisBorder:{color:ln},axisTicks:{color:ln}};
+      o.stroke={curve:'smooth',width:ns.map((_,j)=>tp(j)==='bar'?0:2.5),dashArray:cfg.dash||0};
+      o.markers={size:ns.map((_,j)=>tp(j)==='line'?3:0)};
+      o.dataLabels={enabled:false};
+      o.plotOptions={bar:{columnWidth:'55%',borderRadius:2,horizontal:!!cfg.horizontal}};
+      const lf=v=>Number(v).toLocaleString('id-ID',{maximumFractionDigits:1});
+      if(cfg.axes){
+        o.yaxis=cfg.axes.map((a,j)=>{const first=cfg.axes.indexOf(a)===j;return {seriesName:ns[cfg.axes.indexOf(a)],show:first,opposite:a===1,title:{text:(cfg.yt||[])[a]},labels:{formatter:lf},min:a===0?cfg.min:undefined}});
+        o.tooltip.y={formatter:v=>v==null?'–':lf(v)};
+      } else o.yaxis={title:{text:cfg.yt},labels:{formatter:lf},min:cfg.min,max:cfg.max};
+    }
+    const ch=new ApexCharts(el,o); ch.render(); chartInstances.push(ch);
+  });
+}
+
+function render(id){
+  current = id;
+  if(threeState){ cancelAnimationFrame(threeState.raf); if(threeState.ro)threeState.ro.disconnect(); if(threeState.ren)threeState.ren.dispose(); threeState=null; ST.V=null; }
+  if(id==='editor-data'){ renderEditor(); return; }
+  if(id==='buat-laporan'){ renderReport(); return; }
+  if(id==='studio-desain'){ renderStudio(); return; }
+  if(id==='kalkulator'){ renderKalkulator(); return; }
+  const m = MOD[id];
+  const c = document.getElementById('content');
+  const cat = CATS.find(([,ids])=>ids.includes(id))[0];
+  let kpiHtml = m.kpi.map(([lbl,val,tone,note])=>`
+    <div class="kpi">
+      <div class="lbl">${lbl}</div>
+      <div class="val">${val}</div>
+      ${note?`<div class="tag ${tone}">${note}</div>`:`<span class="tag ${tone}">${tone==='ok'?'Aman':tone==='warn'?'Perhatian':tone==='bad'?'Kritis':'Info'}</span>`}
+    </div>`).join('');
+  let tableHtml = '';
+  if(m.rows){
+    tableHtml = `<div class="tablewrap"><table><thead><tr>${(m.cols||['Item','Detail','Status']).map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>
+      ${m.rows.map(r=>`<tr>${r.map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}
+    </tbody></table></div>`;
+  }
+  let chartHtml = '';
+  if(m.charts){
+    chartHtml = `<div class="chartgrid">${m.charts.map((cfg,i)=>`
+      <div class="chartbox" style="${cfg.wide?'grid-column:1/-1':''}"><h4>${cfg.title}</h4><div class="chart-canvas-wrap" id="chart-${i}"></div></div>
+    `).join('')}</div>`;
+  }
+  c.innerHTML = `
+    <div id="topbar">
+      <div>
+        <div class="crumb">${cat}</div>
+        <h1>${m.t}</h1>
+      </div>
+      <div class="meta">Diperbarui hari ini<br>Panel: 15 aktif</div>
+    </div>
+    <div class="desc">${m.d}</div>
+    ${m.note?`<div class="note">${m.note}</div>`:''}
+    <div class="kpirow">${kpiHtml}</div>
+    ${chartHtml}
+    ${tableHtml}
+  `;
+  destroyCharts();
+  if(m.charts) drawCharts(m.charts);
+  buildNav('');
+  document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo(0,0);
+  document.getElementById('main').scrollTop = 0;
+}
+
+function renderEditor(){
+  destroyCharts();
+  const c = document.getElementById('content');
+  let body = '';
+  CATS.forEach(([cat,ids])=>{
+    if(cat==='Alat & Laporan') return;
+    const withKpi = ids.filter(id=>MOD[id].kpi && MOD[id].kpi.length);
+    if(!withKpi.length) return;
+    body += `<div class="editorcat">${cat}</div><div class="editorgroup">`;
+    withKpi.forEach(id=>{
+      MOD[id].kpi.forEach((k,ki)=>{
+        body += `<div class="editorrow">
+          <span class="mtitle">${MOD[id].t}</span>
+          <span class="klabel">${k[0]}</span>
+          <input type="text" data-id="${id}" data-idx="${ki}" value="${k[1]}">
+        </div>`;
+      });
+    });
+    body += `</div>`;
+  });
+  c.innerHTML = `
+    <div id="topbar"><div><div class="crumb">Alat & Laporan</div><h1>Editor Data</h1></div></div>
+    <div class="desc">Ubah nilai KPI/angka pada modul mana pun di bawah ini. Perubahan tersimpan otomatis di perangkat ini dan langsung terlihat saat modul tersebut dibuka kembali.</div>
+    <input type="file" id="csvimport" accept=".csv">
+    <div id="savenote"></div>
+    <div class="editorlist">${body}</div>
+  `;
+  document.getElementById('csvimport').addEventListener('change', e=>{
+    const file = e.target.files[0]; if(!file || !window.Papa) return;
+    Papa.parse(file, {header:true, skipEmptyLines:true, complete: res=>{
+      let n=0;
+      res.data.forEach(row=>{
+        const id=(row.modul||'').trim(), label=(row.label||'').trim(), val=row.nilai;
+        if(MOD[id] && MOD[id].kpi){
+          const idx = MOD[id].kpi.findIndex(k=>k[0]===label);
+          if(idx>=0){ MOD[id].kpi[idx][1]=val; n++; }
+        }
+      });
+      saveOverrides();
+      renderEditor();
+      const note=document.getElementById('savenote');
+      note.textContent = `✓ ${n} nilai diperbarui dari CSV`;
+    }});
+  });
+  c.querySelectorAll('.editorrow input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const id=e.target.dataset.id, idx=+e.target.dataset.idx;
+      MOD[id].kpi[idx][1] = e.target.value;
+      saveOverrides();
+      const note = document.getElementById('savenote');
+      note.textContent = '✓ Tersimpan';
+      clearTimeout(window._sn); window._sn=setTimeout(()=>note.textContent='',1500);
+    });
+  });
+  buildNav('');
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function renderKalkulator(){
+  destroyCharts();
+  const c = document.getElementById('content');
+  c.innerHTML = `
+    <div id="topbar"><div><div class="crumb">Alat & Laporan</div><h1>Kalkulator Volume & Tonase</h1></div></div>
+    <div class="desc">${MOD["kalkulator"].d} Isi dimensi blok dan parameter geologi — hasil terhitung otomatis.</div>
+    <div class="calcgrid">
+      <div class="calcform">
+        <label>Panjang blok (m)</label><input type="number" id="k-p" value="120">
+        <label>Lebar blok (m)</label><input type="number" id="k-l" value="80">
+        <label>Tinggi/kedalaman (m)</label><input type="number" id="k-t" value="16">
+        <label>Densitas batuan (t/m³)</label><input type="number" id="k-d" value="2.7" step="0.1">
+        <label>Kadar rata-rata (g/t)</label><input type="number" id="k-g" value="2.1" step="0.1">
+      </div>
+      <div class="calcresult">
+        <div class="row"><span>Volume</span><b id="r-vol">–</b></div>
+        <div class="row"><span>Tonase</span><b id="r-ton">–</b></div>
+        <div class="row"><span>Kandungan Emas</span><b id="r-gram">–</b></div>
+        <div class="row"><span>Setara Troy Ounce</span><b id="r-oz">–</b></div>
+      </div>
+    </div>
+  `;
+  const ids=['k-p','k-l','k-t','k-d','k-g'];
+  function calc(){
+    const [p,l,t,d,g] = ids.map(id=>parseFloat(document.getElementById(id).value)||0);
+    const vol = math.evaluate(`${p}*${l}*${t}`);
+    const ton = math.evaluate(`${vol}*${d}`);
+    const gram = math.evaluate(`${ton}*${g}`);
+    const oz = math.evaluate(`${gram}/31.1035`);
+    document.getElementById('r-vol').textContent = math.format(vol,{notation:'fixed',precision:0}) + ' m³';
+    document.getElementById('r-ton').textContent = Number(ton.toFixed(0)).toLocaleString('id-ID') + ' ton';
+    document.getElementById('r-gram').textContent = Number(gram.toFixed(0)).toLocaleString('id-ID') + ' gram';
+    document.getElementById('r-oz').textContent = Number(oz.toFixed(1)).toLocaleString('id-ID') + ' oz';
+  }
+  ids.forEach(id=>document.getElementById(id).addEventListener('input', calc));
+  calc();
+  buildNav(''); document.getElementById('sidebar').classList.remove('open');
+}
+
+let threeState = null;
+/* ===== STUDIO DESAIN ===== */
+const nf=(v,d)=>Number(v).toLocaleString('id-ID',{minimumFractionDigits:d==null?1:d,maximumFractionDigits:d==null?1:d});
+const RAMP=[[0,'#5b5347'],[0.5,'#4d7a91'],[1,'#5f8c5a'],[2,'#d6a93c'],[3.5,'#e0532f']];
+function ramp(g){let i=RAMP.length-1;while(i>0&&g<RAMP[i][0])i--;const a=new THREE.Color(RAMP[i][1]);if(i===RAMP.length-1)return a;return a.lerp(new THREE.Color(RAMP[i+1][1]),(g-RAMP[i][0])/(RAMP[i+1][0]-RAMP[i][0]))}
+const hexOf=g=>window.THREE?'#'+ramp(g).getHexString():'#888';
+const LITH={SAP:'Saprolit',ALT:'Andesit terubah (argilik–silika)',QV:'Urat kuarsa–sulfida',AND:'Andesit segar'};
+const ST={cut:.5,pit:{h:10,ang:65,berm:6.5},road:{gr:10,w:30},dump:{lifts:6},dh:'collar',sched:'short',open:{},hole:null,sel:null,log:[],V:null,
+ layers:{topo:{n:'Topografi',t:'String / grid',c:'#8a8072',v:1,l:0},pit:{n:'Desain Pit',t:'Wireframe',c:'#c99a3f',v:1,l:0},road:{n:'Jalan Angkut',t:'String',c:'#e3dccd',v:1,l:0},dump:{n:'Waste Dump',t:'Wireframe',c:'#9a7a4e',v:1,l:0},holes:{n:'Drillholes',t:'Data pemboran',c:'#4d7a91',v:1,l:0},blocks:{n:'Model Blok Au',t:'Block model',c:'#5f8c5a',v:1,l:0}},
+ steps:[['Import data pemboran',1],['Kompositing 2 m',1],['Wireframe & topografi',1],['Model blok & estimasi kadar',1],['Optimasi pit',0],['Penjadwalan produksi',0]]};
+function LOG(m,c){ST.log.push({t:new Date().toLocaleTimeString('id-ID'),m,c:c||''});const e=document.getElementById('con');if(e){e.innerHTML=conHtml();e.scrollTop=e.scrollHeight}}
+const conHtml=()=>ST.log.map(l=>`<div class="${l.c}"><span>${l.t}</span> &gt; ${l.m}</div>`).join('');
+function rng(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
+function initStudioData(){
+  if(ST.blocks)return;
+  const r=rng(20260924),field=(x,y,z,n)=>Math.max(0,4.4*Math.exp(-Math.pow(Math.abs(.6*x+.3*z-.4*y-20)/22,2))*(.8+.4*n)+.04*n);
+  ST.blocks=[];
+  for(let j=0;j<6;j++)for(let k=0;k<14;k++)for(let i=0;i<20;i++){const x=(i-9.5)*10,y=-(j+.5)*10,z=(k-6.5)*10,g=field(x,y,z,r());ST.blocks.push({i,j,k,x,y,z,g,lit:j===0?'SAP':g>1.5?'QV':g>.5?'ALT':'AND'})}
+  ST.holes=[];let n=1201;
+  for(let a=0;a<6;a++)for(let b=0;b<4;b++){
+    const az=60+Math.round(r()*240),dip=-(60+Math.round(r()*30)),dr=dip*Math.PI/180,ar=az*Math.PI/180,dep=3*Math.round((60+r()*30)/3),
+      x0=+(-75+a*30+(r()-.5)*6).toFixed(1),z0=+(-45+b*30+(r()-.5)*6).toFixed(1),d=[Math.cos(dr)*Math.sin(ar),Math.sin(dr),Math.cos(dr)*Math.cos(ar)],
+      pt=s=>({x:x0+d[0]*s,y:d[1]*s,z:z0+d[2]*s}),iv=[];
+    for(let s=0;s<dep;s+=3){const p0=pt(s),p1=pt(s+3),m=pt(s+1.5);iv.push({from:s,to:s+3,p0,p1,au:field(m.x,m.y,m.z,r()),lit:''});}
+    iv.forEach(v=>{const m=(v.p0.y+v.p1.y)/2;v.lit=m>-10?'SAP':v.au>1.5?'QV':v.au>.5?'ALT':'AND'});
+    const lith=[];iv.forEach(v=>{const l=lith[lith.length-1];if(l&&l.c===v.lit)l.to=v.to;else lith.push({from:v.from,to:v.to,c:v.lit})});
+    const best=iv.reduce((m,v)=>v.au>m.au?v:m,iv[0]);
+    ST.holes.push({id:'DDH-'+(n++),x:x0,z:z0,dep,az,dip,iv,lith,avg:iv.reduce((s,v)=>s+v.au,0)/iv.length,best,
+      sv:[{d:0,az,dip},{d:dep/2,az:+(az+r()*4-2).toFixed(1),dip:+(dip+r()*2-1).toFixed(1)},{d:dep,az:+(az+r()*6-3).toFixed(1),dip:+(dip+r()*3-1.5).toFixed(1)}]});
+  }
+  ST.hole=ST.holes[0].id;
+  const v=calcVol();
+  LOG(`IMPORT collar/survey/assay ... OK (${ST.holes.length} lubang, ${ST.holes.reduce((s,h)=>s+h.iv.length,0)} interval assay)`,'ok');
+  LOG('COMPOSITE drillhole grade=Au interval=3m ... OK','ok');
+  LOG(`BLOCKMODEL bm_au_v3 ... ${ST.blocks.length} blok sampel dimuat (10×10×10 m)`,'ok');
+  LOG(`EVALUATE cut-off ${nf(ST.cut,2)} g/t ... ${IDN(v.n)} blok bijih, ${IDN(Math.round(v.t))} t @ ${nf(v.ga,2)} g/t`,'ok');
+}
+function calcVol(){let n=0,s=0;ST.blocks.forEach(b=>{if(b.g>=ST.cut){n++;s+=b.g}});const t=n*2700,ga=n?s/n:0,oz=t*ga/31.1035;return{n,vol:n*1000,t,ga,oz,rec:oz*.912}}
+function pitGeo(){const{h,ang,berm}=ST.pit,face=h/Math.tan(ang*Math.PI/180),run=face+berm;return{face,run,depth:6*h,overall:Math.atan(h/run)*180/Math.PI,top:40+6*run-berm}}
+function dumpGeo(){const H=ST.dump.lifts*10,r=45,R=r+H/Math.tan(37*Math.PI/180),cap=Math.PI*H/3*(R*R+R*r+r*r);return{H,r,R,cap,need:SCH.waste[0]*1000/2.7*1.3}}
+/* --- 3D builders --- */
+const P3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const LN=(p,c,o)=>new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),new THREE.LineBasicMaterial({color:c,transparent:true,opacity:o==null?.85:o}));
+const ring=(rx,rz,y,c,o)=>{const p=[];for(let s=0;s<=64;s++){const a=s/64*Math.PI*2;p.push(P3(Math.cos(a)*rx,y,Math.sin(a)*rz))}return LN(p,c,o)};
+function mkPit(){const g=new THREE.Group(),{h,berm}=ST.pit,G=pitGeo(),c=ST.layers.pit.c;
+  for(let l=0;l<=6;l++){const y=-6*h+l*h,rt=40+l*G.run;if(l<6)g.add(ring(rt,rt*.7,y,c));if(l>0){const rc=rt-berm;g.add(ring(rc,rc*.7,y,c,.6));
+    const rb=40+(l-1)*G.run;for(let s=0;s<16;s++){const a=s/16*Math.PI*2;g.add(LN([P3(Math.cos(a)*rb,y-h,Math.sin(a)*rb*.7),P3(Math.cos(a)*rc,y,Math.sin(a)*rc*.7)],c,.35))}}}
+  return g}
+function mkTopo(){const g=new THREE.Group(),ex=pitGeo().top+4,ez=ex*.7,N=14,S=340/N,pt=(i,j)=>{const x=-170+i*S,z=-170+j*S;return P3(x,3+2.2*Math.sin(x/47)*Math.cos(z/38),z)},out=p=>p.x*p.x/(ex*ex)+p.z*p.z/(ez*ez)>1,a=[];
+  for(let i=0;i<=N;i++)for(let j=0;j<=N;j++){const p=pt(i,j);if(i<N){const q=pt(i+1,j);if(out(p)&&out(q))a.push(p,q)}if(j<N){const q=pt(i,j+1);if(out(p)&&out(q))a.push(p,q)}}
+  g.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(a),new THREE.LineBasicMaterial({color:ST.layers.topo.c,transparent:true,opacity:.5})));return g}
+function roadLen(){return pitGeo().depth/(ST.road.gr/100)}
+function mkRoad(){const G=pitGeo(),turns=roadLen()/(2*Math.PI*(40+3*G.run)*.85),p=[];
+  for(let u=0;u<=150;u++){const t=u/150,rr=40+t*6*G.run-ST.pit.berm/2,a=t*turns*Math.PI*2+.6;p.push(P3(Math.cos(a)*rr,-G.depth+t*G.depth,Math.sin(a)*rr*.7))}
+  return LN(p,ST.layers.road.c,1)}
+function mkDump(){const D=dumpGeo(),m=new THREE.Mesh(new THREE.CylinderGeometry(D.r,D.R,D.H,20,ST.dump.lifts,true),new THREE.MeshBasicMaterial({color:ST.layers.dump.c,wireframe:true,transparent:true,opacity:.55}));m.position.set(250,D.H/2,-110);return m}
+function mkHoles(){const g=new THREE.Group(),cp=[];
+  ST.holes.forEach(h=>{const pos=[],col=[];h.iv.forEach(v=>{const c=ramp(v.au);pos.push(v.p0.x,v.p0.y,v.p0.z,v.p1.x,v.p1.y,v.p1.z);col.push(c.r,c.g,c.b,c.r,c.g,c.b)});
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+    const l=new THREE.LineSegments(geo,new THREE.LineBasicMaterial({vertexColors:true}));l.userData.hid=h.id;g.add(l);cp.push(h.x,0,h.z)});
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(cp,3));g.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0xefe9df,size:4,sizeAttenuation:false})));return g}
+function mkBlocks(){const B=ST.blocks,m=new THREE.InstancedMesh(new THREE.BoxGeometry(9,9,9),new THREE.MeshLambertMaterial({transparent:true,opacity:.9}),B.length);
+  B.forEach((b,i)=>m.setColorAt(i,ramp(b.g)));m.instanceColor.needsUpdate=true;return m}
+function applyCut(){const m=ST.V&&ST.V.grp.blocks;if(!m)return;const M=new THREE.Matrix4(),q=new THREE.Quaternion();
+  ST.blocks.forEach((b,i)=>{const s=b.g>=ST.cut?1:1e-4;M.compose(P3(b.x,b.y,b.z),q,P3(s,s,s));m.setMatrixAt(i,M)});m.instanceMatrix.needsUpdate=true}
+function rebuild(k){const V=ST.V;if(!V)return;const f={pit:mkPit,road:mkRoad,dump:mkDump,topo:mkTopo}[k];V.scene.remove(V.grp[k]);V.grp[k]=f();V.grp[k].visible=!!ST.layers[k].v;V.scene.add(V.grp[k])}
+function highlight(){const V=ST.V;if(!V)return;if(V.hl)V.scene.remove(V.hl);V.hl=new THREE.Group();const s=ST.sel;if(!s)return;const m=new THREE.LineBasicMaterial({color:0xffffff});
+  if(s.kind==='block'){const e=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(10.6,10.6,10.6)),m);e.position.set(s.b.x,s.b.y,s.b.z);V.hl.add(e)}
+  if(s.kind==='hole'){const h=ST.holes.find(x=>x.id===s.id),a=h.iv[0].p0,z=h.iv[h.iv.length-1].p1;[[.8,0],[-.8,0],[0,.8],[0,-.8]].forEach(o=>V.hl.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P3(a.x+o[0],a.y,a.z+o[1]),P3(z.x+o[0],z.y,z.z+o[1])]),m)))}
+  V.scene.add(V.hl)}
+function initViewer(){
+  const box=document.getElementById('v3');if(!window.THREE){box.innerHTML='<div class="empty">Three.js gagal dimuat. Periksa koneksi internet lalu muat ulang.</div>';return}
+  const w=box.clientWidth||600,h=box.clientHeight||480,scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(45,w/h,1,3000),ren=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(w,h);box.appendChild(ren.domElement);
+  scene.add(new THREE.AmbientLight(0xffffff,.65));const dl=new THREE.DirectionalLight(0xffffff,.7);dl.position.set(100,200,80);scene.add(dl);
+  const V=ST.V={scene,cam,ren,sph:{t:.7,p:1.05,d:340},tgt:P3(40,-25,0),grp:{}};
+  ['topo','pit','road','dump','holes','blocks'].forEach(k=>{const o={topo:mkTopo,pit:mkPit,road:mkRoad,dump:mkDump,holes:mkHoles,blocks:mkBlocks}[k]();o.visible=!!ST.layers[k].v;V.grp[k]=o;scene.add(o)});
+  applyCut();highlight();
+  const cu=()=>{const{t,p,d}=V.sph;cam.position.set(V.tgt.x+d*Math.sin(p)*Math.sin(t),V.tgt.y+d*Math.cos(p),V.tgt.z+d*Math.sin(p)*Math.cos(t));cam.lookAt(V.tgt)};
+  V.reset=()=>{V.sph={t:.7,p:1.05,d:340};cu()};cu();
+  const el=ren.domElement;let dr=0,mv=0,lx=0,ly=0;el.style.cursor='grab';
+  el.addEventListener('pointerdown',e=>{dr=1;mv=0;lx=e.clientX;ly=e.clientY;el.setPointerCapture(e.pointerId)});
+  el.addEventListener('pointermove',e=>{if(!dr)return;const dx=e.clientX-lx,dy=e.clientY-ly;mv+=Math.abs(dx)+Math.abs(dy);V.sph.t-=dx*.006;V.sph.p=Math.max(.15,Math.min(1.5,V.sph.p-dy*.006));lx=e.clientX;ly=e.clientY;cu()});
+  el.addEventListener('pointerup',e=>{dr=0;if(mv<5)pick(e)});
+  el.addEventListener('wheel',e=>{e.preventDefault();V.sph.d=Math.max(80,Math.min(900,V.sph.d*(1+Math.sign(e.deltaY)*.08)));cu()},{passive:false});
+  const ro=new ResizeObserver(()=>{const W=box.clientWidth,H=box.clientHeight;if(W&&H){ren.setSize(W,H);cam.aspect=W/H;cam.updateProjectionMatrix()}});ro.observe(box);
+  threeState={raf:0,ro,ren};(function lp(){threeState&&(threeState.raf=requestAnimationFrame(lp));ren.render(scene,cam)})();
+}
+function pick(e){const V=ST.V,r=V.ren.domElement.getBoundingClientRect(),ray=new THREE.Raycaster();ray.params.Line.threshold=2.5;
+  ray.setFromCamera({x:(e.clientX-r.left)/r.width*2-1,y:-((e.clientY-r.top)/r.height)*2+1},V.cam);
+  const L=ST.layers,t=[];if(L.holes.v&&!L.holes.l)t.push(...V.grp.holes.children.filter(c=>c.userData.hid));if(L.blocks.v&&!L.blocks.l)t.push(V.grp.blocks);
+  const hit=ray.intersectObjects(t,false).find(h=>h.instanceId==null||ST.blocks[h.instanceId].g>=ST.cut);
+  if(!hit){ST.sel=null;highlight();drawProps();return}
+  if(hit.instanceId!=null){ST.sel={kind:'block',b:ST.blocks[hit.instanceId],idx:hit.instanceId}}else{ST.sel={kind:'hole',id:hit.object.userData.hid};ST.hole=ST.sel.id;drawDH()}
+  highlight();drawProps();
+}
+/* --- panels --- */
+function PT(t,rows){return`<div class="ptitle">${t}</div><table class="pt">${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>`}
+function drawProps(){const e=document.getElementById('p-props');if(!e)return;const s=ST.sel,E=512300,N=9842100,RL=245;let h;
+  if(!s)h='<div class="empty">Klik lubang bor atau blok di 3D Viewer, atau pilih item di Navigator.</div>';
+  else if(s.kind==='block'){const b=s.b,oz=2700*b.g/31.1035;h=PT('Blok #'+s.idx,[['Indeks (i,j,k)',`${b.i}, ${b.j}, ${b.k}`],['East',nf(E+b.x,1)],['North',nf(N+b.z,1)],['RL (m)',nf(RL+b.y,1)],['Dimensi','10 × 10 × 10 m'],['Volume','1.000 m³'],['Tonase','2.700 t'],['Kadar Au',nf(b.g,2)+' g/t'],['Kandungan Au',nf(oz,1)+' oz'],['Litologi',LITH[b.lit]],['Kelas',b.g>=ST.cut?'Bijih':'Waste (< cut-off)'],['Layer','Model Blok Au']])}
+  else if(s.kind==='hole'){const d=ST.holes.find(x=>x.id===s.id);h=PT(d.id,[['East',nf(E+d.x,1)],['North',nf(N+d.z,1)],['RL collar',nf(RL,1)],['Kedalaman',d.dep+' m'],['Azimuth / Dip',`${d.az}° / ${d.dip}°`],['Au rata-rata',nf(d.avg,2)+' g/t'],['Interval terbaik',`${d.best.from}–${d.best.to} m @ ${nf(d.best.au,2)} g/t`],['Jumlah sampel',d.iv.length],['Layer','Drillholes']])}
+  else if(s.kind==='layer'){const k=s.k,l=ST.layers[k];let x=[['Tipe',l.t],['Status',l.v?'Terlihat':'Tersembunyi'],['Kunci',l.l?'Terkunci':'Terbuka']];
+    if(k==='pit'){const G=pitGeo();x.push(['Tinggi bench',ST.pit.h+' m'],['Sudut muka',ST.pit.ang+'°'],['Lebar berm',nf(ST.pit.berm)+' m'],['Sudut keseluruhan',nf(G.overall)+'°'],['Kedalaman',G.depth+' m'],['Radius crest',nf(G.top,0)+' m'])}
+    if(k==='road')x.push(['Gradien',ST.road.gr+'%'],['Lebar',ST.road.w+' m'],['Panjang',nf(roadLen(),0)+' m']);
+    if(k==='dump'){const D=dumpGeo();x.push(['Jumlah lift',ST.dump.lifts],['Tinggi',D.H+' m'],['Kapasitas',nf(D.cap/1e6,2)+' Mm³ (loose)'])}
+    if(k==='holes')x.push(['Jumlah lubang',ST.holes.length],['Total meter',ST.holes.reduce((a,b)=>a+b.dep,0)+' m'],['Au rata-rata',nf(ST.holes.reduce((a,b)=>a+b.avg,0)/ST.holes.length,2)+' g/t']);
+    if(k==='blocks'){const v=calcVol();x.push(['Jumlah blok',IDN(ST.blocks.length)],['Cut-off',nf(ST.cut,2)+' g/t'],['Blok ≥ cut-off',IDN(v.n)],['Tonase bijih',IDN(v.t)+' t'],['Au rata-rata',nf(v.ga,2)+' g/t'])}
+    h=PT(l.n,x)}
+  e.innerHTML=h}
+function drawNav(){const e=document.getElementById('p-nav'),nh=ST.holes.length,ni=ST.holes.reduce((a,b)=>a+b.iv.length,0);
+  const T=['AURUM_PIT01',[['Data Pemboran',[['collar.csv',nh+' lubang','dh:collar'],['survey.csv',nh*3+' stasiun','dh:survey'],['assay.csv',ni+' sampel','dh:assay'],['litho.csv','','dh:lith']]],['String',[['topo_string.str','','l:topo'],['pit_crest.str','','l:pit'],['haul_road.str','','l:road']]],['Wireframe',[['pit_final.wfm','','l:pit'],['wd_timur.wfm','','l:dump']]],['Model',[['bm_au_v3.dm',IDN(ST.blocks.length)+' blok','l:blocks']]],['Laporan',[['rekap_volume.txt','','vol']]]]];
+  const row=(n,d,ch,act)=>`<div class="tr" style="padding-left:${10+d*14}px" data-a="${act||''}" data-n="${n}">${ch?(ST.open[n]===0?'▸':'▾'):'·'} <span>${ch?'📁':'📄'} ${n}</span></div>`;
+  let h=row(T[0],0,1);if(ST.open[T[0]]!==0)T[1].forEach(f=>{h+=row(f[0],1,1);if(ST.open[f[0]]!==0)f[1].forEach(l=>{h+=`<div class="tr" style="padding-left:38px" data-a="${l[2]}"><span>📄 ${l[0]}</span><i>${l[1]}</i></div>`})});
+  e.innerHTML=h;e.querySelectorAll('.tr').forEach(r=>r.onclick=()=>{const a=r.dataset.a,n=r.dataset.n;
+    if(!a&&n){ST.open[n]=ST.open[n]===0?1:0;drawNav();return}
+    e.querySelectorAll('.tr').forEach(x=>x.classList.remove('on'));r.classList.add('on');
+    if(a.startsWith('dh:')){ST.dh=a.slice(3);drawDH();LOG('OPEN '+r.querySelector('span').textContent.replace('📄 ','')+' di Drillhole Manager')}
+    else if(a.startsWith('l:')){ST.sel={kind:'layer',k:a.slice(2)};highlight();drawProps()}
+    else if(a==='vol')cmd('vol')})}
+function drawLayers(){const e=document.getElementById('p-lay');
+  let h=Object.keys(ST.layers).map(k=>{const l=ST.layers[k],fx=k==='holes'||k==='blocks';return`<div class="lay"><button class="ib${l.v?'':' off'}" data-k="${k}" data-p="v" title="Tampilkan / sembunyikan">👁</button><button class="ib${l.l?'':' off'}" data-k="${k}" data-p="l" title="Kunci (tidak bisa dipilih)">🔒</button><input type="color" value="${l.c}" data-k="${k}" ${fx?'disabled title="Diwarnai menurut kadar Au"':''}><span class="lnm" data-k="${k}">${l.n}</span></div>`}).join('');
+  h+='<div class="ptitle">Project Pipeline</div>'+ST.steps.map(s=>`<div class="stp ${s[1]?'done':''}"><b>${s[1]?'✓':'○'}</b> ${s[0]}</div>`).join('')+'<div style="padding:6px 10px"><button class="bt" data-c="pipe">Jalankan pipeline</button></div>';
+  e.innerHTML=h;
+  e.querySelectorAll('.ib').forEach(b=>b.onclick=()=>{const l=ST.layers[b.dataset.k],p=b.dataset.p;l[p]=l[p]?0:1;if(p==='v'&&ST.V)ST.V.grp[b.dataset.k].visible=!!l.v;if(p==='l'&&l.l&&ST.sel&&((ST.sel.kind==='hole'&&b.dataset.k==='holes')||(ST.sel.kind==='block'&&b.dataset.k==='blocks'))){ST.sel=null;highlight()}drawLayers();drawProps()});
+  e.querySelectorAll('input[type=color]').forEach(i=>i.oninput=()=>{const k=i.dataset.k;ST.layers[k].c=i.value;ST.V&&ST.V.grp[k].traverse(o=>{if(o.material&&o.material.color)o.material.color.set(i.value)})});
+  e.querySelectorAll('.lnm').forEach(s=>s.onclick=()=>{ST.sel={kind:'layer',k:s.dataset.k};highlight();drawProps()});
+  e.querySelector('[data-c=pipe]').onclick=()=>cmd('pipe')}
+const fld=(id,l,v,st)=>`<label>${l}<input id="${id}" type="number" value="${v}" step="${st||1}"></label>`;
+function drawCmd(){const e=document.getElementById('p-cmd'),V=calcVol();
+  e.innerHTML=`<div class="cm"><b>Desain pit</b><div class="ci">${fld('c-h','Bench (m)',ST.pit.h)}${fld('c-a','Muka (°)',ST.pit.ang)}${fld('c-b','Berm (m)',ST.pit.berm,.5)}</div><button class="bt" data-c="pit">Terapkan</button></div>
+  <div class="cm"><b>Jalan angkut</b><div class="ci">${fld('c-g','Gradien (%)',ST.road.gr)}${fld('c-w','Lebar (m)',ST.road.w)}</div><button class="bt" data-c="road">Terapkan</button></div>
+  <div class="cm"><b>Waste dump</b><div class="ci">${fld('c-l','Jumlah lift',ST.dump.lifts)}</div><button class="bt" data-c="dump">Terapkan</button></div>
+  <div class="cm"><b>Volume & tonase</b><label>Cut-off <span id="cutv">${nf(ST.cut,2)}</span> g/t<input id="c-cut" type="range" min="0" max="3" step="0.05" value="${ST.cut}"></label><button class="bt" data-c="vol">Hitung</button></div>
+  <div class="cm"><b>Model & pit</b><div class="ci">${fld('c-p','Harga (USD/oz)',2650,50)}</div><button class="bt" data-c="stat">Statistik model</button> <button class="bt" data-c="opt">Nilai blok</button></div>`;
+  e.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>cmd(b.dataset.c));
+  const s=document.getElementById('c-cut');s.oninput=()=>{ST.cut=+s.value;document.getElementById('cutv').textContent=nf(ST.cut,2);applyCut();if(ST.sel&&ST.sel.kind==='layer'&&ST.sel.k==='blocks')drawProps()}}
+const gv=id=>parseFloat(document.getElementById(id).value);
+function cmd(c){
+  if(c==='pit'){const h=gv('c-h'),a=gv('c-a'),b=gv('c-b');if(!(h>=5&&h<=20&&a>=45&&a<=80&&b>=3&&b<=15)){LOG('ERROR DESIGN PIT: bench 5–20 m, sudut muka 45–80°, berm 3–15 m','err');return}
+    Object.assign(ST.pit,{h,ang:a,berm:b});rebuild('pit');rebuild('road');rebuild('topo');const G=pitGeo();LOG(`DESIGN PIT bench=${h}m face=${a}° berm=${b}m ... sudut keseluruhan ${nf(G.overall)}°, kedalaman ${G.depth} m, radius crest ${nf(G.top,0)} m`,G.overall>50?'warn':'ok');if(G.overall>50)LOG('PERINGATAN: sudut lereng keseluruhan > 50°, perlu kajian geoteknik','warn')}
+  if(c==='road'){const g=gv('c-g'),w=gv('c-w');if(!(g>=4&&g<=14&&w>=15&&w<=45)){LOG('ERROR HAULROAD: gradien 4–14%, lebar 15–45 m','err');return}
+    Object.assign(ST.road,{gr:g,w});rebuild('road');LOG(`HAULROAD gradien=${g}% lebar=${w}m ... panjang ${nf(roadLen(),0)} m untuk turun ${pitGeo().depth} m`,g>10?'warn':'ok');if(g>10)LOG('PERINGATAN: gradien melebihi 10% (batas umum jalan angkut)','warn')}
+  if(c==='dump'){const l=gv('c-l');if(!(l>=2&&l<=10)){LOG('ERROR WASTE DUMP: jumlah lift 2–10','err');return}ST.dump.lifts=l;rebuild('dump');const D=dumpGeo();
+    LOG(`WASTE DUMP ${l} lift (${D.H} m) ... kapasitas ${nf(D.cap/1e6,2)} Mm³, kebutuhan waste 2026 ${nf(D.need/1e6,2)} Mm³ (swell 1,3)`,D.cap>=D.need?'ok':'warn');if(D.cap<D.need)LOG('PERINGATAN: kapasitas dump kurang dari kebutuhan waste tahun 2026','warn')}
+  if(c==='vol'){const v=calcVol();LOG(`VOLUME cut-off ${nf(ST.cut,2)} g/t ... ${IDN(v.n)} blok · ${IDN(v.vol)} m³ · ${IDN(Math.round(v.t))} t · Au ${nf(v.ga,2)} g/t · ${IDN(Math.round(v.oz))} oz in situ · ${IDN(Math.round(v.rec))} oz recoverable (91,2%)`,'ok');ST.sel={kind:'layer',k:'blocks'};highlight();drawProps()}
+  if(c==='stat'){const g=ST.blocks.map(b=>b.g),m=g.reduce((a,b)=>a+b,0)/g.length,sd=Math.sqrt(g.reduce((a,b)=>a+(b-m)*(b-m),0)/g.length);LOG(`STATS bm_au_v3 ... n=${g.length} · rata-rata ${nf(m,2)} · SD ${nf(sd,2)} · CV ${nf(sd/m,2)} · maks ${nf(Math.max(...g),2)} g/t`,'ok')}
+  if(c==='opt'){const p=gv('c-p'),k=p*.912/31.1035*.9625;let val=0,pos=0;ST.blocks.forEach(b=>{const v=2700*(b.g*k-(b.g>=ST.cut?6.6+11.35+3:6.6));if(b.g>=ST.cut&&v>0){val+=v;pos++}});
+    LOG(`BLOCK VALUE harga USD ${IDN(p)}/oz (royalti 3,75%, tambang USD 6,6/t, proses USD 11,35/t, G&A USD 3/t) ... ${IDN(pos)} blok bernilai positif, margin ${nf(val/1e6,1)} juta USD (tanpa diskonto)`,'ok')}
+  if(c==='pipe'){const q=ST.steps.filter(s=>!s[1]);if(!q.length){ST.steps.forEach(s=>s[1]=0);ST.steps.slice(0,4).forEach(s=>s[1]=1);drawLayers()}
+    const go=()=>{const s=ST.steps.find(x=>!x[1]);if(!s)return;setTimeout(()=>{s[1]=1;LOG('PIPELINE '+s[0]+' ... selesai','ok');if(s[0]==='Optimasi pit'){cmd('opt')}if(s[0]==='Penjadwalan produksi')LOG(`SCHEDULE 2026–2030 ... bijih ${IDN(SCH.ore.reduce((a,b)=>a+b))} kt, waste ${IDN(SCH.waste.reduce((a,b)=>a+b))} kt`,'ok');drawLayers();go()},450)};go()}
+}
+function drawDH(){const e=document.getElementById('p-dh');if(!e)return;const H=ST.holes,h=H.find(x=>x.id===ST.hole)||H[0],tab=ST.dh;
+  const T=[['collar','Collar'],['survey','Survey'],['assay','Assay'],['lith','Lithology']];let b='';
+  const tb=(hd,rows)=>`<table class="pt"><thead><tr>${hd.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+  if(tab==='collar')b=tb(['Hole ID','East','North','RL','Depth (m)','Az','Dip','Au rata-rata'],H.map(x=>`<tr class="${x.id===h.id?'on':''}" data-h="${x.id}"><td>${x.id}</td><td>${nf(512300+x.x,1)}</td><td>${nf(9842100+x.z,1)}</td><td>245,0</td><td>${x.dep}</td><td>${x.az}°</td><td>${x.dip}°</td><td>${nf(x.avg,2)} g/t</td></tr>`).join(''));
+  if(tab==='survey')b=tb(['Depth (m)','Azimuth','Dip'],h.sv.map(s=>`<tr><td>${nf(s.d,1)}</td><td>${nf(s.az,1)}°</td><td>${nf(s.dip,1)}°</td></tr>`).join(''));
+  if(tab==='assay')b=tb(['Sample','From (m)','To (m)','Au (g/t)'],h.iv.map((v,i)=>`<tr><td>${h.id.slice(4)}-${String(i+1).padStart(3,'0')}</td><td>${v.from}</td><td>${v.to}</td><td><span class="chip" style="background:${hexOf(v.au)}"></span>${nf(v.au,2)}</td></tr>`).join(''));
+  if(tab==='lith')b=tb(['From (m)','To (m)','Kode','Deskripsi'],h.lith.map(l=>`<tr><td>${l.from}</td><td>${l.to}</td><td>${l.c}</td><td>${LITH[l.c]}</td></tr>`).join(''));
+  e.innerHTML=`<div class="dhbar">${T.map(t=>`<button class="bt${t[0]===tab?' act':''}" data-t="${t[0]}">${t[1]}</button>`).join('')}<select id="dhsel">${H.map(x=>`<option${x.id===h.id?' selected':''}>${x.id}</option>`).join('')}</select></div>
+  <div class="dhsum">${h.id}: ${h.dep} m · Au rata-rata ${nf(h.avg,2)} g/t · terbaik ${h.best.from}–${h.best.to} m @ ${nf(h.best.au,2)} g/t</div><div class="dhtb">${b}</div>`;
+  e.querySelectorAll('[data-t]').forEach(x=>x.onclick=()=>{ST.dh=x.dataset.t;drawDH()});
+  const pickH=id=>{ST.hole=id;ST.sel={kind:'hole',id};highlight();drawProps();drawDH()};
+  document.getElementById('dhsel').onchange=ev=>pickH(ev.target.value);e.querySelectorAll('tr[data-h]').forEach(r=>r.onclick=()=>pickH(r.dataset.h))}
+function drawSched(){const e=document.getElementById('p-sch'),tab=ST.sched;
+  const bar=`<div class="dhbar"><button class="bt${tab==='short'?' act':''}" data-s="short">Jangka pendek · 12 bulan</button><button class="bt${tab==='long'?' act':''}" data-s="long">Jangka panjang · 5 tahun</button></div>`;
+  if(tab==='short'){const M=['Okt','Nov','Des','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep'],ore=[42,42,43,43,43,44,44,44,45,45,45,45],
+    T=[['Pushback Fase 1 (bench 6 → 4)',0,6,'a'],['Stripping waste Fase 2',2,8,'a'],['Ramp jalan angkut 2',0,3,'b'],['Waste dump lift 3–4',3,5,'b'],['Bor & ledak Panel A',0,12,'c'],['Penambangan Panel A-01 s/d A-03',0,12,'c'],['Penambangan Panel B-01',3,9,'c'],['Reklamasi lift dump',8,4,'d']];
+    e.innerHTML=bar+`<div class="gt"><div class="gr gh"><div>Aktivitas</div>${M.map(m=>`<div>${m}</div>`).join('')}</div>${T.map(t=>`<div class="gr"><div class="gn">${t[0]}</div><div class="gb ${t[3]}" style="grid-column:${t[1]+2}/span ${t[2]}"></div></div>`).join('')}<div class="gr gh"><div>Bijih (kt)</div>${ore.map(o=>`<div>${o}</div>`).join('')}</div></div><div class="dhsum">Total bijih 12 bulan: ${ore.reduce((a,b)=>a+b)} kt · rata-rata 43,8 kt/bulan (target RKAB 2027: 520 kt/tahun)</div>`}
+  else{e.innerHTML=bar+`<div id="sch-0" class="schc"></div><table class="pt"><thead><tr><th>Periode</th><th>Bijih (kt)</th><th>Waste (kt)</th><th>SR</th><th>Au (g/t)</th><th>Emas (oz)</th></tr></thead><tbody>${SCH.yr.map((y,i)=>`<tr><td>${y}</td><td>${IDN(SCH.ore[i])}</td><td>${IDN(SCH.waste[i])}</td><td>${nf(SCH.sr[i])}</td><td>${nf(SCH.gr[i],2)}</td><td>${IDN(SCH.oz[i])}</td></tr>`).join('')}</tbody></table>
+    <table class="pt"><thead><tr><th>Urutan penambangan</th><th>Periode</th><th>Bench</th></tr></thead><tbody><tr><td>Fase 1</td><td>2026–2027</td><td>Bench 6 → 4</td></tr><tr><td>Fase 2</td><td>2027–2029</td><td>Bench 4 → 2</td></tr><tr><td>Fase 3</td><td>2029–2030 dan seterusnya</td><td>Bench 2 → dasar pit</td></tr></tbody></table>`;
+    drawCharts([{type:'bar',title:'',labels:SCH.yr.map(String),data:[SCH.ore,SCH.waste,SCH.gr],names:['Bijih (kt)','Waste (kt)','Kadar (g/t)'],types:['bar','bar','line'],axes:[0,0,1],yt:['kt','g/t'],stacked:1,colors:['#c99a3f','#726a5f','#4d7a91'],h:230}],'sch-')}
+  e.querySelectorAll('[data-s]').forEach(x=>x.onclick=()=>{ST.sched=x.dataset.s;drawSched()})}
+function renderStudio(){
+  destroyCharts();initStudioData();const c=document.getElementById('content');
+  c.innerHTML=`<div id="topbar"><div><div class="crumb">Pemodelan & Desain Tambang</div><h1>Studio Desain (Datamine-style)</h1></div><div class="meta">Proyek AURUM_PIT01<br>Model blok sampel: ${IDN(ST.blocks.length)} blok · ${ST.holes.length} lubang bor</div></div>
+  <div class="desc">${MOD['studio-desain'].d}</div>
+  <div class="sg"><div class="col"><div class="pn"><h5>Project Navigator</h5><div class="bd" id="p-nav"></div></div><div class="pn"><h5>Layers / Project Pipeline</h5><div class="bd" id="p-lay"></div></div></div>
+  <div class="pn"><h5>Graphics / 3D Viewer <span><button class="bt" id="vreset">Reset tampilan</button></span></h5><div id="v3"></div><div class="lgd"><span>Au g/t</span>${RAMP.map(r=>`<i style="background:${r[1]}"></i>${r[0]}`).join('')}<span>seret: putar · roda: zoom · klik: pilih</span></div></div>
+  <div class="col"><div class="pn"><h5>Properties Window</h5><div class="bd" id="p-props"></div></div><div class="pn"><h5>Command / Function Panel</h5><div class="bd" id="p-cmd"></div></div></div></div>
+  <div class="sg2"><div class="pn"><h5>Drillhole Manager</h5><div id="p-dh"></div></div><div class="pn"><h5>Output / Console <span><button class="bt" id="cclr">Bersihkan</button></span></h5><div id="con" class="con">${conHtml()}</div></div></div>
+  <div class="pn"><h5>Scheduling / Sequence</h5><div id="p-sch" class="bd" style="max-height:none"></div></div>`;
+  drawNav();drawLayers();drawProps();drawCmd();drawDH();drawSched();initViewer();
+  document.getElementById('vreset').onclick=()=>ST.V&&ST.V.reset();document.getElementById('cclr').onclick=()=>{ST.log=[];document.getElementById('con').innerHTML=''};
+  document.getElementById('con').scrollTop=1e6;buildNav('');document.getElementById('sidebar').classList.remove('open');
+}
+
+function renderReport(){
+  destroyCharts();
+  const c = document.getElementById('content');
+  let body = '';
+  CATS.forEach(([cat,ids])=>{
+    if(cat==='Alat & Laporan') return;
+    body += `<div class="repcat"><h4>${cat}</h4>${ids.map(id=>`
+      <label class="repitem"><input type="checkbox" class="rep-check" value="${id}" checked> ${MOD[id].t}</label>
+    `).join('')}</div>`;
+  });
+  c.innerHTML = `
+    <div id="topbar"><div><div class="crumb">Alat & Laporan</div><h1>Buat Laporan</h1></div></div>
+    <div class="desc">Pilih modul yang ingin disertakan dalam laporan, lalu unduh sebagai PDF untuk dibagikan atau diarsipkan.
+      <span class="rep-toggle-all" id="toggleall">Batalkan semua pilihan</span>
+    </div>
+    <div class="replist">${body}</div>
+    <div class="repactions">
+      <button id="genpdfbtn" onclick="generatePDF()">⬇ Buat Laporan PDF</button>
+      <button class="btn-secondary" onclick="generateExcel()">⬇ Unduh Excel</button>
+      <span class="repcount" id="repcount"></span>
+    </div>
+  `;
+  const updateCount = ()=>{
+    const n = c.querySelectorAll('.rep-check:checked').length;
+    document.getElementById('repcount').textContent = n + ' modul dipilih';
+  };
+  c.querySelectorAll('.rep-check').forEach(cb=>cb.addEventListener('change', updateCount));
+  updateCount();
+  let allOn = true;
+  document.getElementById('toggleall').onclick = ()=>{
+    allOn = !allOn;
+    c.querySelectorAll('.rep-check').forEach(cb=>cb.checked=allOn);
+    document.getElementById('toggleall').textContent = allOn ? 'Batalkan semua pilihan' : 'Pilih semua modul';
+    updateCount();
+  };
+  buildNav('');
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function generateExcel(){
+  const selected = [...document.querySelectorAll('.rep-check:checked')].map(cb=>cb.value);
+  if(!selected.length || !window.XLSX){ alert('Pilih minimal satu modul untuk dimasukkan ke laporan.'); return; }
+  const rows = [];
+  selected.forEach(id=>{
+    const m = MOD[id];
+    (m.kpi||[]).forEach(k=> rows.push({Modul:m.t, Item:k[0], Nilai:k[1]}));
+    (m.rows||[]).forEach(r=> rows.push({Modul:m.t, Item:r[0], Nilai:r[1], Status:r.slice(2).join(' | ')}));
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Laporan AURUM');
+  XLSX.writeFile(wb, 'laporan-tambang-emas-aurum.xlsx');
+}
+
+function generatePDF(){
+  const selected = [...document.querySelectorAll('.rep-check:checked')].map(cb=>cb.value);
+  if(!selected.length){ alert('Pilih minimal satu modul untuk dimasukkan ke laporan.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+  doc.setFontSize(17); doc.setTextColor(30,25,20); doc.text('Laporan Operasional — Tambang Emas AURUM', 14, y); y+=7;
+  doc.setFontSize(10); doc.setTextColor(110,100,85);
+  doc.text('Dibuat pada ' + new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}), 14, y); y+=10;
+  doc.setDrawColor(201,154,63); doc.line(14,y,196,y); y+=8;
+
+  selected.forEach(id=>{
+    const m = MOD[id];
+    if(y > 265){ doc.addPage(); y = 20; }
+    doc.setFontSize(13); doc.setTextColor(30,25,20); doc.text(m.t, 14, y); y+=6;
+    doc.setFontSize(9.5); doc.setTextColor(90,82,70);
+    const descLines = doc.splitTextToSize(m.d, 180);
+    doc.text(descLines, 14, y); y += descLines.length*4.6 + 3;
+    doc.setFontSize(10); doc.setTextColor(50,44,36);
+    (m.kpi||[]).forEach(k=>{
+      if(y>280){ doc.addPage(); y=20; }
+      doc.text(`•  ${k[0]}:  ${k[1]}`, 16, y); y+=5.5;
+    });
+    if(m.rows){
+      m.rows.forEach(r=>{
+        if(y>280){ doc.addPage(); y=20; }
+        doc.setFontSize(8.5); doc.setTextColor(110,100,85);
+        doc.text(`   ${r.join(' — ')}`, 16, y); y+=4.6;
+      });
+    }
+    y += 6;
+  });
+  doc.save('laporan-tambang-emas-aurum.pdf');
+}
+
+/* ===== PERBAIKAN DATA & CHART (satu rantai asumsi) ===== */
+const _m=(id,o)=>Object.assign(MOD[id],o);
+const BLN=['Apr','Mei','Jun','Jul','Agu','Sep'], IDN=n=>Number(n).toLocaleString('id-ID');
+const SCH={yr:[2026,2027,2028,2029,2030],ore:[508,520,540,540,520],sr:[4.4,4.3,4.2,4.1,4.0],gr:[2.10,2.10,2.15,2.10,2.05]};
+SCH.waste=SCH.ore.map((o,i)=>Math.round(o*SCH.sr[i]));
+SCH.oz=SCH.ore.map((o,i)=>Math.round(o*1000*SCH.gr[i]*0.912/31.1035));
+const CF={in:[102.8,105.0,107.1,108.9,110.6,112.3],out:[100.6,102.4,106.4,107.3,111.5,109.2],saldo:[35.2,37.8,38.5,40.1,39.2,42.3]};
+const ASUMSI='Asumsi data: kadar kepala 2,1 g/t · recovery 91,2% · densitas 2,7 t/m³ · harga realisasi USD 2.650/oz · kurs Rp 16.300/USD · royalti emas 3,75%. Semua modul memakai asumsi yang sama.';
+_m('dashboard',{note:ASUMSI,kpi:[["Produksi Bulan Ini","2.600 oz","ok","+1,6% dari Agustus"],["Status Izin","18 dari 20 berlaku","warn","2 mendekati jatuh tempo"],["Hari Tanpa LTI","47 hari","ok","Target: 90 hari"],["Arus Kas Bersih","+Rp 3,1 M","info","Saldo kas Rp 42,3 M"],["AISC","USD 1.258/oz","warn","Harga realisasi USD 2.650/oz"]],charts:[
+ {type:'line',title:'Produksi Emas vs Target RKAB (oz/bulan)',labels:BLN,data:[[2380,2430,2480,2520,2560,2600],[2400,2450,2500,2550,2600,2600]],names:['Realisasi','Target'],dash:[0,5],colors:['#c99a3f','#726a5f'],unit:' oz',min:2200},
+ {type:'doughnut',title:'Status Izin (20 izin)',labels:['Berlaku','Mendekati jatuh tempo','Kedaluwarsa'],data:[[16,2,2]],colors:['#5f8c5a','#c78a3a','#a5473a'],total:'Izin'},
+ {type:'bar',title:'Penerimaan vs Pengeluaran Kas (Rp Miliar)',labels:BLN,data:[CF.in,CF.out],names:['Penerimaan','Pengeluaran'],colors:['#5f8c5a','#a5473a'],wide:1}]});
+_m('produksi-harian',{note:'Tonase per panel dijumlahkan = throughput pabrik (1.410 t). Emas = 1.410 t × 2,1 g/t × 91,2% ÷ 31,1035.',kpi:[["Tonase Hari Ini","1.410 t","ok","Target 1.450 t (97,2%)"],["Rata-rata Kadar","2,1 g/t","info","Kadar kepala"],["Emas Terekstraksi","86,8 oz","ok","Recovery 91,2%"]],cols:['Panel','Tonase','Kadar (g/t)','Status'],rows:[["Panel A-01","420 t","2,4","On track"],["Panel A-02","330 t","2,1","On track"],["Panel A-03","290 t","2,0","On track"],["Panel B-01","240 t","1,9","On track"],["Panel B-05","0 t","-","Perawatan alat"],["Panel C-02","130 t","1,8","Di bawah target"]],charts:[
+ {type:'bar',title:'Tonase Aktual vs Target per Panel (t)',labels:['A-01','A-02','A-03','B-01','B-05','C-02'],data:[[420,330,290,240,0,130],[430,330,290,250,0,150]],names:['Aktual','Target'],colors:['#c99a3f','#726a5f'],unit:' t'},
+ {type:'line',title:'Tonase Harian, 7 Hari (t) dan Kadar (g/t)',labels:['H-6','H-5','H-4','H-3','H-2','H-1','Hari ini'],data:[[1350,1395,1410,1380,1425,1400,1410],[2.05,2.12,2.08,2.15,2.10,2.07,2.10]],names:['Tonase (t)','Kadar (g/t)'],types:['bar','line'],axes:[0,1],yt:['ton','g/t'],colors:['#8a6b30','#4d7a91']}]});
+_m('cadangan-emas',{note:'Umur tambang = 430.000 oz ÷ (2.600 oz/bulan × 12) = 13,8 tahun.',kpi:[["Cadangan Terbukti (Proven)","290.000 oz","ok",""],["Cadangan Terkira (Probable)","140.000 oz","info",""],["Total Cadangan","430.000 oz","ok","Cut-off 0,5 g/t"],["Umur Tambang Tersisa","13,8 tahun","warn","Pada laju 31.200 oz/tahun"]],cols:['Zona','Cadangan','Kadar','Klasifikasi'],rows:[["Panel A (01-06)","160.000 oz","2,4 g/t","Proven"],["Panel B (01-05)","130.000 oz","2,0 g/t","Proven"],["Panel C (01-04)","95.000 oz","1,9 g/t","Probable"],["Zona Ekstensi Timur","45.000 oz","1,7 g/t","Probable"]],charts:[
+ {type:'doughnut',title:'Klasifikasi Cadangan (oz)',labels:['Proven','Probable'],data:[[290000,140000]],colors:['#5f8c5a','#4d7a91'],total:'Total oz'},
+ {type:'bar',title:'Cadangan per Zona (ribu oz)',labels:['Panel A','Panel B','Panel C','Ekst. Timur'],data:[[160,130,95,45]],names:['koz'],horizontal:1,unit:' koz'}]});
+_m('pengolahan',{kpi:[["Throughput","1.410 t/hari","ok","≈ 42.300 t/bulan"],["Recovery Rate","91,2%","ok","Target 90%"],["Downtime Pabrik","3,4%","warn",""],["Biaya Proses per Ton","Rp 185.000","info",""],["Konsumsi Sianida","0,42 kg/t","info","≈ 592 kg/hari"]],cols:['Tahap','Kinerja','Parameter','Status'],rows:[["Crushing & Grinding","1.410 t/hari","98,5% uptime","Normal"],["Leaching (CIL)","91,2% recovery","8 tangki aktif","Normal"],["Refining","86,8 oz/hari","99,1% kemurnian","Normal"]],charts:[
+ {type:'line',title:'Recovery Rate vs Target (%)',labels:BLN,data:[[89.4,89.9,90.3,90.6,91.0,91.2],[90,90,90,90,90,90]],names:['Recovery','Target'],dash:[0,5],colors:['#c99a3f','#726a5f'],unit:'%',min:88,max:92},
+ {type:'doughnut',title:'Penyebab Downtime Pabrik',labels:['Perawatan terjadwal','Gangguan mekanik','Listrik','Lainnya'],data:[[46,31,15,8]],total:'%'}]});
+_m('peledakan',{kpi:[["Peledakan Bulan Ini","22 kali","info",""],["Efisiensi Fragmentasi","87%","ok","P80 ≤ 30 cm"],["Volume Diledakkan","220 kt","info","Bijih 42 kt + waste 178 kt"],["Powder Factor","0,38 kg/t","info","≈ 83,6 t bahan peledak"]],cols:['Panel','Jumlah Ledakan','Volume','P80 Fragmentasi'],rows:[["A-01","6","62 kt","24 cm"],["A-02","5","52 kt","26 cm"],["A-03","4","40 kt","25 cm"],["B-01","4","36 kt","29 cm"],["C-02","3","30 kt","31 cm"]],charts:[
+ {type:'bar',title:'Jumlah Peledakan dan P80 (cm)',labels:BLN,data:[[19,20,21,20,21,22],[29,28,28,27,26,26]],names:['Peledakan','P80 (cm)'],types:['bar','line'],axes:[0,1],yt:['kali','cm'],colors:['#8a6b30','#c99a3f']}]});
+_m('kualitas-air',{charts:[{type:'line',title:'pH Air Limpasan vs Baku Mutu',labels:BLN,data:[[7.1,7.0,6.9,7.2,7.1,7.0],[6,6,6,6,6,6],[9,9,9,9,9,9]],names:['pH terukur','Batas bawah','Batas atas'],dash:[0,5,5],colors:['#c99a3f','#a5473a','#a5473a'],min:5,max:10}]});
+_m('kualitas-udara',{kpi:[["Rata-rata PM10","62 µg/m³","ok","Baku mutu 24 jam: 75 µg/m³"],["Titik Pantau","5","info",""]],charts:[{type:'line',title:'PM10 Bulanan vs Baku Mutu (µg/m³)',labels:BLN,data:[[58,61,66,64,60,62],[75,75,75,75,75,75]],names:['PM10','Baku mutu'],dash:[0,5],colors:['#c99a3f','#a5473a'],min:40,max:80}]});
+_m('reklamasi-lahan',{kpi:[["Lahan Direklamasi (kumulatif)","310 ha","info","Dari lahan terganggu 2.450 ha terpetakan"],["Realisasi 2026 s/d Sep","58 ha","warn","68% dari target 85 ha"]],charts:[{type:'bar',title:'Reklamasi per Kuartal 2026 (ha)',labels:['Q1','Q2','Q3','Q4'],data:[[14,18,26,null],[21,21,21,22]],names:['Realisasi','Target'],colors:['#5f8c5a','#726a5f'],unit:' ha'}]});
+_m('data-karyawan',{cols:['Departemen','Jumlah','Persentase'],charts:[{type:'doughnut',title:'Karyawan per Departemen (842 orang)',labels:['Operasional Tambang','Pengolahan','K3 & Lingkungan','Administrasi & Keuangan','Teknik & Geologi'],data:[[412,156,64,98,112]],total:'Orang'},{type:'doughnut',title:'Status Kepegawaian',labels:['Tetap','Kontrak'],data:[[611,231]],colors:['#c99a3f','#4d7a91'],total:'Orang'}]});
+_m('absensi',{charts:[{type:'doughnut',title:'Kehadiran Hari Ini (842 orang)',labels:['Shift siang','Shift malam','Tidak hadir'],data:[[421,387,34]],colors:['#c99a3f','#4d7a91','#a5473a'],total:'Orang'}]});
+_m('payroll',{cols:['Komponen','Nilai','Porsi'],rows:[["Gaji Pokok","Rp 6.610.000.000","74,3%"],["Tunjangan Tetap","Rp 1.190.000.000","13,4%"],["Lembur","Rp 620.000.000","7,0%"],["BPJS & Asuransi","Rp 480.000.000","5,4%"]],charts:[{type:'doughnut',title:'Komposisi Payroll (Rp 8,9 M)',labels:['Gaji pokok','Tunjangan','Lembur','BPJS & asuransi'],data:[[6.61,1.19,0.62,0.48]],unit:' M',total:'Rp M'}]});
+_m('cashflow',{kpi:[["Saldo Kas","Rp 42,3 M","ok",""],["Arus Kas Bersih Bulan Ini","+Rp 3,1 M","ok","Setelah capex, pajak, dividen & cicilan"]],cols:['Komponen (September)','Rp Miliar','Keterangan'],rows:[["Penerimaan penjualan emas","+112,3","2.600 oz × USD 2.650 × Rp 16.300"],["Biaya operasional","−31,6","Lihat modul Biaya Operasional"],["Royalti (PNBP)","−4,2","3,75% dari penjualan"],["Belanja modal berkelanjutan","−17,5","Capex"],["Pajak (PPh & daerah)","−13,8",""],["Dividen & cicilan pinjaman","−42,1",""],["Arus kas bersih","+3,1","= perubahan saldo 39,2 → 42,3"]],charts:[
+ {type:'bar',title:'Penerimaan vs Pengeluaran dan Saldo Kas (Rp Miliar)',labels:BLN,data:[CF.in,CF.out,CF.saldo],names:['Penerimaan','Pengeluaran','Saldo kas'],types:['bar','bar','line'],axes:[0,0,0],colors:['#5f8c5a','#a5473a','#c99a3f'],wide:1,min:0}]});
+_m('biaya-operasional',{kpi:[["Total Biaya Bulan Ini","Rp 31,6 M","info",""],["Biaya per Ton Bijih","Rp 747.000","info","31,6 M ÷ 42.300 t"],["Biaya per Ounce (AISC)","USD 1.258","warn","(Opex + royalti + capex) ÷ 2.600 oz"]],cols:['Komponen','Biaya','Porsi'],charts:[
+ {type:'doughnut',title:'Komposisi Biaya Operasional',labels:['Tenaga kerja','Bahan bakar','Pemeliharaan','Reagen','Lainnya'],data:[[28.2,21.4,16.5,13.0,20.9]],unit:'%',total:'%'},
+ {type:'line',title:'Tren AISC (USD/oz)',labels:BLN,data:[[1310,1295,1280,1268,1275,1258]],names:['AISC'],unit:' USD',min:1200,max:1350}]});
+_m('royalti-pajak',{kpi:[["Royalti Bulan Ini (3,75%)","Rp 4,2 M","info","3,75% × Rp 112,3 M"],["PPh Badan (YTD)","Rp 120,5 M","info","22% × laba operasional"],["Status Pembayaran","Lunas","ok",""]],cols:['Jenis','Nilai','Status'],rows:[["Royalti Produksi (PNBP)","Rp 4.210.000.000","Lunas"],["PPh Badan (YTD)","Rp 120.500.000.000","Lunas"],["Pajak Air Permukaan","Rp 84.000.000","Lunas"],["Pajak Daerah (Alat Berat)","Rp 156.000.000","Lunas"]],charts:[{type:'bar',title:'Royalti Bulanan (Rp Miliar)',labels:BLN,data:[[3.86,3.94,4.02,4.08,4.15,4.21]],names:['Royalti'],unit:' M'}]});
+_m('anggaran',{kpi:[["Total Anggaran 2026","Rp 620 M","info",""],["Realisasi s/d September","Rp 422,3 M (68,1%)","info","Waktu berjalan 75%"],["Sisa Anggaran","Rp 197,7 M","info",""]],cols:['Pos','Anggaran','Realisasi'],rows:[["Belanja Modal (Capex)","Rp 210 M","Rp 121,8 M (58%)"],["Belanja Operasional (Opex)","Rp 380 M","Rp 284,0 M (74,7%)"],["Eksplorasi Lanjutan","Rp 30 M","Rp 16,5 M (55%)"]],charts:[{type:'bar',title:'Anggaran vs Realisasi (Rp Miliar)',labels:['Capex','Opex','Eksplorasi'],data:[[210,380,30],[121.8,284,16.5]],names:['Anggaran','Realisasi'],colors:['#726a5f','#c99a3f'],unit:' M'}]});
+_m('laporan-keuangan',{note:'Pendapatan YTD = 21.860 oz × USD 2.650 × Rp 16.300. Beban pokok produksi = opex Rp 284 M + penyusutan Rp 60 M.',kpi:[["Pendapatan (YTD)","Rp 944,2 M","ok",""],["Beban Pokok Produksi (YTD)","Rp 344,0 M","info",""],["Laba Operasional (YTD)","Rp 547,8 M","ok",""],["Margin Operasional","58,0%","ok",""]],cols:['Pos','Nilai (Rp M)','% Pendapatan'],rows:[["Pendapatan Penjualan Emas","944,2","100%"],["Beban Pokok Produksi","344,0","36,4%"],["Royalti (3,75%)","35,4","3,7%"],["Beban Umum & Administrasi","17,0","1,8%"],["Laba Operasional","547,8","58,0%"]],charts:[
+ {type:'bar',title:'Pendapatan per Kuartal 2026 (Rp Miliar)',labels:['Q1','Q2','Q3'],data:[[297.6,314.9,331.7]],names:['Pendapatan'],unit:' M'},
+ {type:'doughnut',title:'Alokasi Pendapatan',labels:['Beban pokok','Royalti','G&A','Laba operasional'],data:[[36.4,3.7,1.8,58.0]],colors:['#a5473a','#c78a3a','#726a5f','#5f8c5a'],unit:'%',total:'%'}]});
+_m('alat-berat',{kpi:[["Unit Beroperasi","38 dari 42 (90,5%)","warn","3 perawatan · 1 standby"],["Rata-rata Utilisasi","84,4%","ok",""]],cols:['Unit','Lokasi','Status'],charts:[{type:'bar',title:'Utilisasi Alat per Kategori (%)',labels:['Excavator','Dump Truck','Bulldozer','Drill Rig','Genset'],data:[[88,79,84,76,95]],names:['Utilisasi'],unit:'%',min:0,max:100},{type:'doughnut',title:'Status Armada (42 unit)',labels:['Beroperasi','Perawatan','Standby'],data:[[38,3,1]],colors:['#5f8c5a','#c78a3a','#4d7a91'],total:'Unit'}]});
+_m('data-bor',{note:'3.100 m/bulan ≈ 21 lubang × rata-rata 148 m. Lihat detail collar, survey, assay dan litologi di Studio Desain › Drillhole Manager.',cols:['Lubang','Kedalaman','Kadar rata-rata'],charts:[{type:'bar',title:'Meter Bor per Bulan (m)',labels:BLN,data:[[2650,2800,2950,3020,3050,3100]],names:['Meter bor'],unit:' m'}]});
+_m('sampling',{charts:[{type:'line',title:'Kadar Rata-rata Sampel (g/t)',labels:BLN,data:[[2.00,2.05,2.12,2.08,2.15,2.10]],names:['Au'],unit:' g/t',min:1.8,max:2.3}]});
+_m('estimasi-sumberdaya',{kpi:[["Jumlah Blok Model","48.600 blok","info",""],["Metode Interpolasi","Ordinary Kriging","info",""],["Search Ellipse","150×150×50 m","info",""],["Total Sumber Daya (M+I+Inf)","700.000 oz","ok","Cadangan 430.000 oz"],["Validasi Swath Plot","Lolos","ok",""]],cols:['Klasifikasi','Kandungan','Kadar','Tonase'],rows:[["Measured","340.000 oz","2,25 g/t","4,70 Mt"],["Indicated","210.000 oz","1,95 g/t","3,35 Mt"],["Inferred","150.000 oz","1,70 g/t","2,74 Mt"]],charts:[
+ {type:'bar',title:'Kurva Kadar–Tonase (Mt dan g/t vs cut-off)',labels:['0,3','0,5','0,7','1,0','1,5','2,0','2,5'],data:[[7.6,6.4,5.6,4.5,2.9,1.4,0.5],[1.85,2.10,2.35,2.75,3.30,4.10,5.00]],names:['Tonase (Mt)','Kadar rata-rata (g/t)'],types:['bar','line'],axes:[0,1],yt:['Mt','g/t'],colors:['#8a6b30','#c99a3f'],wide:1}]});
+_m('rencana-tambang',{kpi:[["Panel Aktif","15","info","A: 6 · B: 5 · C: 4"],["Kepatuhan Rencana","94%","ok",""],["Strip Ratio 2026–2030","4,2 : 1","info",""]],cols:['Tahun','Bijih','Waste','Emas (oz)'],rows:SCH.yr.map((y,i)=>[String(y),IDN(SCH.ore[i])+' kt',IDN(SCH.waste[i])+' kt',IDN(SCH.oz[i])]),charts:[{type:'bar',title:'Emas Terproduksi per Tahun (oz)',labels:SCH.yr.map(String),data:[SCH.oz],names:['Emas'],unit:' oz'}]});
+_m('optimasi-penjadwalan',{kpi:[["NPV Pit Optimal","USD 186 juta","ok",""],["Strip Ratio Rata-rata","4,2 : 1","info",""],["Horizon Jadwal","5 tahun rinci · LOM 13,8 th","info",""],["Periode Jadwal Aktif","Bulanan","info",""]],charts:[
+ {type:'bar',title:'Rencana Produksi 5 Tahun: Bijih, Waste (kt) dan Kadar (g/t)',labels:SCH.yr.map(String),data:[SCH.ore,SCH.waste,SCH.gr],names:['Bijih (kt)','Waste (kt)','Kadar (g/t)'],types:['bar','bar','line'],axes:[0,0,1],yt:['kt','g/t'],stacked:1,colors:['#c99a3f','#726a5f','#4d7a91'],wide:1}]});
+_m('studio-desain',{d:'Ruang kerja bergaya Datamine Studio dengan 8 panel: Project Navigator, Layers/Project Pipeline, 3D Viewer, Properties, Drillhole Manager, Output/Console, Command Panel, dan Scheduling/Sequence. Klik objek 3D, tabel, atau pohon proyek untuk melihat propertinya.'});
+_m('desain-tambang',{kpi:[["Tahapan Pit (Pushback)","3 fase","info",""],["Sudut Lereng Keseluruhan","42°","info","Bench 10 m · muka 65° · berm 6,5 m"],["Lebar Jalan Angkut","30 m","info","Gradien 10%"],["Panjang Desain Terowongan UG","1.850 m","info",""]]});
+loadOverrides();
+
+document.getElementById('searchbox').addEventListener('input', e=>{
+  buildNav(e.target.value.toLowerCase());
+});
+
+buildNav('');
+render('dashboard');
+</script>
+</body>
+</html>

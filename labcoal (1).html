@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoalMine Pro v2.0 — Sistem Manajemen Tambang Batu Bara</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root{
+    --bg:#0a0f16; --panel:#111a24; --panel2:#16212e; --border:#1f2c3a;
+    --gold:#f0b429; --gold2:#ffc94d; --text:#e6edf3; --muted:#7a8896;
+    --green:#4ade80; --yellow:#fbbf24; --red:#f87171; --blue:#60a5fa; --cyan:#22d3ee;
+  }
+  body { font-family:'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; }
+
+  /* SIDEBAR */
+  .sidebar { width:290px; background:linear-gradient(180deg,#101a26,#070c12); padding:18px 0; border-right:1px solid var(--border); height:100vh; overflow-y:auto; position:fixed; }
+  .brand { padding:0 20px 18px; border-bottom:1px solid var(--border); margin-bottom:14px; }
+  .brand h1 { font-size:19px; color:var(--gold); letter-spacing:.5px; }
+  .brand p { font-size:11px; color:var(--muted); margin-top:4px; }
+  .brand .stat { margin-top:10px; display:flex; gap:8px; font-size:10px; }
+  .brand .stat div{ background:#1a2532; padding:4px 8px; border-radius:4px; color:var(--green); border:1px solid #24303f; }
+  .nav-item { padding:11px 20px; cursor:pointer; font-size:13px; color:#b8c5d3; border-left:3px solid transparent; transition:.2s; display:flex; align-items:center; gap:10px; }
+  .nav-item:hover { background:#141f2b; color:#fff; }
+  .nav-item.active { background:#182634; border-left-color:var(--gold); color:var(--gold); }
+  .nav-item .num { background:#1c2836; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; }
+  .nav-item.active .num { background:var(--gold); color:#0a0f16; }
+
+  /* MAIN */
+  .main { margin-left:290px; flex:1; padding:22px 32px; min-height:100vh; }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+  .header h2 { font-size:21px; color:#fff; }
+  .header .right { display:flex; gap:10px; align-items:center; }
+  .badge { background:#182634; padding:6px 14px; border-radius:20px; font-size:11px; color:var(--gold); border:1px solid var(--gold); }
+  .badge.live { color:var(--green); border-color:var(--green); }
+  .panel { display:none; }
+  .panel.active { display:block; animation:fadeIn .3s; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+  /* CARDS */
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:13px; margin-bottom:18px; }
+  .grid-5 { grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; transition:.2s; }
+  .card:hover { border-color:#2f4054; transform:translateY(-2px); }
+  .card .label { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; display:flex; justify-content:space-between; }
+  .card .value { font-size:23px; font-weight:700; color:var(--gold); margin-top:6px; }
+  .card .unit { font-size:11px; color:var(--muted); margin-left:3px; }
+  .card .desc { font-size:10.5px; color:var(--muted); margin-top:5px; }
+  .card.green .value { color:var(--green); }
+  .card.blue .value { color:var(--blue); }
+  .card.red .value { color:var(--red); }
+  .card.cyan .value { color:var(--cyan); }
+  .card .trend { font-size:10px; margin-top:4px; }
+  .card .trend.up { color:var(--green); }
+  .card .trend.down { color:var(--red); }
+
+  /* FORM */
+  .form-box { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:18px; }
+  .form-box h3 { font-size:14px; color:var(--gold); margin-bottom:14px; padding-bottom:9px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:11px; margin-bottom:14px; }
+  .form-group label { display:block; font-size:11.5px; color:#b8c5d3; margin-bottom:4px; font-weight:500; }
+  .form-group input,.form-group select,.form-group textarea { width:100%; padding:8px 11px; background:#0a121b; border:1px solid #253242; border-radius:6px; color:var(--text); font-size:12.5px; font-family:inherit; outline:none; transition:.2s; }
+  .form-group input:focus,.form-group select:focus { border-color:var(--gold); }
+  .btn { padding:8px 18px; background:var(--gold); color:#0a0f16; border:none; border-radius:6px; font-weight:600; font-size:12.5px; cursor:pointer; transition:.2s; }
+  .btn:hover { background:var(--gold2); transform:translateY(-1px); }
+  .btn.secondary { background:#253242; color:var(--text); }
+  .btn.secondary:hover { background:#2f4054; }
+  .btn.danger { background:#c94a4a; color:#fff; }
+  .btn.small { padding:5px 11px; font-size:11px; }
+  .btn.ghost { background:transparent; border:1px solid #253242; color:var(--text); }
+  .btn.ghost:hover { background:#1a2532; }
+
+  /* TABLE */
+  table { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+  th,td { padding:9px 11px; text-align:left; border-bottom:1px solid var(--border); }
+  th { background:#1a2634; color:var(--gold); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.4px; position:sticky; top:0; }
+  tbody tr:hover td { background:#141f2b; }
+  .tbl-wrap { max-height:380px; overflow-y:auto; border-radius:8px; border:1px solid var(--border); }
+  .status-ok { color:var(--green); font-weight:600; }
+  .status-warn { color:var(--yellow); font-weight:600; }
+  .status-bad { color:var(--red); font-weight:600; }
+
+  /* CHART */
+  .chart-box { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .chart-box h3 { font-size:13.5px; color:var(--gold); margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
+  .chart-box h3 .sub { font-size:11px; color:var(--muted); font-weight:400; }
+  canvas { max-height:340px; }
+
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:1000px){ .row{ grid-template-columns:1fr; } }
+
+  .tag { display:inline-block; padding:3px 10px; border-radius:20px; font-size:10.5px; font-weight:600; }
+  .tag.high { background:rgba(74,222,128,.15); color:var(--green); border:1px solid rgba(74,222,128,.3); }
+  .tag.medium { background:rgba(251,191,36,.15); color:var(--yellow); border:1px solid rgba(251,191,36,.3); }
+  .tag.low { background:rgba(248,113,113,.15); color:var(--red); border:1px solid rgba(248,113,113,.3); }
+
+  .info-text { font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.65; }
+  .flex-between { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .toast { position:fixed; top:20px; right:20px; background:#22c55e; color:#fff; padding:11px 18px; border-radius:8px; font-size:12.5px; font-weight:600; z-index:1000; opacity:0; transform:translateX(100px); transition:.3s; }
+  .toast.show { opacity:1; transform:none; }
+  .toast.error { background:#ef4444; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--muted); margin-top:8px; }
+  .legend span { display:flex; align-items:center; gap:5px; }
+  .coa-print { background:#0d151e; padding:22px; border-radius:8px; border:1px solid var(--border); font-size:12.5px; line-height:1.85; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="brand">
+    <h1>⛏️ CoalMine Pro</h1>
+    <p>Enterprise Mine Management System v2.0</p>
+    <div class="stat">
+      <div id="navSamples">● 0 sampel</div>
+      <div id="navBlocks">● 0 blok</div>
+    </div>
+  </div>
+  <div class="nav-item active" onclick="showPanel(1)"><span class="num">1</span> Database Geologi</div>
+  <div class="nav-item" onclick="showPanel(2)"><span class="num">2</span> Analisis Proksimat</div>
+  <div class="nav-item" onclick="showPanel(3)"><span class="num">3</span> Ultimat & Kalori</div>
+  <div class="nav-item" onclick="showPanel(4)"><span class="num">4</span> Pemodelan Seam</div>
+  <div class="nav-item" onclick="showPanel(5)"><span class="num">5</span> Model Blok & Cadangan</div>
+  <div class="nav-item" onclick="showPanel(6)"><span class="num">6</span> Desain Pit & Jalan</div>
+  <div class="nav-item" onclick="showPanel(7)"><span class="num">7</span> Penjadwalan & Blending</div>
+  <div class="nav-item" onclick="showPanel(8)"><span class="num">8</span> QA/QC & Sertifikasi</div>
+</div>
+
+<div class="main">
+  <div class="header">
+    <h2 id="panelTitle">1. Panel Registrasi Sampel & Database Geologi</h2>
+    <div class="right">
+      <span class="badge live">● Live</span>
+      <span class="badge" id="liveClock">--:--:--</span>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 1 ============ -->
+  <div class="panel active" id="panel1">
+    <div class="grid grid-5">
+      <div class="card"><div class="label">Titik Bor</div><div class="value" id="p1-total">0</div><div class="desc">Total titik sampling</div></div>
+      <div class="card blue"><div class="label">Rata Elevasi</div><div class="value" id="p1-elev">0<span class="unit">m</span></div></div>
+      <div class="card cyan"><div class="label">Kedalaman Maks</div><div class="value" id="p1-depth">0<span class="unit">m</span></div></div>
+      <div class="card green"><div class="label">Jumlah Pit</div><div class="value" id="p1-pits">0</div><div class="desc">Lokasi aktif</div></div>
+      <div class="card"><div class="label">Seam Terdeteksi</div><div class="value" id="p1-seams">0</div></div>
+    </div>
+
+    <div class="form-box">
+      <h3>📌 Registrasi Titik Bor / Sampel Baru</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>ID Sampel</label><input id="p1-id" placeholder="SMP-016"></div>
+        <div class="form-group"><label>Koordinat X (Easting)</label><input id="p1-x" type="number" placeholder="504500"></div>
+        <div class="form-group"><label>Koordinat Y (Northing)</label><input id="p1-y" type="number" placeholder="9503300"></div>
+        <div class="form-group"><label>Elevasi Z (mdpl)</label><input id="p1-z" type="number" placeholder="120"></div>
+        <div class="form-group"><label>Kedalaman (m)</label><input id="p1-depth" type="number" placeholder="30"></div>
+        <div class="form-group"><label>Jenis Litologi</label>
+          <select id="p1-lito"><option>Top Soil</option><option>Clay</option><option>Siltstone</option><option>Sandstone</option><option>Mudstone</option><option>Shale</option><option>Coal</option></select>
+        </div>
+        <div class="form-group"><label>Nomor Seam</label><input id="p1-seam" placeholder="Seam F"></div>
+        <div class="form-group"><label>Asal Pit</label><input id="p1-pit" placeholder="Pit Utara"></div>
+        <div class="form-group"><label>ID Tongkang / Stockpile</label><input id="p1-stock" placeholder="SP-04"></div>
+      </div>
+      <button class="btn" onclick="addSample()">+ Simpan Data</button>
+      <button class="btn secondary" onclick="clearForm('p1')">Reset</button>
+      <button class="btn ghost" onclick="loadDummySamples()">🔄 Reload Dummy</button>
+    </div>
+
+    <div class="row">
+      <div class="chart-box">
+        <h3>🗺️ Peta Sebaran Titik Bor <span class="sub">(X vs Y — warna per kategori)</span></h3>
+        <canvas id="chartSpatial"></canvas>
+        <div class="legend">
+          <span><span class="dot" style="background:#4ade80"></span>High BCI</span>
+          <span><span class="dot" style="background:#fbbf24"></span>Medium BCI</span>
+          <span><span class="dot" style="background:#f87171"></span>Low BCI</span>
+        </div>
+      </div>
+      <div class="chart-box">
+        <h3>📊 Distribusi Litologi Penutup</h3>
+        <canvas id="chartLito"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <div class="flex-between">
+        <h3>📋 Database Titik Bor</h3>
+        <button class="btn small danger" onclick="exportCSV('samples')">Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table id="tblSamples">
+          <thead><tr><th>ID</th><th>X</th><th>Y</th><th>Z</th><th>Depth</th><th>Litologi</th><th>Seam</th><th>Pit</th><th>Stockpile</th><th>Aksi</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 2 ============ -->
+  <div class="panel" id="panel2">
+    <div class="grid grid-5">
+      <div class="card blue"><div class="label">Total Moisture (TM)</div><div class="value" id="p2-tm">-<span class="unit">%</span></div><div class="desc" id="p2-tm-d">Rata-rata sampel</div></div>
+      <div class="card cyan"><div class="label">Inherent Moisture</div><div class="value" id="p2-im">-<span class="unit">%</span></div></div>
+      <div class="card red"><div class="label">Ash Content</div><div class="value" id="p2-ash">-<span class="unit">%</span></div></div>
+      <div class="card"><div class="label">Volatile Matter</div><div class="value" id="p2-vm">-<span class="unit">%</span></div></div>
+      <div class="card green"><div class="label">Fixed Carbon</div><div class="value" id="p2-fc">-<span class="unit">%</span></div></div>
+    </div>
+
+    <div class="form-box">
+      <h3>🧪 Input Analisis Proksimat</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>ID Sampel</label><select id="p2-sample"></select></div>
+        <div class="form-group"><label>Total Moisture (%)</label><input id="p2-in-tm" type="number" step="0.01" placeholder="8.5"></div>
+        <div class="form-group"><label>Inherent Moisture (%)</label><input id="p2-in-im" type="number" step="0.01" placeholder="4.2"></div>
+        <div class="form-group"><label>Ash Content (%)</label><input id="p2-in-ash" type="number" step="0.01" placeholder="5.5"></div>
+        <div class="form-group"><label>Volatile Matter (%)</label><input id="p2-in-vm" type="number" step="0.01" placeholder="35"></div>
+        <div class="form-group"><label>Fixed Carbon (%)</label><input id="p2-in-fc" type="number" step="0.01" placeholder="51"></div>
+      </div>
+      <button class="btn" onclick="saveProximate()">+ Simpan Proksimat</button>
+    </div>
+
+    <div class="row">
+      <div class="chart-box">
+        <h3>📊 Perbandingan Proksimat antar Sampel</h3>
+        <canvas id="chartProximate"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>🥧 Komposisi Rata-rata</h3>
+        <canvas id="chartProxAvg"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h3>📋 Data Proksimat Lengkap</h3>
+      <div class="tbl-wrap">
+        <table id="tblProximate">
+          <thead><tr><th>ID</th><th>TM %</th><th>IM %</th><th>Ash %</th><th>VM %</th><th>FC %</th><th>VM/FC</th><th>Aksi</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 3 ============ -->
+  <div class="panel" id="panel3">
+    <div class="grid grid-5">
+      <div class="card"><div class="label">Calorific Value (GCV)</div><div class="value" id="p3-cv">-<span class="unit">kkal/kg</span></div></div>
+      <div class="card red"><div class="label">Total Sulfur</div><div class="value" id="p3-s">-<span class="unit">%</span></div></div>
+      <div class="card blue"><div class="label">Karbon (C)</div><div class="value" id="p3-c">-<span class="unit">%</span></div></div>
+      <div class="card cyan"><div class="label">Hidrogen (H)</div><div class="value" id="p3-h">-<span class="unit">%</span></div></div>
+      <div class="card green"><div class="label">AFT</div><div class="value" id="p3-aft">-<span class="unit">°C</span></div></div>
+    </div>
+
+    <div class="form-box">
+      <h3>🔥 Input Analisis Ultimat & Nilai Kalori</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>ID Sampel</label><select id="p3-sample"></select></div>
+        <div class="form-group"><label>Calorific Value (kkal/kg)</label><input id="p3-in-cv" type="number" step="0.1" placeholder="5500"></div>
+        <div class="form-group"><label>Total Sulfur (%)</label><input id="p3-in-s" type="number" step="0.01" placeholder="0.5"></div>
+        <div class="form-group"><label>Karbon C (%)</label><input id="p3-in-c" type="number" step="0.01" placeholder="65"></div>
+        <div class="form-group"><label>Hidrogen H (%)</label><input id="p3-in-h" type="number" step="0.01" placeholder="4"></div>
+        <div class="form-group"><label>Nitrogen N (%)</label><input id="p3-in-n" type="number" step="0.01" placeholder="1.2"></div>
+        <div class="form-group"><label>Oksigen O (%)</label><input id="p3-in-o" type="number" step="0.01" placeholder="8"></div>
+        <div class="form-group"><label>AFT (°C)</label><input id="p3-in-aft" type="number" placeholder="1250"></div>
+      </div>
+      <button class="btn" onclick="saveUltimate()">+ Simpan Ultimat</button>
+    </div>
+
+    <div class="row">
+      <div class="chart-box">
+        <h3>🌡️ Trend GCV per Sampel</h3>
+        <canvas id="chartCV"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>🕸️ Komposisi Elemen (Radar)</h3>
+        <canvas id="chartRadar"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h3>📋 Data Ultimat & Kalori</h3>
+      <div class="tbl-wrap">
+        <table id="tblUltimate">
+          <thead><tr><th>ID</th><th>GCV</th><th>S %</th><th>C %</th><th>H %</th><th>N %</th><th>O %</th><th>AFT °C</th><th>Kategori</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 4 ============ -->
+  <div class="panel" id="panel4">
+    <div class="grid grid-5">
+      <div class="card"><div class="label">Total Seam</div><div class="value" id="p4-cnt">0</div></div>
+      <div class="card green"><div class="label">Total Thickness</div><div class="value" id="p4-tt">0<span class="unit">m</span></div></div>
+      <div class="card blue"><div class="label">Rata-rata Dip</div><div class="value" id="p4-ad">0<span class="unit">°</span></div></div>
+      <div class="card red"><div class="label">Fault Terdeteksi</div><div class="value" id="p4-fl">0</div></div>
+      <div class="card cyan"><div class="label">Rata Strike</div><div class="value" id="p4-as">0<span class="unit">°</span></div></div>
+    </div>
+
+    <div class="form-box">
+      <h3>🗻 Tambah Data Seam</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>Nama Seam</label><input id="p4-seam" placeholder="Seam F"></div>
+        <div class="form-group"><label>True Thickness (m)</label><input id="p4-thick" type="number" step="0.1" placeholder="3.5"></div>
+        <div class="form-group"><label>Strike (°)</label><input id="p4-strike" type="number" placeholder="45"></div>
+        <div class="form-group"><label>Dip (°)</label><input id="p4-dip" type="number" placeholder="12"></div>
+        <div class="form-group"><label>Kedalaman (m)</label><input id="p4-depth" type="number" placeholder="80"></div>
+        <div class="form-group"><label>Fault Line</label><input id="p4-fault" placeholder="Fault F1 - normal"></div>
+      </div>
+      <button class="btn" onclick="addSeam()">+ Simpan Seam</button>
+    </div>
+
+    <div class="chart-box">
+      <h3>📐 Penampang Stratigrafi Seam <span class="sub">(posisi vertikal berdasar kedalaman)</span></h3>
+      <canvas id="chartStrat"></canvas>
+    </div>
+
+    <div class="row">
+      <div class="chart-box">
+        <h3>📊 Dip vs Thickness</h3>
+        <canvas id="chartSeam"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>📋 Tabel Seam</h3>
+        <div class="tbl-wrap">
+          <table id="tblSeam">
+            <thead><tr><th>Seam</th><th>Thickness</th><th>Strike</th><th>Dip</th><th>Depth</th><th>Fault</th><th>Aksi</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 5 ============ -->
+  <div class="panel" id="panel5">
+    <div class="grid grid-5">
+      <div class="card"><div class="label">Total Volume</div><div class="value" id="p5-vol">0<span class="unit">m³</span></div></div>
+      <div class="card green"><div class="label">Total Tonase</div><div class="value" id="p5-ton">0<span class="unit">ton</span></div></div>
+      <div class="card blue"><div class="label">Rata Density</div><div class="value" id="p5-den">-<span class="unit">t/m³</span></div></div>
+      <div class="card cyan"><div class="label">Jumlah Blok</div><div class="value" id="p5-count">0</div></div>
+      <div class="card"><div class="label">Rata GCV</div><div class="value" id="p5-cv">-<span class="unit">kkal</span></div></div>
+    </div>
+
+    <div class="form-box">
+      <h3>🧊 Tambah Blok Model</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>ID Blok</label><input id="p5-id" placeholder="BLK-021"></div>
+        <div class="form-group"><label>Volume (m³)</label><input id="p5-in-vol" type="number" placeholder="10000"></div>
+        <div class="form-group"><label>Density (t/m³)</label><input id="p5-in-den" type="number" step="0.01" placeholder="1.35"></div>
+        <div class="form-group"><label>Kategori</label>
+          <select id="p5-in-cat"><option value="High">High BCI (&gt;6000)</option><option value="Medium">Medium BCI (5000-6000)</option><option value="Low">Low BCI (&lt;5000)</option></select>
+        </div>
+        <div class="form-group"><label>CV Estimasi</label><input id="p5-in-cv" type="number" placeholder="5500"></div>
+        <div class="form-group"><label>Zona</label><input id="p5-in-zone" placeholder="North Block"></div>
+      </div>
+      <button class="btn" onclick="addBlock()">+ Tambah Blok</button>
+    </div>
+
+    <div class="row">
+      <div class="chart-box">
+        <h3>📦 Distribusi Tonase per Kategori</h3>
+        <canvas id="chartBlock"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>📈 Histogram GCV Blok</h3>
+        <canvas id="chartHistCV"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h3>📋 Detail Model Blok</h3>
+      <div class="tbl-wrap">
+        <table id="tblBlock">
+          <thead><tr><th>ID</th><th>Zona</th><th>Volume</th><th>Density</th><th>Tonase</th><th>Kategori</th><th>CV</th><th>Aksi</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 6 ============ -->
+  <div class="panel" id="panel6">
+    <div class="grid grid-5">
+      <div class="card"><div class="label">Stripping Ratio</div><div class="value" id="p6-sr">-<span class="unit">bcm/ton</span></div></div>
+      <div class="card blue"><div class="label">Overall Slope</div><div class="value" id="p6-slope">-<span class="unit">°</span></div></div>
+      <div class="card cyan"><div class="label">Bench Height</div><div class="value" id="p6-bench">-<span class="unit">m</span></div></div>
+      <div class="card green"><div class="label">Grade Jalan</div><div class="value" id="p6-grade">-<span class="unit">%</span></div></div>
+      <div class="card red"><div class="label">Safety Factor</div><div class="value" id="p6-sf">-</div><div class="desc">FoS geoteknik</div></div>
+    </div>
+
+    <div class="form-box">
+      <h3>🚧 Parameter Desain Pit & Infrastruktur</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>Volume Overburden (bcm)</label><input id="p6-ob" type="number" value="1500000"></div>
+        <div class="form-group"><label>Tonase Batubara (ton)</label><input id="p6-coal" type="number" value="250000"></div>
+        <div class="form-group"><label>Overall Slope Angle (°)</label><input id="p6-in-slope" type="number" step="0.1" value="38"></div>
+        <div class="form-group"><label>Bench Height (m)</label><input id="p6-in-bench" type="number" value="8"></div>
+        <div class="form-group"><label>Bench Width (m)</label><input id="p6-in-width" type="number" value="5"></div>
+        <div class="form-group"><label>Haul Road Grade (%)</label><input id="p6-in-grade" type="number" step="0.1" value="8"></div>
+        <div class="form-group"><label>Kohesi Tanah (kPa)</label><input id="p6-in-coh" type="number" value="25"></div>
+        <div class="form-group"><label>Sudut Geser Dalam (°)</label><input id="p6-in-phi" type="number" value="30"></div>
+      </div>
+      <button class="btn" onclick="calcPit()">📏 Hitung & Evaluasi</button>
+    </div>
+
+    <div class="row">
+      <div class="chart-box">
+        <h3>⚖️ Evaluasi Standar Geoteknik</h3>
+        <table id="tblGeo"><thead><tr><th>Parameter</th><th>Nilai</th><th>Standar</th><th>Status</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="chart-box">
+        <h3>🎯 Safety Factor Radar</h3>
+        <canvas id="chartGeotech"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h3>📉 Sensitivity: Slope Angle vs FoS</h3>
+      <canvas id="chartSlope"></canvas>
+      <p class="info-text">*FoS = (c/(γ·H·sinα·cosα)) + (tanφ/tanα). Standar FoS ≥ 1.3 untuk tambang terbuka.</p>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 7 ============ -->
+  <div class="panel" id="panel7">
+    <div class="grid grid-5">
+      <div class="card"><div class="label">Total Coal Plan</div><div class="value" id="p7-tot-coal">0<span class="unit">ton</span></div></div>
+      <div class="card blue"><div class="label">Total OB Plan</div><div class="value" id="p7-tot-ob">0<span class="unit">bcm</span></div></div>
+      <div class="card green"><div class="label">Avg SR</div><div class="value" id="p7-avg-sr">-</div></div>
+      <div class="card cyan"><div class="label">Periode</div><div class="value" id="p7-periods">0</div></div>
+      <div class="card"><div class="label">Best Month</div><div class="value" id="p7-best">-</div></div>
+    </div>
+
+    <div class="form-box">
+      <h3>📅 Tambah Target Produksi</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>Periode</label><input id="p7-per" placeholder="Jan-2025"></div>
+        <div class="form-group"><label>Target Coal (ton)</label><input id="p7-coal" type="number" placeholder="50000"></div>
+        <div class="form-group"><label>Target OB (bcm)</label><input id="p7-ob" type="number" placeholder="300000"></div>
+      </div>
+      <button class="btn" onclick="addSchedule()">+ Tambah</button>
+      <button class="btn ghost" onclick="loadDummySchedule()">🔄 Reload Dummy</button>
+    </div>
+
+    <div class="chart-box">
+      <h3>📈 Rencana Produksi Bulanan</h3>
+      <canvas id="chartSched"></canvas>
+    </div>
+
+    <div class="row">
+      <div class="chart-box">
+        <h3>🧪 Kalkulator Blending CV</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>CV High</label><input id="p7-hcv" type="number" value="6500"></div>
+          <div class="form-group"><label>CV Low</label><input id="p7-lcv" type="number" value="4500"></div>
+          <div class="form-group"><label>Target CV</label><input id="p7-tcv" type="number" value="5500"></div>
+          <div class="form-group"><label>Total Tonase (ton)</label><input id="p7-tton" type="number" value="10000"></div>
+        </div>
+        <button class="btn" onclick="calcBlend()">🧮 Hitung Formulasi</button>
+        <div id="blendResult" class="info-text" style="margin-top:12px;"></div>
+      </div>
+      <div class="chart-box">
+        <h3>📊 Simulasi Blending</h3>
+        <canvas id="chartBlend"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h3>📋 Jadwal Produksi</h3>
+      <div class="tbl-wrap">
+        <table id="tblSched">
+          <thead><tr><th>Periode</th><th>Coal (ton)</th><th>OB (bcm)</th><th>SR</th><th>Progress</th><th>Aksi</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 8 ============ -->
+  <div class="panel" id="panel8">
+    <div class="grid grid-5">
+      <div class="card green"><div class="label">Data In Control</div><div class="value" id="p8-in">0</div></div>
+      <div class="card red"><div class="label">Out of Control</div><div class="value" id="p8-out">0</div></div>
+      <div class="card blue"><div class="label">Mean Ash</div><div class="value" id="p8-mean">-<span class="unit">%</span></div></div>
+      <div class="card cyan"><div class="label">Std Dev</div><div class="value" id="p8-std">-</div></div>
+      <div class="card"><div class="label">CoA Terbit</div><div class="value" id="p8-coa">0</div></div>
+    </div>
+
+    <div class="chart-box">
+      <h3>🔍 Control Chart — Ash Content (%) <span class="sub">UCL/LCL = ±3σ</span></h3>
+      <canvas id="chartQC"></canvas>
+      <div id="qcSummary" class="info-text" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="row">
+      <div class="chart-box">
+        <h3>📊 Control Chart — GCV</h3>
+        <canvas id="chartQC2"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>📊 Control Chart — Total Sulfur</h3>
+        <canvas id="chartQC3"></canvas>
+      </div>
+    </div>
+
+    <div class="form-box">
+      <h3>📜 Generate Certificate of Analysis (CoA)</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>ID Sampel</label><select id="p8-sample"></select></div>
+        <div class="form-group"><label>Nama Pembeli</label><input id="p8-buyer" value="PT. Energi Nusantara"></div>
+        <div class="form-group"><label>No. Kontrak</label><input id="p8-contract" value="CTR/2025/001"></div>
+        <div class="form-group"><label>Tanggal</label><input id="p8-date" type="date"></div>
+      </div>
+      <button class="btn" onclick="generateCoA()">📄 Generate CoA</button>
+    </div>
+
+    <div class="form-box" id="coaBox" style="display:none;">
+      <h3>✅ Certificate of Analysis</h3>
+      <div id="coaContent" class="coa-print"></div>
+      <button class="btn secondary" style="margin-top:12px;" onclick="window.print()">🖨️ Cetak</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Tersimpan!</div>
+
+<script>
+// ==================================================================
+// DATABASE
+// ==================================================================
+const DB = { samples:[], proximate:[], ultimate:[], seams:[], blocks:[], schedule:[], coaCount:0 };
+
+// ==================================================================
+// DUMMY DATA GENERATOR
+// ==================================================================
+function loadDummySamples(){
+  DB.samples = [
+    // Pit Utara
+    {id:'SMP-001', x:504000, y:9503500, z:145, depth:42, lito:'Top Soil',    seam:'Seam A', pit:'Pit Utara',   stock:'SP-01'},
+    {id:'SMP-002', x:504200, y:9503400, z:142, depth:38, lito:'Clay',        seam:'Seam A', pit:'Pit Utara',   stock:'SP-01'},
+    {id:'SMP-003', x:504400, y:9503300, z:139, depth:45, lito:'Siltstone',   seam:'Seam B', pit:'Pit Utara',   stock:'SP-01'},
+    {id:'SMP-004', x:504600, y:9503200, z:136, depth:40, lito:'Sandstone',   seam:'Seam B', pit:'Pit Utara',   stock:'SP-02'},
+    {id:'SMP-005', x:504800, y:9503100, z:133, depth:50, lito:'Mudstone',    seam:'Seam C', pit:'Pit Utara',   stock:'SP-02'},
+    // Pit Selatan
+    {id:'SMP-006', x:505500, y:9502000, z:128, depth:35, lito:'Clay',        seam:'Seam A', pit:'Pit Selatan', stock:'SP-02'},
+    {id:'SMP-007', x:505700, y:9501900, z:125, depth:42, lito:'Shale',       seam:'Seam B', pit:'Pit Selatan', stock:'SP-03'},
+    {id:'SMP-008', x:505900, y:9501800, z:122, depth:48, lito:'Siltstone',   seam:'Seam C', pit:'Pit Selatan', stock:'SP-03'},
+    {id:'SMP-009', x:506100, y:9501700, z:119, depth:38, lito:'Sandstone',   seam:'Seam B', pit:'Pit Selatan', stock:'SP-03'},
+    {id:'SMP-010', x:506300, y:9501600, z:116, depth:52, lito:'Mudstone',    seam:'Seam D', pit:'Pit Selatan', stock:'SP-04'},
+    // Pit Timur
+    {id:'SMP-011', x:507000, y:9502800, z:135, depth:40, lito:'Top Soil',    seam:'Seam A', pit:'Pit Timur',   stock:'SP-04'},
+    {id:'SMP-012', x:507200, y:9502700, z:131, depth:44, lito:'Clay',        seam:'Seam C', pit:'Pit Timur',   stock:'SP-04'},
+    {id:'SMP-013', x:507400, y:9502600, z:127, depth:47, lito:'Siltstone',   seam:'Seam C', pit:'Pit Timur',   stock:'SP-05'},
+    {id:'SMP-014', x:507600, y:9502500, z:123, depth:41, lito:'Sandstone',   seam:'Seam D', pit:'Pit Timur',   stock:'SP-05'},
+    {id:'SMP-015', x:507800, y:9502400, z:120, depth:55, lito:'Shale',       seam:'Seam D', pit:'Pit Timur',   stock:'SP-05'},
+  ];
+}
+
+function loadDummyProximate(){
+  DB.proximate = [
+    {id:'SMP-001', tm:32.5, im:12.8, ash:5.2,  vm:38.5, fc:43.5},
+    {id:'SMP-002', tm:30.2, im:11.5, ash:6.8,  vm:37.2, fc:44.5},
+    {id:'SMP-003', tm:28.5, im:10.2, ash:4.5,  vm:36.8, fc:48.5},
+    {id:'SMP-004', tm:31.0, im:12.0, ash:7.5,  vm:35.5, fc:45.0},
+    {id:'SMP-005', tm:29.8, im:11.0, ash:5.8,  vm:37.0, fc:46.2},
+    {id:'SMP-006', tm:33.5, im:13.2, ash:8.2,  vm:36.5, fc:42.1},
+    {id:'SMP-007', tm:27.8, im:9.8,  ash:4.2,  vm:38.0, fc:48.0},
+    {id:'SMP-008', tm:26.5, im:9.2,  ash:3.8,  vm:38.5, fc:48.5},
+    {id:'SMP-009', tm:29.0, im:10.5, ash:6.5,  vm:36.8, fc:46.2},
+    {id:'SMP-010', tm:28.2, im:10.0, ash:5.0,  vm:37.5, fc:47.5},
+    {id:'SMP-011', tm:31.5, im:12.2, ash:7.2,  vm:36.0, fc:44.6},
+    {id:'SMP-012', tm:28.8, im:10.8, ash:5.5,  vm:37.2, fc:46.5},
+    {id:'SMP-013', tm:27.2, im:9.5,  ash:4.0,  vm:38.2, fc:48.3},
+    {id:'SMP-014', tm:29.5, im:11.2, ash:6.2,  vm:36.5, fc:46.1},
+    {id:'SMP-015', tm:26.8, im:9.0,  ash:3.5,  vm:38.8, fc:48.7},
+  ];
+}
+
+function loadDummyUltimate(){
+  DB.ultimate = [
+    {id:'SMP-001', cv:4850, s:0.45, c:62.5, h:4.2, n:1.1, o:14.5, aft:1280},
+    {id:'SMP-002', cv:4650, s:0.52, c:60.8, h:4.0, n:1.2, o:15.2, aft:1290},
+    {id:'SMP-003', cv:5850, s:0.38, c:68.2, h:4.5, n:1.0, o:12.8, aft:1250},
+    {id:'SMP-004', cv:5250, s:0.55, c:64.5, h:4.3, n:1.3, o:14.0, aft:1270},
+    {id:'SMP-005', cv:5550, s:0.42, c:66.8, h:4.4, n:1.1, o:13.5, aft:1260},
+    {id:'SMP-006', cv:4450, s:0.65, c:59.2, h:3.8, n:1.4, o:16.0, aft:1310},
+    {id:'SMP-007', cv:6100, s:0.30, c:70.5, h:4.8, n:0.9, o:11.5, aft:1230},
+    {id:'SMP-008', cv:6350, s:0.28, c:72.2, h:5.0, n:0.8, o:10.8, aft:1220},
+    {id:'SMP-009', cv:5450, s:0.48, c:65.8, h:4.2, n:1.2, o:13.8, aft:1265},
+    {id:'SMP-010', cv:5800, s:0.40, c:68.0, h:4.5, n:1.0, o:12.5, aft:1245},
+    {id:'SMP-011', cv:5050, s:0.58, c:63.5, h:4.1, n:1.3, o:14.8, aft:1295},
+    {id:'SMP-012', cv:5650, s:0.44, c:67.2, h:4.4, n:1.1, o:13.0, aft:1255},
+    {id:'SMP-013', cv:6250, s:0.32, c:71.0, h:4.9, n:0.9, o:11.2, aft:1225},
+    {id:'SMP-014', cv:5350, s:0.50, c:65.0, h:4.2, n:1.2, o:14.2, aft:1275},
+    {id:'SMP-015', cv:6500, s:0.25, c:73.5, h:5.2, n:0.8, o:10.2, aft:1210},
+  ];
+}
+
+function loadDummySeams(){
+  DB.seams = [
+    {seam:'Seam A', thick:3.2, strike:42, dip:8,  depth:35, fault:'-',                topsoil:12},
+    {seam:'Seam B', thick:4.5, strike:45, dip:12, depth:52, fault:'Fault F1 normal',  topsoil:15},
+    {seam:'Seam C', thick:5.8, strike:48, dip:10, depth:68, fault:'-',                topsoil:18},
+    {seam:'Seam D', thick:3.8, strike:50, dip:15, depth:85, fault:'Fault F2 reverse', topsoil:20},
+    {seam:'Seam E', thick:2.5, strike:52, dip:18, depth:98, fault:'-',                topsoil:22},
+  ];
+}
+
+function loadDummyBlocks(){
+  const zones = ['North','North','North','South','South','South','East','East','East','West','West','West'];
+  const cats = ['High','High','Medium','Medium','Medium','Low','Low','High','Medium','High','Medium','Low'];
+  DB.blocks = [];
+  zones.forEach((z,i)=>{
+    const cat = cats[i];
+    const cv = cat==='High'? 6300+Math.random()*500 : cat==='Medium'? 5200+Math.random()*600 : 4300+Math.random()*600;
+    const vol = 8000+Math.floor(Math.random()*15000);
+    const den = 1.28+Math.random()*0.18;
+    DB.blocks.push({
+      id:`BLK-${String(i+1).padStart(3,'0')}`,
+      zone: z,
+      vol: Math.round(vol),
+      den: Math.round(den*100)/100,
+      cat: cat,
+      cv: Math.round(cv),
+      ton: Math.round(vol*den)
+    });
+  });
+}
+
+function loadDummySchedule(){
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  DB.schedule = months.map((m,i)=>{
+    const coal = Math.round(45000 + Math.random()*20000);
+    const ob = Math.round(coal * (4.5 + Math.random()*1.5));
+    return {periode:`${m}-2025`, coal, ob, sr: ob/coal, progress: Math.round(60+Math.random()*40)};
+  });
+}
+
+// ==================================================================
+// INIT
+// ==================================================================
+function initDummy(){
+  loadDummySamples();
+  loadDummyProximate();
+  loadDummyUltimate();
+  loadDummySeams();
+  loadDummyBlocks();
+  loadDummySchedule();
+}
+
+// ==================================================================
+// NAV
+// ==================================================================
+const titles = {
+  1:'1. Panel Registrasi Sampel & Database Geologi',
+  2:'2. Panel Analisis Proksimat',
+  3:'3. Panel Analisis Ultimat & Energi',
+  4:'4. Panel Pemodelan Lapisan & Geometri',
+  5:'5. Panel Model Blok & Estimasi Cadangan',
+  6:'6. Panel Desain Pit & Infrastruktur',
+  7:'7. Panel Penjadwalan & Pencampuran',
+  8:'8. Panel Kontrol Kualitas & Sertifikasi'
+};
+function showPanel(n){
+  document.querySelectorAll('.nav-item').forEach((el,i)=>el.classList.toggle('active', i===n-1));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel'+n).classList.add('active');
+  document.getElementById('panelTitle').textContent = titles[n];
+  refreshAll();
+}
+
+// ==================================================================
+// UTIL
+// ==================================================================
+function toast(msg, err=false){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (err?' error':'');
+  setTimeout(()=>t.className='toast', 2200);
+}
+function fmt(n, d=2){ return Number(n||0).toLocaleString('id-ID',{maximumFractionDigits:d}); }
+function clearForm(p){ document.querySelectorAll(`[id^="${p}-"]`).forEach(el=>{ if(el.tagName==='INPUT') el.value=''; }); }
+function catOf(cv){ return cv>=6000?'High':cv>=5000?'Medium':'Low'; }
+
+// ==================================================================
+// PANEL 1 — SAMPLES
+// ==================================================================
+function addSample(){
+  const s = {
+    id: document.getElementById('p1-id').value.trim(),
+    x: parseFloat(document.getElementById('p1-x').value)||0,
+    y: parseFloat(document.getElementById('p1-y').value)||0,
+    z: parseFloat(document.getElementById('p1-z').value)||0,
+    depth: parseFloat(document.getElementById('p1-depth').value)||0,
+    lito: document.getElementById('p1-lito').value,
+    seam: document.getElementById('p1-seam').value,
+    pit: document.getElementById('p1-pit').value,
+    stock: document.getElementById('p1-stock').value
+  };
+  if(!s.id){ toast('ID Sampel wajib diisi!', true); return; }
+  if(DB.samples.find(x=>x.id===s.id)){ toast('ID sudah ada!', true); return; }
+  DB.samples.push(s);
+  refreshAll(); toast('Sampel '+s.id+' tersimpan'); clearForm('p1');
+}
+function deleteSample(id){
+  DB.samples = DB.samples.filter(s=>s.id!==id);
+  refreshAll(); toast('Terhapus');
+}
+function renderSamples(){
+  document.querySelector('#tblSamples tbody').innerHTML = DB.samples.map(s=>`
+    <tr>
+      <td><strong>${s.id}</strong></td>
+      <td>${fmt(s.x,0)}</td><td>${fmt(s.y,0)}</td><td>${s.z}</td>
+      <td>${s.depth} m</td><td>${s.lito}</td><td>${s.seam}</td>
+      <td>${s.pit}</td><td>${s.stock}</td>
+      <td><button class="btn small danger" onclick="deleteSample('${s.id}')">✕</button></td>
+    </tr>`).join('');
+
+  const n = DB.samples.length;
+  document.getElementById('p1-total').textContent = n;
+  document.getElementById('navSamples').textContent = '● '+n+' sampel';
+  if(n>0){
+    document.getElementById('p1-elev').innerHTML = fmt(DB.samples.reduce((a,s)=>a+s.z,0)/n,0)+'<span class="unit">m</span>';
+    document.getElementById('p1-depth').innerHTML = Math.max(...DB.samples.map(s=>s.depth))+'<span class="unit">m</span>';
+    document.getElementById('p1-pits').textContent = new Set(DB.samples.map(s=>s.pit)).size;
+    document.getElementById('p1-seams').textContent = new Set(DB.samples.map(s=>s.seam)).size;
+  }
+  drawSpatial();
+  drawLito();
+}
+let chartSpatial, chartLito;
+function drawSpatial(){
+  const ctx = document.getElementById('chartSpatial');
+  if(chartSpatial) chartSpatial.destroy();
+  if(!ctx) return;
+  const groups = {High:[], Medium:[], Low:[]};
+  DB.samples.forEach(s=>{
+    const u = DB.ultimate.find(u=>u.id===s.id);
+    const cat = u ? catOf(u.cv) : 'Low';
+    groups[cat].push({x:s.x, y:s.y, label:s.id, cv: u?u.cv:'-'});
+  });
+  chartSpatial = new Chart(ctx, {
+    type:'scatter',
+    data:{ datasets:[
+      {label:'High BCI', data:groups.High, backgroundColor:'#4ade80', pointRadius:9, pointHoverRadius:12},
+      {label:'Medium BCI', data:groups.Medium, backgroundColor:'#fbbf24', pointRadius:9, pointHoverRadius:12},
+      {label:'Low BCI', data:groups.Low, backgroundColor:'#f87171', pointRadius:9, pointHoverRadius:12}
+    ]},
+    options:{ responsive:true, plugins:{
+      legend:{ display:false },
+      tooltip:{ callbacks:{ label: c => `${c.raw.label} (CV ${c.raw.cv})` } }
+    },
+    scales:{ x:{ title:{display:true, text:'Easting (X)', color:'#b8c5d3'}, ticks:{color:'#7a8896'} },
+             y:{ title:{display:true, text:'Northing (Y)', color:'#b8c5d3'}, ticks:{color:'#7a8896'} } } }
+  });
+}
+function drawLito(){
+  const ctx = document.getElementById('chartLito');
+  if(chartLito) chartLito.destroy();
+  if(!ctx) return;
+  const map = {};
+  DB.samples.forEach(s=>map[s.lito]=(map[s.lito]||0)+1);
+  chartLito = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels:Object.keys(map), datasets:[{
+      data:Object.values(map),
+      backgroundColor:['#60a5fa','#22d3ee','#f0b429','#4ade80','#f87171','#a78bfa','#fbbf24']
+    }]},
+    options:{ responsive:true, plugins:{ legend:{ position:'right', labels:{ color:'#b8c5d3', font:{size:11} } } } }
+  });
+}
+
+// ==================================================================
+// PANEL 2 — PROXIMATE
+// ==================================================================
+function saveProximate(){
+  const id = document.getElementById('p2-sample').value;
+  if(!id){ toast('Pilih sampel!', true); return; }
+  const p = { id,
+    tm: parseFloat(document.getElementById('p2-in-tm').value)||0,
+    im: parseFloat(document.getElementById('p2-in-im').value)||0,
+    ash: parseFloat(document.getElementById('p2-in-ash').value)||0,
+    vm: parseFloat(document.getElementById('p2-in-vm').value)||0,
+    fc: parseFloat(document.getElementById('p2-in-fc').value)||0 };
+  DB.proximate = DB.proximate.filter(x=>x.id!==id);
+  DB.proximate.push(p);
+  refreshAll(); toast('Proksimat tersimpan');
+}
+function renderProximate(){
+  const arr = DB.proximate;
+  const n = arr.length;
+  if(n>0){
+    const avg = k => arr.reduce((a,p)=>a+p[k],0)/n;
+    document.getElementById('p2-tm').innerHTML = fmt(avg('tm'),1)+'<span class="unit">%</span>';
+    document.getElementById('p2-im').innerHTML = fmt(avg('im'),1)+'<span class="unit">%</span>';
+    document.getElementById('p2-ash').innerHTML = fmt(avg('ash'),1)+'<span class="unit">%</span>';
+    document.getElementById('p2-vm').innerHTML = fmt(avg('vm'),1)+'<span class="unit">%</span>';
+    document.getElementById('p2-fc').innerHTML = fmt(avg('fc'),1)+'<span class="unit">%</span>';
+    document.getElementById('p2-tm-d').textContent = n+' sampel terdaftar';
+  }
+  document.querySelector('#tblProximate tbody').innerHTML = arr.map(p=>`
+    <tr><td><strong>${p.id}</strong></td>
+      <td>${p.tm}</td><td>${p.im}</td><td>${p.ash}</td><td>${p.vm}</td><td>${p.fc}</td>
+      <td>${(p.vm/p.fc).toFixed(2)}</td>
+      <td><button class="btn small danger" onclick="delProx('${p.id}')">✕</button></td>
+    </tr>`).join('');
+  drawProximateCharts();
+}
+function delProx(id){ DB.proximate = DB.proximate.filter(p=>p.id!==id); refreshAll(); }
+let chartP, chartPAvg;
+function drawProximateCharts(){
+  const ctx = document.getElementById('chartProximate');
+  if(chartP) chartP.destroy();
+  if(ctx){
+    chartP = new Chart(ctx, {
+      type:'bar',
+      data:{ labels: DB.proximate.map(p=>p.id),
+        datasets:[
+          { label:'TM', data: DB.proximate.map(p=>p.tm), backgroundColor:'#60a5fa' },
+          { label:'IM', data: DB.proximate.map(p=>p.im), backgroundColor:'#22d3ee' },
+          { label:'Ash', data: DB.proximate.map(p=>p.ash), backgroundColor:'#f87171' },
+          { label:'VM', data: DB.proximate.map(p=>p.vm), backgroundColor:'#fbbf24' },
+          { label:'FC', data: DB.proximate.map(p=>p.fc), backgroundColor:'#4ade80' }
+        ]},
+      options:{ responsive:true, plugins:{ legend:{ labels:{color:'#b8c5d3', font:{size:11}} } },
+        scales:{ x:{ ticks:{color:'#7a8896', font:{size:10}} }, y:{ ticks:{color:'#7a8896'} } } }
+    });
+  }
+  const ctx2 = document.getElementById('chartProxAvg');
+  if(chartPAvg) chartPAvg.destroy();
+  if(ctx2 && DB.proximate.length){
+    const avg = k => DB.proximate.reduce((a,p)=>a+p[k],0)/DB.proximate.length;
+    chartPAvg = new Chart(ctx2, {
+      type:'polarArea',
+      data:{ labels:['TM','IM','Ash','VM','FC'],
+        datasets:[{ data:[avg('tm'),avg('im'),avg('ash'),avg('vm'),avg('fc')],
+          backgroundColor:['#60a5fa','#22d3ee','#f87171','#fbbf24','#4ade80'].map(c=>c+'bb') }]},
+      options:{ responsive:true, plugins:{ legend:{ position:'right', labels:{color:'#b8c5d3'} } },
+        scales:{ r:{ ticks:{ color:'#7a8896', backdropColor:'transparent' }, grid:{ color:'#24303f' } } } }
+    });
+  }
+}
+
+// ==================================================================
+// PANEL 3 — ULTIMATE
+// ==================================================================
+function saveUltimate(){
+  const id = document.getElementById('p3-sample').value;
+  if(!id){ toast('Pilih sampel!', true); return; }
+  const u = { id,
+    cv: parseFloat(document.getElementById('p3-in-cv').value)||0,
+    s: parseFloat(document.getElementById('p3-in-s').value)||0,
+    c: parseFloat(document.getElementById('p3-in-c').value)||0,
+    h: parseFloat(document.getElementById('p3-in-h').value)||0,
+    n: parseFloat(document.getElementById('p3-in-n').value)||0,
+    o: parseFloat(document.getElementById('p3-in-o').value)||0,
+    aft: parseFloat(document.getElementById('p3-in-aft').value)||0 };
+  DB.ultimate = DB.ultimate.filter(x=>x.id!==id);
+  DB.ultimate.push(u);
+  refreshAll(); toast('Ultimat tersimpan');
+}
+function renderUltimate(){
+  const arr = DB.ultimate;
+  if(arr.length){
+    const avg = k => arr.reduce((a,u)=>a+u[k],0)/arr.length;
+    document.getElementById('p3-cv').innerHTML = fmt(avg('cv'),0)+'<span class="unit">kkal/kg</span>';
+    document.getElementById('p3-s').innerHTML = fmt(avg('s'),2)+'<span class="unit">%</span>';
+    document.getElementById('p3-c').innerHTML = fmt(avg('c'),1)+'<span class="unit">%</span>';
+    document.getElementById('p3-h').innerHTML = fmt(avg('h'),2)+'<span class="unit">%</span>';
+    document.getElementById('p3-aft').innerHTML = fmt(avg('aft'),0)+'<span class="unit">°C</span>';
+  }
+  document.querySelector('#tblUltimate tbody').innerHTML = arr.map(u=>{
+    const cat = catOf(u.cv);
+    const cls = cat==='High'?'high':cat==='Medium'?'medium':'low';
+    return `<tr><td><strong>${u.id}</strong></td>
+      <td>${fmt(u.cv,0)}</td><td>${u.s}</td><td>${u.c}</td><td>${u.h}</td>
+      <td>${u.n}</td><td>${u.o}</td><td>${u.aft}</td>
+      <td><span class="tag ${cls}">${cat}</span></td></tr>`;
+  }).join('');
+  drawUltimateCharts();
+}
+let chartCV, chartRadar;
+function drawUltimateCharts(){
+  const ctx = document.getElementById('chartCV');
+  if(chartCV) chartCV.destroy();
+  if(ctx){
+    chartCV = new Chart(ctx, {
+      type:'line',
+      data:{ labels: DB.ultimate.map(u=>u.id),
+        datasets:[{
+          label:'GCV (kkal/kg)',
+          data: DB.ultimate.map(u=>u.cv),
+          borderColor:'#f0b429', backgroundColor:'rgba(240,180,41,.15)',
+          fill:true, tension:.3, pointBackgroundColor:'#f0b429', pointRadius:6
+        }]
+      },
+      options:{ responsive:true, plugins:{ legend:{ labels:{color:'#b8c5d3'} } },
+        scales:{ x:{ ticks:{color:'#7a8896', font:{size:10}} }, y:{ ticks:{color:'#7a8896'} } } }
+    });
+  }
+  const ctx2 = document.getElementById('chartRadar');
+  if(chartRadar) chartRadar.destroy();
+  if(ctx2 && DB.ultimate.length){
+    const avg = k => DB.ultimate.reduce((a,u)=>a+u[k],0)/DB.ultimate.length;
+    chartRadar = new Chart(ctx2, {
+      type:'radar',
+      data:{ labels:['C','H','N','O','S×10'],
+        datasets:[{ label:'Rata-rata (%)',
+          data:[avg('c'),avg('h'),avg('n'),avg('o'),avg('s')*10],
+          borderColor:'#f0b429', backgroundColor:'rgba(240,180,41,.25)',
+          pointBackgroundColor:'#f0b429' }]},
+      options:{ responsive:true, plugins:{ legend:{ labels:{color:'#b8c5d3'} } },
+        scales:{ r:{ ticks:{ color:'#7a8896', backdropColor:'transparent' },
+          grid:{ color:'#24303f' }, angleLines:{ color:'#24303f' } } } }
+    });
+  }
+}
+
+// ==================================================================
+// PANEL 4 — SEAM
+// ==================================================================
+function addSeam(){
+  const s = {
+    seam: document.getElementById('p4-seam').value,
+    thick: parseFloat(document.getElementById('p4-thick').value)||0,
+    strike: parseFloat(document.getElementById('p4-strike').value)||0,
+    dip: parseFloat(document.getElementById('p4-dip').value)||0,
+    depth: parseFloat(document.getElementById('p4-depth').value)||0,
+    fault: document.getElementById('p4-fault').value || '-'
+  };
+  if(!s.seam){ toast('Nama Seam wajib!', true); return; }
+  DB.seams.push(s);
+  refreshAll(); toast('Seam tersimpan');
+}
+function deleteSeam(i){ DB.seams.splice(i,1); refreshAll(); }
+function renderSeams(){
+  const arr = DB.seams;
+  document.getElementById('p4-cnt').textContent = arr.length;
+  document.getElementById('p4-tt').innerHTML = fmt(arr.reduce((a,s)=>a+s.thick,0),1)+'<span class="unit">m</span>';
+  document.getElementById('p4-ad').innerHTML = fmt(arr.length?arr.reduce((a,s)=>a+s.dip,0)/arr.length:0,1)+'<span class="unit">°</span>';
+  document.getElementById('p4-fl').textContent = arr.filter(s=>s.fault && s.fault!=='-').length;
+  document.getElementById('p4-as').innerHTML = fmt(arr.length?arr.reduce((a,s)=>a+s.strike,0)/arr.length:0,1)+'<span class="unit">°</span>';
+
+  document.querySelector('#tblSeam tbody').innerHTML = arr.map((s,i)=>`
+    <tr><td><strong>${s.seam}</strong></td>
+      <td>${s.thick} m</td><td>${s.strike}°</td><td>${s.dip}°</td>
+      <td>${s.depth} m</td><td>${s.fault}</td>
+      <td><button class="btn small danger" onclick="deleteSeam(${i})">✕</button></td></tr>`).join('');
+
+  drawStrat();
+  drawSeamScatter();
+}
+let chartStrat, chartSeamScatter;
+function drawStrat(){
+  const ctx = document.getElementById('chartStrat');
+  if(chartStrat) chartStrat.destroy();
+  if(!ctx) return;
+  const sorted = [...DB.seams].sort((a,b)=>b.depth-a.depth);
+  chartStrat = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: sorted.map(s=>s.seam),
+      datasets:[
+        { label:'Overburden (m)', data: sorted.map(s=>s.depth - s.thick),
+          backgroundColor:'#7a8896', stack:'0' },
+        { label:'Coal Thickness (m)', data: sorted.map(s=>s.thick),
+          backgroundColor:'#f0b429', stack:'0' }
+      ]},
+    options:{ indexAxis:'y', responsive:true,
+      plugins:{ legend:{ labels:{color:'#b8c5d3'} },
+        tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${c.raw} m` } } },
+      scales:{ x:{ stacked:true, ticks:{color:'#7a8896'}, title:{display:true, text:'Kedalaman dari permukaan (m)', color:'#b8c5d3'} },
+                y:{ stacked:true, ticks:{color:'#b8c5d3'} } } }
+  });
+}
+function drawSeamScatter(){
+  const ctx = document.getElementById('chartSeam');
+  if(chartSeamScatter) chartSeamScatter.destroy();
+  if(!ctx) return;
+  chartSeamScatter = new Chart(ctx, {
+    type:'bubble',
+    data:{ datasets:[{
+      label:'Seam',
+      data: DB.seams.map(s=>({x:s.dip, y:s.thick, r: Math.min(20, s.depth/5), label:s.seam})),
+      backgroundColor:'rgba(240,180,41,.5)', borderColor:'#f0b429', borderWidth:2
+    }]},
+    options:{ responsive:true, plugins:{
+      legend:{ display:false },
+      tooltip:{ callbacks:{ label: c => `${c.raw.label}: Dip ${c.raw.x}°, Thick ${c.raw.y}m` } }
+    },
+    scales:{ x:{ title:{display:true, text:'Dip (°)', color:'#b8c5d3'}, ticks:{color:'#7a8896'} },
+             y:{ title:{display:true, text:'Thickness (m)', color:'#b8c5d3'}, ticks:{color:'#7a8896'} } } }
+  });
+}
+
+// ==================================================================
+// PANEL 5 — BLOCKS
+// ==================================================================
+function addBlock(){
+  const b = {
+    id: document.getElementById('p5-id').value.trim(),
+    vol: parseFloat(document.getElementById('p5-in-vol').value)||0,
+    den: parseFloat(document.getElementById('p5-in-den').value)||0,
+    cat: document.getElementById('p5-in-cat').value,
+    cv: parseFloat(document.getElementById('p5-in-cv').value)||0,
+    zone: document.getElementById('p5-in-zone').value || '-'
+  };
+  if(!b.id){ toast('ID Blok wajib!', true); return; }
+  b.ton = Math.round(b.vol*b.den);
+  DB.blocks.push(b);
+  refreshAll(); toast('Blok tersimpan'); clearForm('p5');
+}
+function deleteBlock(id){ DB.blocks = DB.blocks.filter(b=>b.id!==id); refreshAll(); }
+function renderBlocks(){
+  const arr = DB.blocks;
+  const totVol = arr.reduce((a,b)=>a+b.vol,0);
+  const totTon = arr.reduce((a,b)=>a+b.ton,0);
+  const avgDen = arr.length?arr.reduce((a,b)=>a+b.den,0)/arr.length:0;
+  const avgCV = arr.length?arr.reduce((a,b)=>a+b.cv,0)/arr.length:0;
+  document.getElementById('p5-vol').innerHTML = fmt(totVol,0)+'<span class="unit">m³</span>';
+  document.getElementById('p5-ton').innerHTML = fmt(totTon,0)+'<span class="unit">ton</span>';
+  document.getElementById('p5-den').innerHTML = fmt(avgDen,2)+'<span class="unit">t/m³</span>';
+  document.getElementById('p5-count').textContent = arr.length;
+  document.getElementById('p5-cv').innerHTML = fmt(avgCV,0)+'<span class="unit">kkal</span>';
+  document.getElementById('navBlocks').textContent = '● '+arr.length+' blok';
+
+  document.querySelector('#tblBlock tbody').innerHTML = arr.map(b=>{
+    const cls = b.cat==='High'?'high':b.cat==='Medium'?'medium':'low';
+    return `<tr><td><strong>${b.id}</strong></td><td>${b.zone}</td>
+      <td>${fmt(b.vol,0)}</td><td>${b.den}</td><td>${fmt(b.ton,0)}</td>
+      <td><span class="tag ${cls}">${b.cat}</span></td><td>${fmt(b.cv,0)}</td>
+      <td><button class="btn small danger" onclick="deleteBlock('${b.id}')">✕</button></td></tr>`;
+  }).join('');
+
+  drawBlockCharts();
+}
+let chartBlock, chartHistCV;
+function drawBlockCharts(){
+  const cats = {High:0, Medium:0, Low:0};
+  DB.blocks.forEach(b=>cats[b.cat]+=b.ton);
+  const ctx = document.getElementById('chartBlock');
+  if(chartBlock) chartBlock.destroy();
+  if(ctx){
+    chartBlock = new Chart(ctx, {
+      type:'doughnut',
+      data:{ labels:Object.keys(cats).map(k=>k+' BCI'),
+        datasets:[{ data:Object.values(cats),
+          backgroundColor:['#4ade80','#fbbf24','#f87171'] }]},
+      options:{ responsive:true, plugins:{ legend:{ position:'right', labels:{color:'#b8c5d3'} },
+        tooltip:{ callbacks:{ label: c => `${c.label}: ${fmt(c.raw,0)} ton` } } } }
+    });
+  }
+  const ctx2 = document.getElementById('chartHistCV');
+  if(chartHistCV) chartHistCV.destroy();
+  if(ctx2){
+    // bin GCV per 500
+    const bins = {};
+    DB.blocks.forEach(b=>{
+      const bin = Math.floor(b.cv/500)*500;
+      bins[bin] = (bins[bin]||0)+1;
+    });
+    const labels = Object.keys(bins).map(Number).sort((a,b)=>a-b);
+    chartHistCV = new Chart(ctx2, {
+      type:'bar',
+      data:{ labels: labels.map(l=>l+'-'+(l+500)),
+        datasets:[{ label:'Jumlah Blok', data: labels.map(l=>bins[l]),
+          backgroundColor:'#22d3ee' }]},
+      options:{ responsive:true, plugins:{ legend:{ display:false } },
+        scales:{ x:{ ticks:{color:'#7a8896'} }, y:{ ticks:{color:'#7a8896'} } } }
+    });
+  }
+}
+
+// ==================================================================
+// PANEL 6 — PIT DESIGN
+// ==================================================================
+function calcPit(){
+  const ob = parseFloat(document.getElementById('p6-ob').value)||0;
+  const coal = parseFloat(document.getElementById('p6-coal').value)||0;
+  const slope = parseFloat(document.getElementById('p6-in-slope').value)||0;
+  const bench = parseFloat(document.getElementById('p6-in-bench').value)||0;
+  const width = parseFloat(document.getElementById('p6-in-width').value)||0;
+  const grade = parseFloat(document.getElementById('p6-in-grade').value)||0;
+  const coh = parseFloat(document.getElementById('p6-in-coh').value)||0;
+  const phi = parseFloat(document.getElementById('p6-in-phi').value)||0;
+  const sr = coal? ob/coal : 0;
+
+  // Simplified FoS: c/(γ·H·sinα·cosα) + tanφ/tanα
+  const H = 50; // bench height pile
+  const gamma = 18; // kN/m³
+  const alphaRad = slope*Math.PI/180;
+  const phiRad = phi*Math.PI/180;
+  const fos = (coh/(gamma*H*Math.sin(alphaRad)*Math.cos(alphaRad))) + (Math.tan(phiRad)/Math.tan(alphaRad));
+
+  document.getElementById('p6-sr').innerHTML = fmt(sr,2)+'<span class="unit">bcm/ton</span>';
+  document.getElementById('p6-slope').innerHTML = slope+'<span class="unit">°</span>';
+  document.getElementById('p6-bench').innerHTML = bench+'<span class="unit">m</span>';
+  document.getElementById('p6-grade').innerHTML = grade+'<span class="unit">%</span>';
+  document.getElementById('p6-sf').textContent = fmt(fos,2);
+
+  const checks = [
+    {p:'Overall Slope Angle', v:slope+'°', std:'≤ 45°', ok: slope<=45},
+    {p:'Bench Height', v:bench+' m', std:'≤ 10 m', ok: bench<=10},
+    {p:'Bench Width', v:width+' m', std:'≥ 5 m', ok: width>=5},
+    {p:'Haul Road Grade', v:grade+'%', std:'≤ 10%', ok: grade<=10},
+    {p:'Stripping Ratio', v:fmt(sr,2), std:'< 10 bcm/ton', ok: sr<10},
+    {p:'Safety Factor (FoS)', v:fmt(fos,2), std:'≥ 1.3', ok: fos>=1.3}
+  ];
+  document.querySelector('#tblGeo tbody').innerHTML = checks.map(c=>`
+    <tr><td>${c.p}</td><td>${c.v}</td><td>${c.std}</td>
+      <td class="${c.ok?'status-ok':'status-bad'}">${c.ok?'✓ AMAN':'✗ PERIKSA'}</td></tr>`).join('');
+
+  drawGeoRadar(checks);
+  drawSlopeSens(coh, phi, gamma, H);
+  toast('Evaluasi selesai');
+}
+let chartGeotech, chartSlopeSens;
+function drawGeoRadar(checks){
+  const ctx = document.getElementById('chartGeotech');
+  if(chartGeotech) chartGeotech.destroy();
+  if(!ctx) return;
+  chartGeotech = new Chart(ctx, {
+    type:'radar',
+    data:{ labels: checks.map(c=>c.p),
+      datasets:[{ label:'Skor Kepatuhan (%)',
+        data: checks.map(c=>c.ok?100:40),
+        borderColor:'#4ade80', backgroundColor:'rgba(74,222,128,.25)',
+        pointBackgroundColor:'#4ade80' }]},
+    options:{ responsive:true, plugins:{ legend:{ labels:{color:'#b8c5d3'} } },
+      scales:{ r:{ min:0, max:100, ticks:{ color:'#7a8896', backdropColor:'transparent' },
+        grid:{ color:'#24303f' }, angleLines:{ color:'#24303f' } } } }
+  });
+}
+function drawSlopeSens(coh, phi, gamma, H){
+  const ctx = document.getElementById('chartSlope');
+  if(chartSlopeSens) chartSlopeSens.destroy();
+  if(!ctx) return;
+  const angles = [];
+  const fosArr = [];
+  const phiRad = phi*Math.PI/180;
+  for(let a=15; a<=60; a+=2){
+    const aRad = a*Math.PI/180;
+    const fos = (coh/(gamma*H*Math.sin(aRad)*Math.cos(aRad))) + (Math.tan(phiRad)/Math.tan(aRad));
+    angles.push(a);
+    fosArr.push(Math.max(0, fos));
+  }
+  chartSlopeSens = new Chart(ctx, {
+    type:'line',
+    data:{ labels: angles.map(a=>a+'°'),
+      datasets:[
+        { label:'FoS', data: fosArr, borderColor:'#f0b429', backgroundColor:'rgba(240,180,41,.15)', fill:true, tension:.3, pointRadius:4 },
+        { label:'FoS Minimum (1.3)', data: angles.map(()=>1.3), borderColor:'#f87171', borderDash:[6,4], pointRadius:0 }
+      ]},
+    options:{ responsive:true, plugins:{ legend:{ labels:{color:'#b8c5d3'} } },
+      scales:{ x:{ ticks:{color:'#7a8896'}, title:{display:true, text:'Slope Angle', color:'#b8c5d3'} },
+               y:{ ticks:{color:'#7a8896'}, title:{display:true, text:'Safety Factor', color:'#b8c5d3'} } } }
+  });
+}
+
+// ==================================================================
+// PANEL 7 — SCHEDULING & BLENDING
+// ==================================================================
+function addSchedule(){
+  const per = document.getElementById('p7-per').value;
+  const coal = parseFloat(document.getElementById('p7-coal').value)||0;
+  const ob = parseFloat(document.getElementById('p7-ob').value)||0;
+  if(!per){ toast('Periode wajib!', true); return; }
+  DB.schedule.push({ periode: per, coal, ob, sr: coal?ob/coal:0, progress: Math.round(60+Math.random()*40) });
+  refreshAll(); toast('Jadwal tersimpan');
+}
+function deleteSched(i){ DB.schedule.splice(i,1); refreshAll(); }
+function renderSchedule(){
+  const arr = DB.schedule;
+  const totC = arr.reduce((a,s)=>a+s.coal,0);
+  const totO = arr.reduce((a,s)=>a+s.ob,0);
+  document.getElementById('p7-tot-coal').innerHTML = fmt(totC,0)+'<span class="unit">ton</span>';
+  document.getElementById('p7-tot-ob').innerHTML = fmt(totO,0)+'<span class="unit">bcm</span>';
+  document.getElementById('p7-avg-sr').textContent = totC? fmt(totO/totC,2) : '-';
+  document.getElementById('p7-periods').textContent = arr.length;
+  if(arr.length){
+    const best = arr.reduce((a,b)=>a.coal>b.coal?a:b);
+    document.getElementById('p7-best').textContent = best.periode;
+  }
+
+  document.querySelector('#tblSched tbody').innerHTML = arr.map((s,i)=>`
+    <tr><td><strong>${s.periode}</strong></td>
+      <td>${fmt(s.coal,0)}</td><td>${fmt(s.ob,0)}</td>
+      <td>${fmt(s.sr,2)}</td>
+      <td><div style="background:#1a2532;border-radius:4px;overflow:hidden;height:14px;min-width:80px;">
+        <div style="width:${s.progress}%;height:100%;background:linear-gradient(90deg,#f0b429,#4ade80);"></div>
+      </div><span style="font-size:10px;color:#7a8896;">${s.progress}%</span></td>
+      <td><button class="btn small danger" onclick="deleteSched(${i})">✕</button></td></tr>`).join('');
+
+  drawSchedChart();
+}
+let chartSched;
+function drawSchedChart(){
+  const ctx = document.getElementById('chartSched');
+  if(chartSched) chartSched.destroy();
+  if(!ctx) return;
+  chartSched = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: DB.schedule.map(s=>s.periode),
+      datasets:[
+        { label:'Coal (ton)', data: DB.schedule.map(s=>s.coal),
+          backgroundColor:'#f0b429', yAxisID:'y' },
+        { label:'Overburden (bcm)', data: DB.schedule.map(s=>s.ob),
+          backgroundColor:'#60a5fa', yAxisID:'y1', type:'line', tension:.3, borderColor:'#60a5fa' }
+      ]},
+    options:{ responsive:true,
+      plugins:{ legend:{ labels:{color:'#b8c5d3'} } },
+      scales:{
+        x:{ ticks:{color:'#7a8896'} },
+        y:{ position:'left', ticks:{color:'#7a8896'}, title:{display:true, text:'Coal (ton)', color:'#f0b429'} },
+        y1:{ position:'right', ticks:{color:'#7a8896'}, title:{display:true, text:'OB (bcm)', color:'#60a5fa'}, grid:{ drawOnChartArea:false } }
+      }
+    }
+  });
+}
+let chartBlend;
+function calcBlend(){
+  const hcv = parseFloat(document.getElementById('p7-hcv').value)||0;
+  const lcv = parseFloat(document.getElementById('p7-lcv').value)||0;
+  const tcv = parseFloat(document.getElementById('p7-tcv').value)||0;
+  const tton = parseFloat(document.getElementById('p7-tton').value)||0;
+  if(hcv===lcv){ toast('CV High dan Low harus beda!', true); return; }
+  const x = (tcv - lcv)/(hcv - lcv);
+  if(x<0 || x>1){
+    toast('Target CV di luar rentang!', true);
+    document.getElementById('blendResult').textContent = '⚠️ Tidak dapat dicapai dari kombinasi ini.';
+    return;
+  }
+  const tHigh = x*tton, tLow = (1-x)*tton;
+  document.getElementById('blendResult').innerHTML =
+    `📊 <b>Formulasi Blending:</b><br>
+     • High (${fmt(hcv,0)} kkal/kg): <b style="color:#4ade80">${fmt(tHigh,0)} ton</b> (${fmt(x*100,1)}%)<br>
+     • Low (${fmt(lcv,0)} kkal/kg): <b style="color:#f87171">${fmt(tLow,0)} ton</b> (${fmt((1-x)*100,1)}%)<br>
+     • Target CV tercapai: <b style="color:#f0b429">${fmt(tcv,0)} kkal/kg</b>`;
+
+  const ctx = document.getElementById('chartBlend');
+  if(chartBlend) chartBlend.destroy();
+  if(ctx){
+    chartBlend = new Chart(ctx, {
+      type:'bar',
+      data:{ labels:['High BCI','Low BCI','Target'],
+        datasets:[{ label:'Tonase (ton)', data:[tHigh, tLow, tton],
+          backgroundColor:['#4ade80','#f87171','#f0b429'] }]},
+      options:{ responsive:true, plugins:{ legend:{ display:false } },
+        scales:{ x:{ ticks:{color:'#7a8896'} }, y:{ ticks:{color:'#7a8896'} } } }
+    });
+  }
+}
+
+// ==================================================================
+// PANEL 8 — QA/QC
+// ==================================================================
+function renderQC(){
+  if(!DB.proximate.length){ document.getElementById('qcSummary').textContent='Belum ada data.'; return; }
+  const ashArr = DB.proximate.map(p=>p.ash);
+  const mean = ashArr.reduce((a,b)=>a+b,0)/ashArr.length;
+  const std = Math.sqrt(ashArr.reduce((a,v)=>a+(v-mean)**2,0)/ashArr.length) || 0.5;
+  const ucl = mean + 3*std, lcl = Math.max(0, mean - 3*std);
+  const out = ashArr.filter(v=>v>ucl||v<lcl).length;
+  const inC = ashArr.length - out;
+
+  document.getElementById('p8-in').textContent = inC;
+  document.getElementById('p8-out').textContent = out;
+  document.getElementById('p8-mean').innerHTML = fmt(mean,2)+'<span class="unit">%</span>';
+  document.getElementById('p8-std').textContent = fmt(std,3);
+  document.getElementById('p8-coa').textContent = DB.coaCount;
+
+  document.getElementById('qcSummary').innerHTML = `
+    📈 <b>Ash:</b> Mean ${fmt(mean,2)}% | Std ${fmt(std,3)} | UCL ${fmt(ucl,2)}% | LCL ${fmt(lcl,2)}%<br>
+    Status: <span class="${out===0?'status-ok':'status-warn'}">
+    ${out===0?'✓ Proses dalam kendali (in control)':`⚠️ ${out} titik di luar kendali`}</span>`;
+
+  drawQCChart('chartQC', DB.proximate.map(p=>p.id), ashArr, 'Ash Content (%)', ucl, lcl, mean, '#f0b429');
+  drawQCChart('chartQC2', DB.ultimate.map(u=>u.id), DB.ultimate.map(u=>u.cv), 'GCV (kkal/kg)', null, null, null, '#4ade80', true);
+  drawQCChart('chartQC3', DB.ultimate.map(u=>u.id), DB.ultimate.map(u=>u.s), 'Total Sulfur (%)', null, null, null, '#f87171', true);
+}
+const qcCharts = {};
+function drawQCChart(canvasId, labels, data, label, ucl, lcl, mean, color, autoCalc=false){
+  const ctx = document.getElementById(canvasId);
+  if(!ctx) return;
+  if(qcCharts[canvasId]) qcCharts[canvasId].destroy();
+  let m = mean, u = ucl, l = lcl;
+  if(autoCalc && data.length){
+    m = data.reduce((a,b)=>a+b,0)/data.length;
+    const s = Math.sqrt(data.reduce((a,v)=>a+(v-m)**2,0)/data.length) || 1;
+    u = m + 3*s; l = m - 3*s;
+  }
+  qcCharts[canvasId] = new Chart(ctx, {
+    type:'line',
+    data:{ labels,
+      datasets:[
+        { label, data, borderColor: color, backgroundColor: color+'33', fill:true, tension:.3, pointRadius:5 },
+        { label:'UCL', data: labels.map(()=>u), borderColor:'#f87171', borderDash:[6,4], pointRadius:0 },
+        { label:'LCL', data: labels.map(()=>l), borderColor:'#f87171', borderDash:[6,4], pointRadius:0 },
+        { label:'Mean', data: labels.map(()=>m), borderColor:'#4ade80', pointRadius:0, borderWidth:2 }
+      ]},
+    options:{ responsive:true, plugins:{ legend:{ labels:{color:'#b8c5d3', font:{size:10}} } },
+      scales:{ x:{ ticks:{color:'#7a8896', font:{size:9}} }, y:{ ticks:{color:'#7a8896'} } } }
+  });
+}
+function generateCoA(){
+  const id = document.getElementById('p8-sample').value;
+  const s = DB.samples.find(x=>x.id===id);
+  const p = DB.proximate.find(x=>x.id===id);
+  const u = DB.ultimate.find(x=>x.id===id);
+  if(!s){ toast('Pilih sampel!', true); return; }
+  const buyer = document.getElementById('p8-buyer').value || '-';
+  const ctr = document.getElementById('p8-contract').value || '-';
+  const date = document.getElementById('p8-date').value || new Date().toISOString().slice(0,10);
+
+  let category = 'Low BCI', cls = 'low';
+  if(u){
+    if(u.cv >= 6000){ category='High BCI'; cls='high'; }
+    else if(u.cv >= 5000){ category='Medium BCI'; cls='medium'; }
+  }
+  DB.coaCount++;
+
+  document.getElementById('coaContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:18px;font-weight:bold;color:#f0b429;">CERTIFICATE OF ANALYSIS</div>
+      <div style="color:#7a8896;font-size:11px;">CoalMine Pro — Quality Certification</div>
+    </div>
+    <hr style="border-color:#1f2c3a;margin:14px 0;">
+    <table style="width:100%;font-size:12.5px;">
+      <tr><td style="color:#7a8896;width:40%;">ID Sampel</td><td><b>${s.id}</b></td></tr>
+      <tr><td style="color:#7a8896;">Lokasi / Pit</td><td>${s.pit}</td></tr>
+      <tr><td style="color:#7a8896;">Seam</td><td>${s.seam}</td></tr>
+      <tr><td style="color:#7a8896;">Stockpile</td><td>${s.stock}</td></tr>
+      <tr><td style="color:#7a8896;">Koordinat</td><td>${fmt(s.x,0)}, ${fmt(s.y,0)}, ${s.z} mdpl</td></tr>
+      <tr><td style="color:#7a8896;">Pembeli</td><td>${buyer}</td></tr>
+      <tr><td style="color:#7a8896;">No. Kontrak</td><td>${ctr}</td></tr>
+      <tr><td style="color:#7a8896;">Tanggal</td><td>${date}</td></tr>
+    </table>
+    <hr style="border-color:#1f2c3a;margin:14px 0;">
+    <div style="color:#f0b429;font-weight:bold;margin-bottom:8px;">🔬 PROXIMATE ANALYSIS (ar)</div>
+    <table style="width:100%;font-size:12.5px;">
+      <tr><td>Total Moisture (TM)</td><td style="text-align:right;"><b>${p?p.tm:'N/A'} %</b></td></tr>
+      <tr><td>Inherent Moisture (IM)</td><td style="text-align:right;"><b>${p?p.im:'N/A'} %</b></td></tr>
+      <tr><td>Ash Content</td><td style="text-align:right;"><b>${p?p.ash:'N/A'} %</b></td></tr>
+      <tr><td>Volatile Matter</td><td style="text-align:right;"><b>${p?p.vm:'N/A'} %</b></td></tr>
+      <tr><td>Fixed Carbon</td><td style="text-align:right;"><b>${p?p.fc:'N/A'} %</b></td></tr>
+    </table>
+    <hr style="border-color:#1f2c3a;margin:14px 0;">
+    <div style="color:#f0b429;font-weight:bold;margin-bottom:8px;">🔥 ULTIMATE & CALORIFIC</div>
+    <table style="width:100%;font-size:12.5px;">
+      <tr><td>Calorific Value (GCV)</td><td style="text-align:right;"><b>${u?fmt(u.cv,0):'N/A'} kkal/kg</b></td></tr>
+      <tr><td>Total Sulfur</td><td style="text-align:right;"><b>${u?u.s:'N/A'} %</b></td></tr>
+      <tr><td>Carbon (C)</td><td style="text-align:right;"><b>${u?u.c:'N/A'} %</b></td></tr>
+      <tr><td>Hydrogen (H)</td><td style="text-align:right;"><b>${u?u.h:'N/A'} %</b></td></tr>
+      <tr><td>Nitrogen (N)</td><td style="text-align:right;"><b>${u?u.n:'N/A'} %</b></td></tr>
+      <tr><td>Oxygen (O)</td><td style="text-align:right;"><b>${u?u.o:'N/A'} %</b></td></tr>
+      <tr><td>Ash Fusion Temperature</td><td style="text-align:right;"><b>${u?u.aft:'N/A'} °C</b></td></tr>
+    </table>
+    <hr style="border-color:#1f2c3a;margin:14px 0;">
+    <div style="text-align:center;">
+      <div style="color:#7a8896;font-size:11px;">Kategori Kualitas</div>
+      <div class="tag ${cls}" style="font-size:14px;padding:6px 22px;margin-top:6px;">${category}</div>
+    </div>
+    <div style="text-align:center;margin-top:18px;font-size:10.5px;color:#7a8896;">
+      Diterbitkan otomatis oleh CoalMine Pro QA/QC System • ${new Date().toLocaleString('id-ID')}
+    </div>`;
+  document.getElementById('coaBox').style.display='block';
+  document.getElementById('p8-coa').textContent = DB.coaCount;
+  toast('CoA berhasil dibuat');
+}
+
+// ==================================================================
+// SELECTS
+// ==================================================================
+function populateSelects(){
+  ['p2-sample','p3-sample','p8-sample'].forEach(sid=>{
+    const el = document.getElementById(sid);
+    if(!el) return;
+    const cur = el.value;
+    el.innerHTML = '<option value="">-- Pilih --</option>' + DB.samples.map(s=>`<option value="${s.id}">${s.id} (${s.pit})</option>`).join('');
+    if(cur) el.value = cur;
+  });
+}
+
+// ==================================================================
+// EXPORT
+// ==================================================================
+function exportCSV(type){
+  if(type==='samples'){
+    if(!DB.samples.length){ toast('Tidak ada data', true); return; }
+    const h = ['ID','X','Y','Z','Depth','Litologi','Seam','Pit','Stockpile'];
+    const rows = DB.samples.map(s=>[s.id,s.x,s.y,s.z,s.depth,s.lito,s.seam,s.pit,s.stock]);
+    const csv = [h, ...rows].map(r=>r.join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download='coalmine_samples.csv'; a.click();
+    toast('Export CSV selesai');
+  }
+}
+
+// ==================================================================
+// CLOCK
+// ==================================================================
+setInterval(()=>{
+  const now = new Date();
+  document.getElementById('liveClock').textContent =
+    now.toLocaleTimeString('id-ID') + ' | ' + now.toLocaleDateString('id-ID');
+}, 1000);
+
+// ==================================================================
+// REFRESH ALL
+// ==================================================================
+function refreshAll(){
+  renderSamples();
+  renderProximate();
+  renderUltimate();
+  renderSeams();
+  renderBlocks();
+  renderSchedule();
+  renderQC();
+  populateSelects();
+}
+
+// ==================================================================
+// INIT
+// ==================================================================
+initDummy();
+document.getElementById('p8-date').value = new Date().toISOString().slice(0,10);
+refreshAll();
+calcPit(); // preload panel 6 with dummy calc
+</script>
+</body>
+</html>

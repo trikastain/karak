@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIS - PT Karak Ungol Bara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        #map { height: 100%; width: 100%; z-index: 1; }
+        .sidebar-item { transition: all 0.2s ease-in-out; }
+        .sidebar-item:hover, .sidebar-item.active { background-color: #374151; border-left: 4px solid #F59E0B; }
+        .category-header { cursor: pointer; }
+        #sidebar-content::-webkit-scrollbar { width: 6px; }
+        #sidebar-content::-webkit-scrollbar-track { background: #1f2937; }
+        #sidebar-content::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+        #sidebar-content::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .info.legend {
+            background: white; padding: 10px; border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4); font-size: 12px;
+            line-height: 18px; color: #333;
+        }
+        .info.legend i {
+            width: 18px; height: 18px; float: left;
+            margin-right: 8px; opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex bg-gray-100">
+
+    <aside class="w-80 bg-gray-900 text-white flex flex-col h-full shadow-2xl z-10 flex-shrink-0">
+        <div class="p-6 border-b border-gray-700">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center font-bold text-gray-900 text-xl shadow-lg">
+                    <i class="fa-solid fa-mountain-sun"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-gray-100">PT Karak Ungol Bara</h1>
+                    <p class="text-xs text-gray-400">GIS Portal - Kaltim Concession</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="sidebar-content" class="flex-1 overflow-y-auto py-4">
+            <div class="mb-2">
+                <div class="category-header px-6 py-3 flex justify-between items-center text-gray-300 hover:text-white" onclick="toggleCategory('cat1-items', 'cat1-icon')">
+                    <span class="font-semibold text-sm uppercase tracking-wider"><i class="fa-solid fa-cubes mr-2 text-amber-500"></i>Visual & Model</span>
+                    <i id="cat1-icon" class="fa-solid fa-chevron-down text-xs transition-transform duration-300"></i>
+                </div>
+                <div id="cat1-items" class="hidden flex-col pl-4 text-sm">
+                    <button onclick="loadMap('peta3d')" class="sidebar-item active text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta 3D & Digital Model</button>
+                    <button onclick="loadMap('petaPit')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Pithole / Desain Pit</button>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <div class="category-header px-6 py-3 flex justify-between items-center text-gray-300 hover:text-white" onclick="toggleCategory('cat2-items', 'cat2-icon')">
+                    <span class="font-semibold text-sm uppercase tracking-wider"><i class="fa-solid fa-magnifying-glass-chart mr-2 text-blue-500"></i>Eksplorasi & Geologi</span>
+                    <i id="cat2-icon" class="fa-solid fa-chevron-right text-xs transition-transform duration-300"></i>
+                </div>
+                <div id="cat2-items" class="hidden flex-col pl-4 text-sm">
+                    <button onclick="loadMap('petaGeologiRegional')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Geologi Regional</button>
+                    <button onclick="loadMap('petaTopografiCitra')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Topografi & Citra Satelit</button>
+                    <button onclick="loadMap('petaSingkapan')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Singkapan (Outcrop)</button>
+                    <button onclick="loadMap('petaIsopach')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Isopach (Ketebalan Seam)</button>
+                    <button onclick="loadMap('petaStrukturGeologi')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Struktur Geologi</button>
+                    <button onclick="loadMap('petaGeologi')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Geologi Lokal (Drilling)</button>
+                    <button onclick="loadMap('petaAnomali')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Anomali & Geokimia</button>
+                    <button onclick="loadMap('petaTopoAsal')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Topografi Asal</button>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <div class="category-header px-6 py-3 flex justify-between items-center text-gray-300 hover:text-white" onclick="toggleCategory('cat3-items', 'cat3-icon')">
+                    <span class="font-semibold text-sm uppercase tracking-wider"><i class="fa-solid fa-helmet-safety mr-2 text-yellow-500"></i>Operasional Tambang</span>
+                    <i id="cat3-icon" class="fa-solid fa-chevron-right text-xs transition-transform duration-300"></i>
+                </div>
+                <div id="cat3-items" class="hidden flex-col pl-4 text-sm">
+                    <button onclick="loadMap('petaProgress')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Kemajuan (Progress)</button>
+                    <button onclick="loadMap('petaPlan')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Perencanaan (Mine Plan)</button>
+                    <button onclick="loadMap('petaIsoKualitas')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Iso-Kualitas (Kalori)</button>
+                    <button onclick="loadMap('petaOverburden')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Ketebalan Overburden</button>
+                    <button onclick="loadMap('petaDisposal')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Penimbunan (Disposal)</button>
+                    <button onclick="loadMap('petaDrainase')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Penyaliran (Drainage)</button>
+                    <button onclick="loadMap('petaHidrogeologi')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Hidrogeologi</button>
+                    <button onclick="loadMap('petaGeotek')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Geoteknik & Lereng</button>
+                    <button onclick="loadMap('petaDenahTambang')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Denah Tambang</button>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <div class="category-header px-6 py-3 flex justify-between items-center text-gray-300 hover:text-white" onclick="toggleCategory('cat4-items', 'cat4-icon')">
+                    <span class="font-semibold text-sm uppercase tracking-wider"><i class="fa-solid fa-scale-balanced mr-2 text-green-500"></i>Hukum & Lingkungan</span>
+                    <i id="cat4-icon" class="fa-solid fa-chevron-right text-xs transition-transform duration-300"></i>
+                </div>
+                <div id="cat4-items" class="hidden flex-col pl-4 text-sm">
+                    <button onclick="loadMap('petaIUP')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Batas IUP Konsesi</button>
+                    <button onclick="loadMap('petaInfrastruktur')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Infrastruktur & Tata Guna Lahan</button>
+                    <button onclick="loadMap('petaDenahMess')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Denah Mess & Kantor</button>
+                    <button onclick="loadMap('petaReklamasi')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Rencana Reklamasi</button>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <div class="category-header px-6 py-3 flex justify-between items-center text-gray-300 hover:text-white" onclick="toggleCategory('cat5-items', 'cat5-icon')">
+                    <span class="font-semibold text-sm uppercase tracking-wider"><i class="fa-solid fa-ship mr-2 text-cyan-500"></i>Logistik & Distribusi</span>
+                    <i id="cat5-icon" class="fa-solid fa-chevron-right text-xs transition-transform duration-300"></i>
+                </div>
+                <div id="cat5-items" class="hidden flex-col pl-4 text-sm">
+                    <button onclick="loadMap('petaLogistik')" class="sidebar-item text-left px-6 py-3 text-gray-400 hover:text-gray-100 w-full">Peta Rute Logistik & PLTU</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t border-gray-700 text-xs text-gray-500 text-center">
+            &copy; 2026 PT Karak Ungol Bara<br>Data bersifat simulasi (Dummy)
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-gray-100">
+        
+        <div class="bg-white border-b border-gray-200 p-5 shadow-sm z-20 flex-shrink-0">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-base font-bold text-gray-800 uppercase tracking-wide">
+                    <i class="fa-solid fa-chart-line text-amber-500 mr-2"></i>Executive Summary & Key Potentials
+                </h2>
+                <span class="text-xs font-semibold bg-green-100 text-green-800 px-3 py-1 rounded-full flex items-center shadow-sm">
+                    <span class="relative flex h-2 w-2 mr-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    Live Dashboard (Sep 2026)
+                </span>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-[10px] text-gray-500 mb-1 font-semibold uppercase">Luas Konsesi (IUP)</div>
+                    <div class="text-lg font-bold text-gray-800">3.704 <span class="text-xs font-normal text-gray-500">Ha</span></div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-[10px] text-gray-500 mb-1 font-semibold uppercase">Cadangan Terbukti</div>
+                    <div class="text-lg font-bold text-blue-600">18 <span class="text-xs font-normal text-gray-500">Juta MT</span></div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-[10px] text-gray-500 mb-1 font-semibold uppercase">Kualitas Batubara (GAR)</div>
+                    <div class="text-lg font-bold text-purple-600">5.200 <span class="text-xs font-normal text-gray-500">Kcal/kg</span></div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-[10px] text-gray-500 mb-1 font-semibold uppercase">Produksi YTD 2026</div>
+                    <div class="text-lg font-bold text-amber-500">0.65 <span class="text-xs font-normal text-gray-500">Juta MT</span></div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-[10px] text-gray-500 mb-1 font-semibold uppercase">Stripping Ratio (SR)</div>
+                    <div class="text-lg font-bold text-orange-500">4.8 <span class="text-xs font-normal text-gray-500">BCM/MT</span></div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-[10px] text-gray-500 mb-1 font-semibold uppercase">Target Suplai PLTU</div>
+                    <div class="text-lg font-bold text-red-500">0.4 <span class="text-xs font-normal text-gray-500">Juta MT / Thn</span></div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-[10px] text-gray-500 mb-1 font-semibold uppercase">Sisa Umur Tambang (LOM)</div>
+                    <div class="text-lg font-bold text-indigo-600">~28 <span class="text-xs font-normal text-gray-500">Tahun</span></div>
+                </div>
+                 <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-[10px] text-gray-500 mb-1 font-semibold uppercase">Estimasi Cash Cost</div>
+                    <div class="text-lg font-bold text-slate-700">$42.5 <span class="text-xs font-normal text-gray-500">/ MT (FOB)</span></div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-[10px] text-gray-500 mb-1 font-semibold uppercase">Keselamatan Kerja (LTI)</div>
+                    <div class="text-lg font-bold text-emerald-500">1.205 <span class="text-xs font-normal text-gray-500">Hari Aman</span></div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
+                    <div class="text-[10px] text-gray-500 mb-1 font-semibold uppercase">Progress Reklamasi</div>
+                    <div class="text-lg font-bold text-emerald-600">50 <span class="text-xs font-normal text-gray-500">Ha</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative flex-1 w-full">
+            <header class="bg-white shadow-md z-20 px-6 py-3 flex justify-between items-center absolute top-4 left-4 right-4 rounded-xl bg-opacity-95 backdrop-blur-sm pointer-events-none border border-gray-100">
+                <div class="pointer-events-auto">
+                    <h2 id="map-title" class="text-lg font-bold text-gray-800">Peta 3D & Model Digital</h2>
+                    <p id="map-desc" class="text-xs text-gray-500">Visualisasi topografi dan simulasi blok model cadangan batubara.</p>
+                </div>
+                <div class="pointer-events-auto flex gap-3">
+                    <button class="bg-white border border-gray-300 p-2 rounded-lg hover:bg-gray-50 shadow-sm transition-colors" title="Print Map">
+                        <i class="fa-solid fa-print text-gray-600"></i>
+                    </button>
+                    <button class="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 shadow-sm font-medium text-sm transition-colors flex items-center">
+                        <i class="fa-solid fa-download mr-2"></i>Export Data
+                    </button>
+                </div>
+            </header>
+
+            <div id="map" class="h-full w-full absolute inset-0 z-10"></div>
+        </div>
+    </main>
+
+    <script>
+        // =====================================================================
+        // KOORDINAT DIAMBIL DARI FILE KML "IUP Karak Ungol.kml"
+        // Poligon IUP (4 titik sudut):
+        //   A. 117.1058830702327, 3.601949908040122  (NW)
+        //   B. 117.0478977094972, 3.588404100623872  (W)
+        //   C. 117.0532043438046, 3.541092887722529  (SW)
+        //   D. 117.1114378309559, 3.547347102008564  (E/SE)
+        // Luas hasil perhitungan shoelace: ~3.704 Ha (~37 km²)
+        //
+        // Objek infrastruktur dari KML (centroid polygon):
+        //   - Jetty (Pelabuhan Muat) PT KUB:      (3.5945, 117.0461)
+        //   - Crusher Plant:                      (3.5916, 117.0503)
+        //   - Disposal Area:                      (3.5492, 117.0609)
+        //   - Mess Karyawan:                      (3.5659, 117.0414)
+        // =====================================================================
+        const centerLat = 3.5697;   // centroid polygon IUP
+        const centerLng = 117.0796; // centroid polygon IUP
+
+        const IUP_COORDS = [
+            [117.1058830702327, 3.601949908040122],
+            [117.0478977094972, 3.588404100623872],
+            [117.0532043438046, 3.541092887722529],
+            [117.1114378309559, 3.547347102008564],
+            [117.1058830702327, 3.601949908040122]
+        ];
+
+        // Posisi infrastruktur asli dari KML
+        const KML_INFRA = {
+            JETTY:        { lat: 3.5945, lng: 117.0461 },
+            CRUSHER:      { lat: 3.5916, lng: 117.0503 },
+            DISPOSAL:     { lat: 3.5492, lng: 117.0609 },
+            MESS:         { lat: 3.5659, lng: 117.0414 }
+        };
+
+        const map = L.map('map', {
+            zoomControl: false
+        }).setView([centerLat, centerLng], 13);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+        
+        const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+        });
+
+        satelliteLayer.addTo(map);
+
+        let currentMapLayer = L.layerGroup().addTo(map);
+        let currentLegend = null;
+
+        // -------- HELPER: DATA DUMMY --------
+
+        // Batas IUP -- MENGGUNAKAN KOORDINAT ASLI DARI KML BARU
+        function generateIUPBoundary() {
+            return {
+                "type": "FeatureCollection",
+                "features": [{
+                    "type": "Feature",
+                    "properties": { "name": "Batas Konsesi PT KUB", "area": "3.704 Ha" },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [ IUP_COORDS ]
+                    }
+                }]
+            };
+        }
+
+        // Pit dummy (di-scale ~1.5x menyesuaikan luas konsesi yang lebih besar)
+        function generatePitData() {
+            const pits = [];
+            const centers = [
+                { lat: centerLat + 0.011, lng: centerLng - 0.011, name: "Pit North", depth: "120m" },
+                { lat: centerLat - 0.011, lng: centerLng + 0.011, name: "Pit South", depth: "85m" }
+            ];
+            
+            centers.forEach(c => {
+                const r = 0.0055;
+                pits.push({
+                    "type": "Feature",
+                    "properties": { "name": c.name, "depth": c.depth, "type": "pithole" },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [c.lng - r, c.lat - r/2], [c.lng, c.lat - r], [c.lng + r, c.lat - r/2],
+                            [c.lng + r/2, c.lat + r], [c.lng - r/2, c.lat + r], [c.lng - r, c.lat - r/2]
+                        ]]
+                    }
+                });
+            });
+            return { "type": "FeatureCollection", "features": pits };
+        }
+
+        // Block Model (grid 20x20, extent ~0.032° ~ 3,6 km)
+        function generateBlockModelData() {
+            const blocks = [];
+            const startLng = centerLng - 0.016;
+            const startLat = centerLat - 0.016;
+            const step = 0.0016;
+
+            for(let i=0; i<20; i++) {
+                for(let j=0; j<20; j++) {
+                    const val = Math.random() * 100;
+                    if(val > 40) {
+                        blocks.push({
+                            "type": "Feature",
+                            "properties": { "seam": `Seam ${Math.floor(Math.random()*5)+1}`, "kalori": Math.floor(4000 + Math.random()*2500), "thickness": (Math.random()*10+1).toFixed(2) },
+                            "geometry": {
+                                "type": "Polygon",
+                                "coordinates": [[
+                                    [startLng + i*step, startLat + j*step],
+                                    [startLng + (i+1)*step, startLat + j*step],
+                                    [startLng + (i+1)*step, startLat + (j+1)*step],
+                                    [startLng + i*step, startLat + (j+1)*step],
+                                    [startLng + i*step, startLat + j*step]
+                                ]]
+                            }
+                        });
+                    }
+                }
+            }
+            return { "type": "FeatureCollection", "features": blocks };
+        }
+
+        // Infrastruktur dummy -- MENGGUNAKAN POSISI ASLI DARI KML
+        function generateInfrastructure() {
+            return {
+                "type": "FeatureCollection",
+                "features": [
+                    { "type": "Feature", "properties": { "name": "Crusher Plant", "type": "crusher" },
+                      "geometry": { "type": "Point", "coordinates": [KML_INFRA.CRUSHER.lng, KML_INFRA.CRUSHER.lat] } },
+                    { "type": "Feature", "properties": { "name": "Mess Karyawan", "type": "camp" },
+                      "geometry": { "type": "Point", "coordinates": [KML_INFRA.MESS.lng, KML_INFRA.MESS.lat] } },
+                    { "type": "Feature", "properties": { "name": "Disposal Area", "type": "disposal" },
+                      "geometry": { "type": "Polygon", "coordinates": [[
+                          [117.0539, 3.5504], [117.0550, 3.5429], [117.0721, 3.5452],
+                          [117.0701, 3.5548], [117.0533, 3.5527], [117.0539, 3.5504]
+                      ]] } },
+                    { "type": "Feature", "properties": { "name": "Main Haul Road (Jalan Tambang Utama)", "type": "road" }, 
+                      "geometry": { 
+                          "type": "LineString", 
+                          "coordinates": [
+                              [centerLng + 0.011, centerLat - 0.011],   // Pit South
+                              [117.0700, 3.5700],
+                              [117.0600, 3.5820],
+                              [117.0503, 3.5916],                        // Crusher Plant
+                              [117.0461, 3.5945]                         // Jetty
+                          ] 
+                      } 
+                    }
+                ]
+            };
+        }
+
+        // -------- KONFIGURASI PETA --------
+        const mapConfigs = {
+            'peta3d': {
+                title: 'Peta 3D & Model Digital (Block Model)',
+                desc: 'Estimasi sebaran kalori dan ketebalan seam batubara (Simulasi 2D Top Down view dari Block Model 3D).',
+                basemap: topoLayer,
+                render: () => {
+                    const data = generateBlockModelData();
+                    return L.geoJSON(data, {
+                        style: function(feature) {
+                            const cal = feature.properties.kalori;
+                            let color = '#d73027';
+                            if (cal > 5000) color = '#fdae61';
+                            if (cal > 5500) color = '#a6d96a';
+                            if (cal > 6000) color = '#1a9850';
+                            return { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.7 };
+                        },
+                        onEachFeature: function(feature, layer) {
+                            layer.bindPopup(`<b>${feature.properties.seam}</b><br>Kalori: ${feature.properties.kalori} kcal/kg<br>Tebal: ${feature.properties.thickness} m`);
+                        }
+                    });
+                }
+            },
+            'petaPit': {
+                title: 'Peta Pithole / Desain Pit',
+                desc: 'Batas bukaan tambang, jenjang (bench), dan area galian aktif.',
+                basemap: satelliteLayer,
+                render: () => {
+                    const iup = L.geoJSON(generateIUPBoundary(), { style: { color: 'gray', weight: 2, fillOpacity: 0, dashArray: '5, 5' }});
+                    const pits = L.geoJSON(generatePitData(), {
+                        style: { color: '#ff0000', weight: 3, fillColor: '#ff0000', fillOpacity: 0.3 },
+                        onEachFeature: (f, l) => l.bindPopup(`<b>${f.properties.name}</b><br>Kedalaman Max: ${f.properties.depth}`)
+                    });
+                    
+                    const contourGroup = L.layerGroup();
+                    const pitData = generatePitData();
+                    pitData.features.forEach(f => {
+                         let coords = f.geometry.coordinates[0];
+                         for(let i=1; i<4; i++) {
+                             let shrunked = coords.map(coord => [coord[0] + (centerLng - coord[0])*0.1*i, coord[1] + (centerLat - coord[1])*0.1*i]);
+                             contourGroup.addLayer(L.polygon([shrunked], {color: '#ffff00', weight: 1, fillOpacity: 0}));
+                         }
+                    });
+                    return L.layerGroup([iup, pits, contourGroup]);
+                }
+            },
+            'petaGeologi': {
+                title: 'Peta Geologi Lokal',
+                desc: 'Sebaran formasi batuan pembawa batubara (Coal Bearing Formation) dan struktur patahan.',
+                basemap: topoLayer,
+                render: () => {
+                    const formasi1 = L.polygon([[
+                        [centerLat - 0.030, centerLng - 0.038], [centerLat + 0.030, centerLng - 0.015],
+                        [centerLat + 0.030, centerLng + 0.008], [centerLat - 0.030, centerLng + 0.008]
+                    ]], {color: '#8c510a', fillColor: '#d8b365', fillOpacity: 0.5}).bindPopup('<b>Formasi Balikpapan (Tmb)</b><br>Batupasir, batulempung, sisipan batubara.');
+                    
+                    const formasi2 = L.polygon([[
+                        [centerLat - 0.030, centerLng + 0.008], [centerLat + 0.030, centerLng + 0.008],
+                        [centerLat + 0.030, centerLng + 0.038], [centerLat - 0.030, centerLng + 0.038]
+                    ]], {color: '#01665e', fillColor: '#5ab4ac', fillOpacity: 0.5}).bindPopup('<b>Formasi Kampungbaru (Tpk)</b><br>Batupasir kuarsa, batulempung, lignit.');
+
+                    const fault = L.polyline([
+                        [centerLat + 0.024, centerLng - 0.018], [centerLat, centerLng], [centerLat - 0.024, centerLng + 0.012]
+                    ], {color: 'red', weight: 4, dashArray: '10, 5'}).bindPopup('<b>Sesar Mendatar</b><br>Dip: 45°, Strike: N 120° E');
+
+                    const group = L.layerGroup([formasi1, formasi2, fault]);
+
+                    const drillHoles = [
+                        {lat: centerLat + 0.012, lng: centerLng - 0.006, id: 'DH-01', depth: 120, coalThick: 8.5},
+                        {lat: centerLat + 0.018, lng: centerLng - 0.009, id: 'DH-02', depth: 150, coalThick: 12.0},
+                        {lat: centerLat - 0.006, lng: centerLng + 0.009, id: 'DH-03', depth: 85, coalThick: 5.2},
+                        {lat: centerLat - 0.012, lng: centerLng + 0.015, id: 'DH-04', depth: 110, coalThick: 7.1},
+                        {lat: centerLat + 0.006, lng: centerLng + 0.003, id: 'DH-05', depth: 200, coalThick: 3.5}
+                    ];
+
+                    drillHoles.forEach(dh => {
+                        const markerColor = dh.coalThick > 5 ? '#000000' : '#888888';
+                        L.circleMarker([dh.lat, dh.lng], {
+                            radius: 5, color: 'white', weight: 1, fillColor: markerColor, fillOpacity: 1
+                        }).addTo(group).bindPopup(`<b>Titik Bor: ${dh.id}</b><br>Total Depth: ${dh.depth} m<br>Ketebalan Batubara: ${dh.coalThick} m<br>Status: Selesai Logged`);
+                    });
+
+                    return group;
+                }
+            },
+            'petaAnomali': {
+                title: 'Peta Anomali Geofisika',
+                desc: 'Hasil survei resistivitas untuk mendeteksi sebaran lapisan batubara di bawah permukaan.',
+                basemap: topoLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    for(let i=0; i<30; i++) {
+                        const lat = centerLat + (Math.random() * 0.045 - 0.022);
+                        const lng = centerLng + (Math.random() * 0.060 - 0.030);
+                        const radius = Math.random() * 250 + 100;
+                        const intensity = Math.random();
+                        const color = intensity > 0.7 ? '#d73027' : (intensity > 0.4 ? '#ffffbf' : '#4575b4');
+                        
+                        L.circle([lat, lng], {
+                            radius: radius, color: 'transparent', fillColor: color, fillOpacity: 0.6
+                        }).addTo(group).bindPopup(`Nilai Resistivitas: ${Math.floor(intensity * 1000)} Ohm.m`);
+                    }
+                    return group;
+                }
+            },
+            'petaTopoAsal': {
+                title: 'Peta Topografi Asal (Original Topography)',
+                desc: 'Bentuk elevasi asli sebelum penambangan dimulai.',
+                basemap: topoLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    for(let i=0; i<15; i++) {
+                        const rLat = 0.026 - (i*0.0015);
+                        const rLng = 0.034 - (i*0.0021);
+                        L.ellipse([centerLat, centerLng], [rLat, rLng], Math.random()*90, {
+                            color: '#8b4513', weight: 1, fillOpacity: 0, opacity: 0.7
+                        }).addTo(group);
+                    }
+                    return group;
+                }
+            },
+            'petaProgress': {
+                title: 'Peta Situasi / Kemajuan Tambang (Progress Map)',
+                desc: 'Update bulan berjalan. Area merah: target bulan ini. Area hijau: tercapai.',
+                basemap: satelliteLayer,
+                render: () => {
+                    const pits = generatePitData();
+                    const group = L.layerGroup();
+                    
+                    L.geoJSON(pits, { style: {color: 'gray', weight: 1, fillOpacity: 0}}).addTo(group);
+
+                    L.polygon([[
+                        [centerLat + 0.006, centerLng - 0.006], [centerLat + 0.0075, centerLng - 0.0045],
+                        [centerLat + 0.003, centerLng - 0.0015], [centerLat + 0.0015, centerLng - 0.003]
+                    ]], {color: 'green', fillColor: 'green', fillOpacity: 0.5}).bindPopup('Progress Penambangan: 100%').addTo(group);
+
+                    L.polygon([[
+                        [centerLat + 0.0015, centerLng - 0.003], [centerLat + 0.003, centerLng - 0.0015],
+                        [centerLat - 0.0015, centerLng + 0.0015], [centerLat - 0.003, centerLng - 0.0015]
+                    ]], {color: 'red', fillColor: 'red', fillOpacity: 0.5}).bindPopup('Target Kupasan Bulan Ini').addTo(group);
+
+                    return group;
+                }
+            },
+            'petaPlan': {
+                title: 'Peta Perencanaan Tambang (Mine Plan)',
+                desc: 'Desain arah penambangan 5 tahun ke depan.',
+                basemap: satelliteLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    L.geoJSON(generateIUPBoundary(), { style: { color: 'white', weight: 2, fillOpacity: 0 }}).addTo(group);
+                    
+                    L.polyline([
+                        [centerLat + 0.011, centerLng - 0.011], [centerLat - 0.011, centerLng + 0.011]
+                    ], {color: 'yellow', weight: 4, dashArray: '10, 10'}).addTo(group).bindPopup('Arah Kemajuan Tambang (Selatan)');
+
+                    const plans = [
+                        { year: 2026, offset: 0, target: '0.65 Juta MT', sr: '4.5' },
+                        { year: 2027, offset: 1, target: '0.80 Juta MT', sr: '5.2' },
+                        { year: 2028, offset: 2, target: '0.95 Juta MT', sr: '5.8' },
+                        { year: 2029, offset: 3, target: '0.85 Juta MT', sr: '6.1' },
+                        { year: 2030, offset: 4, target: '0.75 Juta MT', sr: '6.5' }
+                    ];
+
+                    plans.forEach((plan) => {
+                        const plat = centerLat + 0.011 - (plan.offset * 0.0055);
+                        const plng = centerLng - 0.011 + (plan.offset * 0.0055);
+                        L.polygon([
+                            [plat + 0.0028, plng - 0.0028], [plat + 0.0028, plng + 0.0028],
+                            [plat - 0.0028, plng + 0.0028], [plat - 0.0028, plng - 0.0028]
+                        ], {color: '#00ffff', weight: 2, fillOpacity: 0.2})
+                        .addTo(group)
+                        .bindPopup(`<b>Rencana Tambang Tahun ${plan.year}</b><br>Target Produksi: ${plan.target}<br>Stripping Ratio (SR): ${plan.sr}`)
+                        .bindTooltip(`Blok ${plan.year}`, {permanent: true, direction: 'center', className: 'text-xs font-bold text-cyan-400 bg-transparent border-0 shadow-none'});
+                    });
+                    
+                    return group;
+                }
+            },
+            'petaDisposal': {
+                title: 'Peta Penimbunan (Disposal & Waste Dump)',
+                desc: 'Lokasi pembuangan lapisan penutup (Overburden) - menggunakan polygon asli dari KML.',
+                basemap: satelliteLayer,
+                render: () => {
+                    const iup = L.geoJSON(generateIUPBoundary(), { style: { color: 'gray', weight: 2, fillOpacity: 0 }});
+                    
+                    const dispKML = L.polygon([[
+                        [117.0539, 3.5504], [117.0550, 3.5429], [117.0721, 3.5452],
+                        [117.0701, 3.5548], [117.0533, 3.5527], [117.0539, 3.5504]
+                    ]], {color: '#8B4513', fillColor: '#A0522D', fillOpacity: 0.6, weight: 2})
+                    .bindPopup(`<b>Disposal Area (KML)</b><br>Lokasi asli dari file KML<br>Luas ~70 Ha<br>Status: Aktif`);
+
+                    const disp2 = L.polygon([[
+                        [centerLat - 0.012, centerLng - 0.024], [centerLat - 0.006, centerLng - 0.024],
+                        [centerLat - 0.006, centerLng - 0.018], [centerLat - 0.012, centerLng - 0.018]
+                    ]], {color: '#8B4513', fillColor: '#A0522D', fillOpacity: 0.6, weight: 2}).bindPopup(`<b>Disposal Area B</b><br>Kapasitas: 450 Ribu BCM<br>Status: Aktif`);
+
+                    return L.layerGroup([iup, dispKML, disp2]);
+                }
+            },
+            'petaDrainase': {
+                title: 'Peta Penyaliran (Mine Drainage)',
+                desc: 'Sistem pompa, parit (channel), dan kolam pengendapan (Sediment Pond).',
+                basemap: topoLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    
+                    L.circle([centerLat + 0.003, centerLng - 0.003], {radius: 80, color: 'blue', fillColor: 'blue', fillOpacity: 0.6}).addTo(group).bindPopup('<b>Sump Pit North</b><br>Elevasi: -30 mdpl<br>Pompa: 2 Unit Multiflo 420');
+                    
+                    L.polygon([[
+                        [centerLat + 0.016, centerLng - 0.019], [centerLat + 0.019, centerLng - 0.019],
+                        [centerLat + 0.019, centerLng - 0.014], [centerLat + 0.016, centerLng - 0.014]
+                    ]], {color: '#00008b', fillColor: '#4169e1', fillOpacity: 0.7}).addTo(group).bindPopup('<b>Kolam Pengendap Lumpur (KPL) Utama</b><br>Kapasitas: 30.000 m3<br>pH Air: 6.8 (Normal)<br>TSS: Memenuhi Baku Mutu');
+
+                    L.polyline([
+                        [centerLat + 0.003, centerLng - 0.003],
+                        [centerLat + 0.009, centerLng - 0.009],
+                        [centerLat + 0.017, centerLng - 0.016]
+                    ], {color: '#00bfff', weight: 3, dashArray: '5,5'}).addTo(group).bindPopup('<b>Pipa HD / Saluran Terbuka</b><br>Debit Aliran: 250 liter/detik');
+
+                    L.marker([centerLat + 0.017, centerLng - 0.019], {
+                        icon: L.divIcon({className: 'fa-solid fa-arrow-right-from-water text-blue-700 text-xl', iconSize: [20, 20], iconAnchor: [10,10]})
+                    }).addTo(group).bindPopup('<b>Titik Penaatan Lingkungan (Discharge Point)</b><br>Menuju Sungai Karak');
+
+                    return group;
+                }
+            },
+            'petaGeotek': {
+                title: 'Peta Geoteknik & Kestabilan Lereng',
+                desc: 'Pemantauan pergerakan tanah dan zona rawan longsor.',
+                basemap: satelliteLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    const pits = L.geoJSON(generatePitData(), { style: {color: 'white', weight: 1, fillOpacity: 0}});
+                    group.addLayer(pits);
+
+                    L.polygon([[
+                        [centerLat + 0.0045, centerLng - 0.0075], [centerLat + 0.0075, centerLng - 0.0075],
+                        [centerLat + 0.0075, centerLng - 0.0045], [centerLat + 0.0045, centerLng - 0.0045]
+                    ]], {color: 'red', fillColor: 'red', fillOpacity: 0.4}).addTo(group).bindPopup('<b>Zona Merah (Kritis)</b><br>Terdeteksi pergerakan > 5mm/hari.');
+
+                    L.polygon([[
+                        [centerLat - 0.0135, centerLng + 0.0105], [centerLat - 0.0105, centerLng + 0.0105],
+                        [centerLat - 0.0105, centerLng + 0.0135], [centerLat - 0.0135, centerLng + 0.0135]
+                    ]], {color: 'orange', fillColor: 'orange', fillOpacity: 0.4}).addTo(group).bindPopup('<b>Zona Kuning (Waspada)</b><br>Pergerakan 1-5mm/hari.');
+
+                    L.circleMarker([centerLat + 0.006, centerLng - 0.006], {radius: 5, color: '#fff', fillColor: '#000', fillOpacity: 1}).addTo(group).bindPopup('Sensor Radar SSR Aktif');
+
+                    return group;
+                }
+            },
+            'petaIUP': {
+                title: 'Peta IUP (Izin Usaha Pertambangan)',
+                desc: 'Batas koordinat resmi wilayah konsesi perusahaan (sumber: KML IUP Karak Ungol).',
+                basemap: topoLayer,
+                render: () => {
+                    const data = generateIUPBoundary();
+                    return L.geoJSON(data, {
+                        style: { color: '#000000', weight: 3, fillColor: '#ffff00', fillOpacity: 0.1 },
+                        onEachFeature: function(feature, layer) {
+                            layer.bindPopup(`<b>${feature.properties.name}</b><br>Luas: ${feature.properties.area}<br>Status: Operasi Produksi<br>Sumber: KML resmi`);
+                            
+                            const coords = feature.geometry.coordinates[0];
+                            coords.forEach((coord, index) => {
+                                if(index < coords.length - 1) {
+                                    L.circleMarker([coord[1], coord[0]], {radius: 4, color: 'red', fillColor: 'red', fillOpacity: 1})
+                                     .addTo(currentMapLayer)
+                                     .bindPopup(`<b>Patok Batas BM-${index+1}</b><br>Lat: ${coord[1].toFixed(6)}<br>Lng: ${coord[0].toFixed(6)}`);
+                                }
+                            });
+                        }
+                    });
+                }
+            },
+            'petaInfrastruktur': {
+                title: 'Peta Tata Guna Lahan & Infrastruktur',
+                desc: 'Fasilitas pabrik, jalan angkut, mess, dan pelabuhan (jetty) - posisi asli dari KML.',
+                basemap: satelliteLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    L.geoJSON(generateIUPBoundary(), { style: { color: 'white', weight: 1, fillOpacity: 0, dashArray: '5,5' }}).addTo(group);
+                    
+                    const infra = generateInfrastructure();
+                    L.geoJSON(infra, {
+                        style: function(feature) {
+                            if(feature.properties.type === 'road') return {color: '#f59e0b', weight: 5, opacity: 0.9};
+                            if(feature.properties.type === 'disposal') return {color: '#8B4513', fillOpacity: 0.4};
+                        },
+                        pointToLayer: function(feature, latlng) {
+                            let iconClass = 'fa-building';
+                            let color = 'text-gray-700';
+                            if(feature.properties.type === 'crusher') { iconClass = 'fa-industry'; color = 'text-gray-800'; }
+                            if(feature.properties.type === 'camp') { iconClass = 'fa-house-chimney'; color = 'text-blue-600'; }
+                            
+                            const icon = L.divIcon({
+                                html: `<div class="bg-white p-1 rounded-full shadow-md border border-gray-300 flex items-center justify-center w-8 h-8 hover:bg-gray-100 transition-colors"><i class="fa-solid ${iconClass} ${color}"></i></div>`,
+                                className: '', iconSize: [32, 32], iconAnchor: [16, 16]
+                            });
+                            return L.marker(latlng, {icon: icon});
+                        },
+                        onEachFeature: (f, l) => {
+                            let info = `<b>${f.properties.name}</b>`;
+                            if(f.properties.type === 'crusher') info += `<br>Kapasitas: 500 TPH (Ton Per Hour)`;
+                            if(f.properties.type === 'road') info += `<br>Panjang Total: 8 KM<br>Lebar Jalan: 25 Meter`;
+                            l.bindPopup(info);
+                        }
+                    }).addTo(group);
+
+                    const jettyLat = KML_INFRA.JETTY.lat;
+                    const jettyLng = KML_INFRA.JETTY.lng;
+                    const jettyIcon = L.divIcon({
+                        html: `<div class="bg-white p-1 rounded-full shadow-md border-2 border-blue-400 flex items-center justify-center w-10 h-10"><i class="fa-solid fa-ship text-blue-800 text-lg"></i></div>`,
+                        className: '', iconSize: [40, 40], iconAnchor: [20, 20]
+                    });
+                    
+                    L.marker([jettyLat, jettyLng], {icon: jettyIcon}).addTo(group).bindPopup('<b>Jetty (Pelabuhan Muat) PT KUB</b><br>Kapasitas Sandar: 300 ft Barge (Tongkang)<br>Conveyor: 1.000 TPH<br>Sumber: KML');
+                    
+                    L.polygon([
+                        [jettyLat - 0.0005, jettyLng - 0.0015], [jettyLat + 0.0015, jettyLng - 0.0015],
+                        [jettyLat + 0.0015, jettyLng + 0.0015], [jettyLat - 0.0005, jettyLng + 0.0015]
+                    ], {color: 'black', fillColor: '#333333', fillOpacity: 0.8}).addTo(group).bindPopup('<b>Port Stockpile</b><br>Kapasitas: 40.000 MT');
+
+                    return group;
+                }
+            },
+            'petaReklamasi': {
+                title: 'Peta Rencana Reklamasi & Pascatambang',
+                desc: 'Zona penghijauan (revegetasi) dan rencana area void (danau buatan).',
+                basemap: satelliteLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    L.geoJSON(generateIUPBoundary(), { style: { color: 'white', weight: 1, fillOpacity: 0 }}).addTo(group);
+
+                    L.polygon([[
+                        [centerLat + 0.016, centerLng + 0.005], [centerLat + 0.022, centerLng + 0.005],
+                        [centerLat + 0.022, centerLng + 0.020], [centerLat + 0.016, centerLng + 0.020]
+                    ]], {color: '#228B22', fillColor: '#32CD32', fillOpacity: 0.6}).addTo(group).bindPopup('<b>Area Revegetasi Sukses</b><br>Tanaman: Sengon, Akasia, Mahoni<br>Tahun Tanam: 2021');
+
+                    L.polygon([[
+                        [centerLat - 0.010, centerLng + 0.010], [centerLat - 0.005, centerLng + 0.016],
+                        [centerLat - 0.016, centerLng + 0.022]
+                    ]], {color: '#00CED1', fillColor: '#40E0D0', fillOpacity: 0.7}).addTo(group).bindPopup('<b>Rencana Void Tambang</b><br>Peruntukan: Danau cadangan air baku');
+
+                    return group;
+                }
+            },
+            'petaDenahTambang': {
+                title: 'Peta Denah Tambang (Mine Layout)',
+                desc: 'Tata letak fasilitas operasi tambang meliputi Pit, Jalan Angkut (Haul Road), ROM Stockpile, dan Workshop.',
+                basemap: satelliteLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    
+                    L.geoJSON(generatePitData(), { style: {color: '#ff0000', weight: 2, fillOpacity: 0.1, dashArray: '5,5'} }).addTo(group);
+                    
+                    // ROM Stockpile dekat Crusher
+                    L.polygon([
+                        [KML_INFRA.CRUSHER.lat - 0.001, KML_INFRA.CRUSHER.lng - 0.0015],
+                        [KML_INFRA.CRUSHER.lat - 0.001, KML_INFRA.CRUSHER.lng + 0.0015],
+                        [KML_INFRA.CRUSHER.lat - 0.003, KML_INFRA.CRUSHER.lng + 0.0015],
+                        [KML_INFRA.CRUSHER.lat - 0.003, KML_INFRA.CRUSHER.lng - 0.0015]
+                    ], {color: 'black', fillColor: '#333333', fillOpacity: 0.8}).addTo(group).bindPopup('<b>ROM (Run of Mine) Stockpile</b><br>Kapasitas Maksimal: 12.000 MT<br>Status: Aktif');
+
+                    L.polygon([
+                        [centerLat - 0.005, centerLng - 0.012], [centerLat - 0.003, centerLng - 0.012],
+                        [centerLat - 0.003, centerLng - 0.010], [centerLat - 0.005, centerLng - 0.010]
+                    ], {color: '#1e3a8a', fillColor: '#3b82f6', fillOpacity: 0.7}).addTo(group).bindPopup('<b>Workshop & Heavy Equipment Yard</b><br>Fasilitas perbaikan excavator dan dump truck.');
+
+                    L.circleMarker([centerLat - 0.005, centerLng - 0.009], {radius: 6, color: 'white', fillColor: 'purple', fillOpacity: 1}).addTo(group).bindPopup('<b>Fuel Station (BBM)</b><br>Kapasitas: 2 x 25.000 Liter');
+
+                    L.polygon([
+                        [centerLat - 0.0065, centerLng - 0.010], [centerLat - 0.006, centerLng - 0.010],
+                        [centerLat - 0.006, centerLng - 0.0095], [centerLat - 0.0065, centerLng - 0.0095]
+                    ], {color: 'yellow', fillColor: 'yellow', fillOpacity: 0.8}).addTo(group).bindPopup('<b>Jembatan Timbang (Weighbridge)</b><br>Kapasitas 100 Ton');
+
+                    // Gudang Handak di area timur IUP
+                    L.polygon([
+                        [centerLat + 0.015, centerLng + 0.022], [centerLat + 0.017, centerLng + 0.022],
+                        [centerLat + 0.017, centerLng + 0.024], [centerLat + 0.015, centerLng + 0.024]
+                    ], {color: 'red', fillColor: '#b91c1c', fillOpacity: 0.8}).addTo(group).bindPopup('<b>Gudang Handak (Bahan Peledak)</b><br>Zona Terbatas! (Restricted Area)');
+                    
+                    L.polyline([
+                        [centerLat + 0.006, centerLng - 0.006], [centerLat + 0.010, centerLng + 0.008], [centerLat + 0.015, centerLng + 0.022]
+                    ], {color: '#9ca3af', weight: 3, dashArray: '4,4'}).addTo(group).bindPopup('Jalan Akses Gudang Handak (Restricted)');
+
+                    // Haul Road utama: Pit South → Crusher → Jetty
+                    L.polyline([
+                        [centerLat - 0.011, centerLng + 0.011],
+                        [centerLat - 0.006, centerLng + 0.001],
+                        [KML_INFRA.CRUSHER.lat - 0.003, KML_INFRA.CRUSHER.lng - 0.0015],
+                        [KML_INFRA.CRUSHER.lat, KML_INFRA.CRUSHER.lng],
+                        [KML_INFRA.JETTY.lat, KML_INFRA.JETTY.lng]
+                    ], {color: '#f59e0b', weight: 6, opacity: 0.9}).addTo(group).bindPopup('<b>Jalan Angkut Utama (Haul Road)</b><br>Lebar: 30 Meter<br>Panjang: ~8 KM');
+
+                    return group;
+                }
+            },
+            'petaDenahMess': {
+                title: 'Peta Denah Mess Pekerja & Kantor (Camp Layout)',
+                desc: 'Denah tata letak gedung perkantoran, blok mess karyawan, kantin, dan fasilitas olahraga (posisi dari KML).',
+                basemap: topoLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    // Base mengacu pada centroid polygon Mess Karyawan KML
+                    const baseLat = KML_INFRA.MESS.lat;
+                    const baseLng = KML_INFRA.MESS.lng;
+
+                    // Batas area mess asli dari KML
+                    L.polygon([
+                        [3.5631, 117.0433], [3.5629, 117.0442], [3.5698, 117.0445],
+                        [3.5700, 117.0375], [3.5634, 117.0376], [3.5631, 117.0433]
+                    ], {color: '#10b981', weight: 2, fillOpacity: 0.1, dashArray: '8,4'}).addTo(group).bindPopup('<b>Batas Area Camp & Perkantoran (KML)</b>');
+
+                    L.polygon([
+                        [baseLat + 0.0008, baseLng - 0.0012], [baseLat + 0.0016, baseLng - 0.0012],
+                        [baseLat + 0.0016, baseLng + 0.0008], [baseLat + 0.0008, baseLng + 0.0008]
+                    ], {color: '#1e3a8a', fillColor: '#3b82f6', fillOpacity: 0.9}).addTo(group).bindPopup('<b>Kantor Utama (Main Office)</b><br>KTT, Manajemen, & Engineering');
+
+                    L.polygon([
+                        [baseLat - 0.0016, baseLng - 0.0024], [baseLat - 0.0008, baseLng - 0.0024],
+                        [baseLat - 0.0008, baseLng - 0.0016], [baseLat - 0.0016, baseLng - 0.0016]
+                    ], {color: 'black', fillColor: '#374151', fillOpacity: 0.9}).addTo(group).bindPopup('<b>Pos Security (Gate Masuk)</b>');
+
+                    for(let i=0; i<3; i++) {
+                        L.polygon([
+                            [baseLat - 0.0016 + (i*0.0012), baseLng + 0.0016], [baseLat - 0.0012 + (i*0.0012), baseLng + 0.0016],
+                            [baseLat - 0.0012 + (i*0.0012), baseLng + 0.0032], [baseLat - 0.0016 + (i*0.0012), baseLng + 0.0032]
+                        ], {color: '#9a3412', fillColor: '#f97316', fillOpacity: 0.9}).addTo(group).bindPopup(`<b>Mess Karyawan Blok ${String.fromCharCode(65+i)}</b><br>Kapasitas: 50 Orang/Blok`);
+                    }
+
+                    L.polygon([
+                        [baseLat + 0.002, baseLng + 0.0016], [baseLat + 0.0028, baseLng + 0.0016],
+                        [baseLat + 0.0028, baseLng + 0.0028], [baseLat + 0.002, baseLng + 0.0028]
+                    ], {color: '#854d0e', fillColor: '#eab308', fillOpacity: 0.9}).addTo(group).bindPopup('<b>Kantin & Ruang Makan (Messhall)</b>');
+
+                    L.polygon([
+                        [baseLat + 0.002, baseLng - 0.0004], [baseLat + 0.0028, baseLng - 0.0004],
+                        [baseLat + 0.0028, baseLng + 0.0004], [baseLat + 0.002, baseLng + 0.0004]
+                    ], {color: '#064e3b', fillColor: '#10b981', fillOpacity: 0.9}).addTo(group).bindPopup('<b>Masjid Al-Amin</b>');
+
+                    L.polygon([
+                        [baseLat - 0.0004, baseLng + 0.0036], [baseLat + 0.0012, baseLng + 0.0036],
+                        [baseLat + 0.0012, baseLng + 0.0044], [baseLat - 0.0004, baseLng + 0.0044]
+                    ], {color: 'white', weight: 2, fillColor: '#059669', fillOpacity: 0.8}).addTo(group).bindPopup('<b>Fasilitas Olahraga (Futsal & Basket)</b>');
+
+                    L.circleMarker([baseLat + 0.0012, baseLng + 0.0012], {
+                        radius: 8, color: 'white', weight: 2, fillColor: '#ef4444', fillOpacity: 1
+                    }).addTo(group).bindPopup('<b>Klinik & First Aid Station</b><br>Buka 24 Jam');
+
+                    L.polygon([
+                        [baseLat - 0.002, baseLng - 0.0012], [baseLat - 0.0004, baseLng - 0.0012],
+                        [baseLat - 0.0004, baseLng + 0.0004], [baseLat - 0.002, baseLng + 0.0004]
+                    ], {color: '#4b5563', fillColor: '#9ca3af', fillOpacity: 0.7}).addTo(group).bindPopup('<b>Area Parkir LV (Light Vehicle)</b>');
+
+                    L.polyline([
+                        [baseLat - 0.0014, baseLng + 0.0016], [baseLat - 0.0014, baseLng + 0.0008],
+                        [baseLat + 0.0024, baseLng + 0.0008], [baseLat + 0.0024, baseLng + 0.0016]
+                    ], {color: '#cbd5e1', weight: 3, dashArray: '3,3'}).addTo(group).bindPopup('Jalur Pejalan Kaki (Pedestrian Walkway)');
+
+                    return group;
+                }
+            },
+            'petaLogistik': {
+                title: 'Peta Logistik & Rantai Pasok (Supply Chain)',
+                desc: 'Jalur transportasi laut dari Jetty KUB menuju PLTU Teluk Balikpapan (Domestik) dan Balikpapan Coal Terminal (BCT).',
+                basemap: satelliteLayer,
+                zoom: 7,
+                center: [1.10, 116.980],
+                render: () => {
+                    const group = L.layerGroup();
+                    
+                    const jettyLat = KML_INFRA.JETTY.lat;
+                    const jettyLng = KML_INFRA.JETTY.lng;
+                    
+                    const jettyIcon = L.divIcon({
+                        html: `<div class="bg-gray-900 p-2 rounded-full shadow-lg border-2 border-amber-400 flex items-center justify-center w-12 h-12"><i class="fa-solid fa-anchor text-amber-400 text-xl"></i></div>`,
+                        className: '', iconSize: [48, 48], iconAnchor: [24, 24]
+                    });
+                    L.marker([jettyLat, jettyLng], {icon: jettyIcon}).addTo(group).bindPopup('<b>Jetty (Pelabuhan Muat) PT KUB</b><br>Titik Awal Pengiriman Tongkang (Barging)');
+
+                    const pltuLat = -1.17036;
+                    const pltuLng = 116.78872;
+                    const pltuIcon = L.divIcon({
+                        html: `<div class="bg-white p-2 rounded-full shadow-lg border-2 border-red-500 flex items-center justify-center w-12 h-12"><i class="fa-solid fa-bolt text-red-500 text-xl"></i></div>`,
+                        className: '', iconSize: [48, 48], iconAnchor: [24, 24]
+                    });
+                    L.marker([pltuLat, pltuLng], {icon: pltuIcon}).addTo(group).bindPopup('<b>PLTU Teluk Balikpapan</b><br>Kel. Kariangau, Kec. Balikpapan Utara<br>Kebutuhan Tahunan: 0.4 Juta MT');
+
+                    const transLat = -1.2000;
+                    const transLng = 116.7833;
+                    const transIcon = L.divIcon({
+                        html: `<div class="bg-blue-600 p-2 rounded-full shadow-lg border-2 border-white flex items-center justify-center w-12 h-12"><i class="fa-solid fa-ship text-white text-xl"></i></div>`,
+                        className: '', iconSize: [48, 48], iconAnchor: [24, 24]
+                    });
+                    L.marker([transLat, transLng], {icon: transIcon}).addTo(group).bindPopup('<b>Balikpapan Coal Terminal (BCT)</b><br>Fasilitas Ekspor Kapal Besar (Mother Vessel)');
+
+                    // Jalur domestik ke PLTU (via Selat Makassar)
+                    L.polyline([
+                        [jettyLat, jettyLng],
+                        [3.30, 117.35],
+                        [2.00, 117.45],
+                        [0.00, 117.05],
+                        [pltuLat, pltuLng]
+                    ], {color: '#ef4444', weight: 5, dashArray: '10, 10'}).addTo(group).bindPopup('<b>Jalur Distribusi PLTU (Suplai Domestik)</b><br>Tongkang 300ft');
+
+                    // Jalur ekspor via BCT
+                    L.polyline([
+                        [jettyLat, jettyLng],
+                        [3.30, 117.35],
+                        [2.00, 117.45],
+                        [0.50, 117.15],
+                        [transLat, transLng]
+                    ], {color: '#3b82f6', weight: 5, dashArray: '10, 10'}).addTo(group).bindPopup('<b>Jalur Logistik Ekspor via BCT</b>');
+                    
+                    return group;
+                }
+            },
+            
+            'petaGeologiRegional': {
+                title: 'Peta Geologi Regional',
+                desc: 'Tahap Eksplorasi Awal: Menampilkan sebaran formasi batuan pembawa batubara berskala makro (Regional Map).',
+                basemap: topoLayer,
+                zoom: 9,
+                render: () => {
+                    const group = L.layerGroup();
+                    L.polygon([[
+                        [centerLat - 0.20, centerLng - 0.30], [centerLat + 0.30, centerLng - 0.12],
+                        [centerLat + 0.30, centerLng + 0.12], [centerLat - 0.20, centerLng + 0.12]
+                    ]], {color: '#8c510a', fillColor: '#d8b365', fillOpacity: 0.4}).addTo(group).bindPopup('<b>Formasi Balikpapan (Tmb)</b> - Regional<br>Potensi Coal Bearing Formation');
+                    
+                    L.polygon([[
+                        [centerLat - 0.20, centerLng + 0.12], [centerLat + 0.30, centerLng + 0.12],
+                        [centerLat + 0.30, centerLng + 0.30], [centerLat - 0.20, centerLng + 0.30]
+                    ]], {color: '#01665e', fillColor: '#5ab4ac', fillOpacity: 0.4}).addTo(group).bindPopup('<b>Formasi Kampungbaru (Tpk)</b> - Regional<br>Dominan batupasir kuarsa');
+
+                    return group;
+                }
+            },
+            'petaTopografiCitra': {
+                title: 'Peta Topografi & Citra Satelit',
+                desc: 'Menunjukkan relief permukaan, pola aliran air, dan akses jalan lapangan awal sebelum ada kegiatan.',
+                basemap: satelliteLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    for(let i=0; i<15; i++) {
+                        const rLat = 0.024 - (i*0.0012);
+                        const rLng = 0.034 - (i*0.0018);
+                        L.ellipse([centerLat, centerLng], [rLat, rLng], Math.random()*90, {
+                            color: '#ffeb3b', weight: 1.5, fillOpacity: 0, opacity: 0.8
+                        }).addTo(group);
+                    }
+                    
+                    L.polyline([
+                        [centerLat + 0.028, centerLng - 0.024], [centerLat + 0.012, centerLng - 0.012],
+                        [centerLat - 0.006, centerLng - 0.018], [centerLat - 0.024, centerLng - 0.006]
+                    ], {color: '#00bfff', weight: 3}).addTo(group).bindPopup('Aliran Sungai Karak Asli');
+
+                    return group;
+                }
+            },
+            'petaSingkapan': {
+                title: 'Peta Singkapan (Outcrop Map)',
+                desc: 'Lokasi sebaran batu bara yang tersingkap di permukaan beserta arah (strike) dan kemiringannya (dip).',
+                basemap: topoLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    L.geoJSON(generateIUPBoundary(), { style: { color: 'gray', weight: 1, fillOpacity: 0 }}).addTo(group);
+
+                    const outcrops = [
+                        {lat: centerLat + 0.018, lng: centerLng - 0.012, strike: 45, dip: 15, seam: 'Seam A', thick: 3.2},
+                        {lat: centerLat + 0.006, lng: centerLng - 0.006, strike: 50, dip: 18, seam: 'Seam A', thick: 3.5},
+                        {lat: centerLat - 0.012, lng: centerLng + 0.009, strike: 135, dip: 22, seam: 'Seam B', thick: 5.1},
+                        {lat: centerLat - 0.022, lng: centerLng + 0.012, strike: 140, dip: 25, seam: 'Seam B', thick: 4.8}
+                    ];
+
+                    outcrops.forEach(oc => {
+                        const icon = L.divIcon({
+                            html: `<div style="transform: rotate(${oc.strike}deg); font-size: 20px; color: black; font-weight: 900; line-height:1;">&#8868;</div>
+                                   <div style="font-size:10px; font-weight:bold; margin-left:15px; margin-top:-5px;">${oc.dip}&deg;</div>`,
+                            className: '', iconSize: [30, 30], iconAnchor: [10, 10]
+                        });
+                        L.marker([oc.lat, oc.lng], {icon: icon}).addTo(group)
+                         .bindPopup(`<b>Titik Singkapan (Outcrop)</b><br>Lapisan: ${oc.seam}<br>Tebal Tersingkap: ${oc.thick} meter<br>Strike: N ${oc.strike}° E<br>Dip: ${oc.dip}°`);
+                    });
+                    
+                    return group;
+                }
+            },
+            'petaIsopach': {
+                title: 'Peta Isopach (Ketebalan Lapisan)',
+                desc: 'Memetakan variasi ketebalan lapisan (seam) batu bara di bawah permukaan berdasarkan data bor.',
+                basemap: satelliteLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    L.geoJSON(generateIUPBoundary(), { style: { color: 'white', weight: 1, fillOpacity: 0 }}).addTo(group);
+
+                    L.polygon([[
+                        [centerLat-0.016, centerLng-0.012], [centerLat+0.016, centerLng-0.012],
+                        [centerLat+0.022, centerLng+0.006], [centerLat-0.006, centerLng+0.018]
+                    ]], {color: '#c6dbef', weight: 1, fillColor: '#c6dbef', fillOpacity: 0.5}).addTo(group).bindPopup('Zona Ketebalan: 2 - 4 meter');
+                    
+                    L.polygon([[
+                        [centerLat-0.011, centerLng-0.006], [centerLat+0.011, centerLng-0.006],
+                        [centerLat+0.016, centerLng+0.006], [centerLat-0.006, centerLng+0.011]
+                    ]], {color: '#6baed6', weight: 1, fillColor: '#6baed6', fillOpacity: 0.6}).addTo(group).bindPopup('Zona Ketebalan: 4 - 6 meter');
+
+                    L.polygon([[
+                        [centerLat-0.006, centerLng-0.003], [centerLat+0.006, centerLng-0.003],
+                        [centerLat+0.011, centerLng+0.003], [centerLat-0.003, centerLng+0.006]
+                    ]], {color: '#08519c', weight: 1, fillColor: '#08519c', fillOpacity: 0.7}).addTo(group).bindPopup('Zona Ketebalan Maksimal: > 6 meter');
+                    
+                    return group;
+                }
+            },
+            'petaStrukturGeologi': {
+                title: 'Peta Struktur Geologi',
+                desc: 'Menampilkan pola patahan (sesar) dan lipatan yang dapat memutus lapisan batu bara.',
+                basemap: topoLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    
+                    L.polyline([
+                        [centerLat + 0.028, centerLng - 0.018], [centerLat, centerLng], [centerLat - 0.028, centerLng + 0.006]
+                    ], {color: '#0000ff', weight: 3, dashArray: '10, 10'}).addTo(group).bindPopup('<b>Sumbu Lipatan Sinklin</b><br>Menyebabkan seam melengkung ke dalam.');
+
+                    L.polyline([
+                        [centerLat + 0.018, centerLng + 0.012], [centerLat - 0.006, centerLng - 0.006], [centerLat - 0.022, centerLng - 0.018]
+                    ], {color: '#ff0000', weight: 4}).addTo(group).bindPopup('<b>Sesar Turun Normal (Normal Fault)</b><br>Displacement (Pergeseran): ~15 meter');
+
+                    return group;
+                }
+            },
+            
+            'petaIsoKualitas': {
+                title: 'Peta Iso-Kualitas (Kualitas Batubara)',
+                desc: 'Menunjukkan sebaran parameter kualitas batu bara seperti Nilai Kalori (GAR) dan Kandungan Sulfur.',
+                basemap: satelliteLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    const zones = [
+                        { lat: centerLat + 0.012, lng: centerLng - 0.012, r: 0.009, color: '#006837', text: 'Kalori Tinggi: > 6000 GAR<br>Sulfur: 0.6%' },
+                        { lat: centerLat, lng: centerLng, r: 0.015, color: '#addd8e', text: 'Kalori Sedang: 5200 - 6000 GAR<br>Sulfur: 0.8%' },
+                        { lat: centerLat - 0.012, lng: centerLng + 0.012, r: 0.012, color: '#ffffcc', text: 'Kalori Rendah: < 5200 GAR<br>Sulfur: 1.2%' }
+                    ];
+
+                    zones.forEach(z => {
+                        L.circle([z.lat, z.lng], {
+                            radius: z.r * 111000,
+                            color: z.color, weight: 2, fillColor: z.color, fillOpacity: 0.6
+                        }).addTo(group).bindPopup(`<b>Zona Kualitas Seam</b><br>${z.text}`);
+                    });
+
+                    return group;
+                }
+            },
+            'petaOverburden': {
+                title: 'Peta Ketebalan Overburden',
+                desc: 'Menampilkan ketebalan tanah penutup (OB) untuk menghitung rasio pengupasan lahan (Stripping Ratio).',
+                basemap: topoLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    
+                    L.polygon([[
+                        [centerLat-0.024, centerLng], [centerLat+0.024, centerLng],
+                        [centerLat+0.024, centerLng+0.024], [centerLat-0.024, centerLng+0.024]
+                    ]], {color: '#fec44f', weight: 1, fillColor: '#fec44f', fillOpacity: 0.5}).addTo(group).bindPopup('Ketebalan OB: 10 - 20 meter<br>Stripping Ratio Rendah');
+
+                    L.polygon([[
+                        [centerLat-0.024, centerLng-0.012], [centerLat+0.024, centerLng-0.012],
+                        [centerLat+0.024, centerLng], [centerLat-0.024, centerLng]
+                    ]], {color: '#d95f0e', weight: 1, fillColor: '#d95f0e', fillOpacity: 0.6}).addTo(group).bindPopup('Ketebalan OB: 20 - 40 meter<br>Stripping Ratio Sedang');
+
+                    L.polygon([[
+                        [centerLat-0.024, centerLng-0.024], [centerLat+0.024, centerLng-0.024],
+                        [centerLat+0.024, centerLng-0.012], [centerLat-0.024, centerLng-0.012]
+                    ]], {color: '#993404', weight: 1, fillColor: '#993404', fillOpacity: 0.7}).addTo(group).bindPopup('Ketebalan OB: > 40 meter<br>Stripping Ratio Tinggi');
+
+                    return group;
+                }
+            },
+            'petaHidrogeologi': {
+                title: 'Peta Hidrogeologi & Air Tanah',
+                desc: 'Menampilkan kondisi muka air tanah untuk merancang sistem penyaliran tambang (Dewatering).',
+                basemap: satelliteLayer,
+                render: () => {
+                    const group = L.layerGroup();
+                    L.geoJSON(generatePitData(), { style: {color: 'white', weight: 2, fillOpacity: 0, dashArray: '5,5'} }).addTo(group);
+
+                    for(let i=0; i<4; i++) {
+                        L.ellipse([centerLat, centerLng], [0.009 + (i*0.006), 0.015 + (i*0.006)], -45, {
+                            color: '#00ffff', weight: 2, fillOpacity: 0, dashArray: '5, 10'
+                        }).addTo(group).bindPopup(`Muka Air Tanah (Water Table): Elevasi -${10 + (i*10)} mdpl`);
+                    }
+
+                    const wells = [
+                        {lat: centerLat + 0.012, lng: centerLng - 0.006, id: 'MW-01'},
+                        {lat: centerLat - 0.006, lng: centerLng + 0.012, id: 'MW-02'},
+                        {lat: centerLat - 0.018, lng: centerLng - 0.012, id: 'MW-03'}
+                    ];
+                    wells.forEach(w => {
+                        L.circleMarker([w.lat, w.lng], {
+                            radius: 6, color: '#fff', weight: 1, fillColor: '#0000ff', fillOpacity: 1
+                        }).addTo(group).bindPopup(`<b>Sumur Pantau (Piezometer) ${w.id}</b><br>Level Air: Stabil`);
+                    });
+
+                    L.marker([centerLat + 0.006, centerLng + 0.006], {
+                        icon: L.divIcon({html: `<i class="fa-solid fa-arrow-down-right text-cyan-400 text-2xl"></i>`, className: ''})
+                    }).addTo(group).bindPopup('Arah Aliran Air Tanah (Groundwater Flow)');
+
+                    return group;
+                }
+            }
+        };
+
+        L.ellipse = function(latlng, radii, tilt, options) {
+            const numSegments = 36;
+            const coords = [];
+            const rLat = radii[0];
+            const rLng = radii[1];
+            const tiltRad = tilt * Math.PI / 180;
+
+            for (let i = 0; i <= numSegments; i++) {
+                const theta = (i / numSegments) * 2 * Math.PI;
+                const x = rLng * Math.cos(theta);
+                const y = rLat * Math.sin(theta);
+                
+                const rx = x * Math.cos(tiltRad) - y * Math.sin(tiltRad);
+                const ry = x * Math.sin(tiltRad) + y * Math.cos(tiltRad);
+
+                coords.push([latlng[0] + ry, latlng[1] + rx]);
+            }
+            return L.polygon(coords, options);
+        };
+
+        // -------- UI INTERACTION --------
+        function toggleCategory(itemId, iconId) {
+            const item = document.getElementById(itemId);
+            const icon = document.getElementById(iconId);
+            
+            if (item.classList.contains('hidden')) {
+                item.classList.remove('hidden');
+                item.classList.add('flex');
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                item.classList.add('hidden');
+                item.classList.remove('flex');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-right');
+            }
+        }
+
+        toggleCategory('cat1-items', 'cat1-icon');
+
+        function createLegend(type) {
+            if (currentLegend) {
+                map.removeControl(currentLegend);
+            }
+
+            currentLegend = L.control({position: 'bottomleft'});
+            currentLegend.onAdd = function (map) {
+                const div = L.DomUtil.create('div', 'info legend');
+                let labels = [];
+
+                if(type === 'peta3d') {
+                    div.innerHTML += '<strong>Kadar Kalori (GAR)</strong><br>';
+                    labels.push('<i style="background:#1a9850"></i> > 6000 (High)');
+                    labels.push('<i style="background:#a6d96a"></i> 5500 - 6000');
+                    labels.push('<i style="background:#fdae61"></i> 5000 - 5500');
+                    labels.push('<i style="background:#d73027"></i> < 5000 (Low)');
+                } else if(type === 'petaProgress') {
+                    labels.push('<i style="background:green"></i> Selesai (Mined)');
+                    labels.push('<i style="background:red"></i> Target Bulan Ini');
+                    labels.push('<i style="background:gray"></i> Batas Pit');
+                } else if(type === 'petaGeotek') {
+                    labels.push('<i style="background:red"></i> Kritis (>5mm/hari)');
+                    labels.push('<i style="background:orange"></i> Waspada (1-5mm/hari)');
+                    labels.push('<i style="background:black; border-radius:50%"></i> Sensor Radar');
+                } else if(type === 'petaGeologi') {
+                    labels.push('<i style="background:#d8b365"></i> Fm. Balikpapan');
+                    labels.push('<i style="background:#5ab4ac"></i> Fm. Kampungbaru');
+                    labels.push('<i style="background:black; border-radius:50%"></i> Titik Bor (Coal > 5m)');
+                    labels.push('<i style="background:#888; border-radius:50%"></i> Titik Bor (Barren/< 5m)');
+                    labels.push('<i style="background:red; height:3px; margin-top:8px;"></i> Sesar / Patahan');
+                } else if(type === 'petaDenahTambang') {
+                    labels.push('<i style="background:#333333"></i> ROM Stockpile');
+                    labels.push('<i style="background:#f59e0b; height:3px; margin-top:8px;"></i> Haul Road (Jalan)');
+                    labels.push('<i style="background:#3b82f6"></i> Workshop');
+                    labels.push('<i style="background:yellow"></i> Jembatan Timbang');
+                    labels.push('<i style="background:#b91c1c"></i> Gudang Handak');
+                    labels.push('<i style="background:purple; border-radius:50%"></i> Fuel Station');
+                } else if(type === 'petaDenahMess') {
+                    labels.push('<i style="background:#3b82f6"></i> Kantor Utama');
+                    labels.push('<i style="background:#f97316"></i> Mess Karyawan');
+                    labels.push('<i style="background:#eab308"></i> Kantin');
+                    labels.push('<i style="background:#10b981"></i> Masjid');
+                    labels.push('<i style="background:#059669"></i> Lapangan Olahraga');
+                    labels.push('<i style="background:#374151"></i> Pos Security');
+                    labels.push('<i style="background:#ef4444; border-radius:50%"></i> Klinik / Medis');
+                } else if(type === 'petaLogistik') {
+                    labels.push('<i class="fa-solid fa-anchor text-amber-600" style="background:transparent; font-size:16px;"></i> Jetty / Port Tambang');
+                    labels.push('<i class="fa-solid fa-bolt text-red-500" style="background:transparent; font-size:16px;"></i> PLTU Terdekat');
+                    labels.push('<i class="fa-solid fa-ship text-blue-600" style="background:transparent; font-size:16px;"></i> Anchorage (BCT)');
+                    labels.push('<i style="background:#ef4444; height:4px; margin-top:8px;"></i> Rute Domestik (PLTU)');
+                    labels.push('<i style="background:#3b82f6; height:4px; margin-top:8px;"></i> Rute Ekspor');
+                } else if(type === 'petaSingkapan') {
+                    labels.push('<div style="float:left; margin-right:8px; font-weight:bold;">&#8868;</div> Titik Singkapan (Outcrop)');
+                    labels.push('<div style="clear:both; font-size:10px; margin-left:20px;">Garis atas = Strike</div>');
+                    labels.push('<div style="font-size:10px; margin-left:20px;">Garis bawah = Arah Dip</div>');
+                } else if(type === 'petaIsopach') {
+                    labels.push('<strong>Ketebalan Batubara</strong>');
+                    labels.push('<i style="background:#08519c"></i> > 6 Meter (Tebal)');
+                    labels.push('<i style="background:#6baed6"></i> 4 - 6 Meter');
+                    labels.push('<i style="background:#c6dbef"></i> 2 - 4 Meter (Tipis)');
+                } else if(type === 'petaIsoKualitas') {
+                    labels.push('<strong>Nilai Kalori (GAR)</strong>');
+                    labels.push('<i style="background:#006837"></i> > 6000 (High Grade)');
+                    labels.push('<i style="background:#addd8e"></i> 5200 - 6000 (Medium)');
+                    labels.push('<i style="background:#ffffcc"></i> < 5200 (Low Grade)');
+                } else if(type === 'petaOverburden') {
+                    labels.push('<strong>Ketebalan Overburden</strong>');
+                    labels.push('<i style="background:#993404"></i> > 40 Meter (Dalam)');
+                    labels.push('<i style="background:#d95f0e"></i> 20 - 40 Meter');
+                    labels.push('<i style="background:#fec44f"></i> 10 - 20 Meter (Dangkal)');
+                } else if(type === 'petaStrukturGeologi') {
+                    labels.push('<i style="background:#ff0000; height:3px; margin-top:8px;"></i> Sesar / Patahan (Fault)');
+                    labels.push('<i style="background:transparent; border-top: 3px dashed #0000ff; height:0; margin-top:10px;"></i> Sumbu Lipatan (Fold)');
+                } else if(type === 'petaHidrogeologi') {
+                    labels.push('<i style="background:transparent; border-top: 2px dashed #00ffff; height:0; margin-top:10px;"></i> Kontur Air Tanah');
+                    labels.push('<i style="background:#0000ff; border-radius:50%;"></i> Sumur Pantau');
+                    labels.push('<i class="fa-solid fa-arrow-down-right text-cyan-500" style="background:transparent; margin-top:2px;"></i> Arah Aliran Air');
+                } else {
+                    return div;
+                }
+
+                div.innerHTML += labels.join('<br>');
+                return div;
+            };
+            currentLegend.addTo(map);
+        }
+
+        function loadMap(mapKey) {
+            document.querySelectorAll('.sidebar-item').forEach(el => {
+                el.classList.remove('active', 'text-white', 'bg-gray-800');
+                el.classList.add('text-gray-400');
+            });
+            event.currentTarget.classList.add('active', 'text-white', 'bg-gray-800');
+            event.currentTarget.classList.remove('text-gray-400');
+
+            const config = mapConfigs[mapKey];
+            if(!config) return;
+
+            document.getElementById('map-title').innerText = config.title;
+            document.getElementById('map-desc').innerText = config.desc;
+
+            currentMapLayer.clearLayers();
+
+            map.removeLayer(satelliteLayer);
+            map.removeLayer(topoLayer);
+            config.basemap.addTo(map);
+
+            const newLayer = config.render();
+            currentMapLayer.addLayer(newLayer);
+
+            createLegend(mapKey);
+
+            const targetCenter = config.center || [centerLat, centerLng];
+            const targetZoom = config.zoom || 13;
+
+            map.flyTo(targetCenter, targetZoom, {
+                animate: true,
+                duration: 1.5
+            });
+        }
+
+        window.onload = () => {
+            document.querySelector("button[onclick=\"loadMap('peta3d')\"]").click();
+        };
+    </script>
+</body>
+</html>
