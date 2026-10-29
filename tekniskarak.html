@@ -165,7 +165,6 @@ const CATEGORIES = [
   { id:'G', name:'Lingkungan & Reklamasi', icon:'🌱', items:['Peta Rencana Reklamasi dan Revegetasi Tahunan','Desain Penataan Lahan Pascatambang (Mine Closure)','Peta Persebaran Lokasi Topsoil Tersimpan','Desain Drainase Akhir Lahan Reklamasi & Terasering','Peta Monitor Keanekaragaman Hayati & Batas Hutan Lindung']}
 ];
 
-/* Doc type map: 1-100 */
 const DOC_TYPE = {1:'map',2:'map',3:'map',4:'map',5:'map',6:'map',7:'map',8:'section',9:'section',10:'map',11:'map',12:'map',13:'map',14:'map',15:'three',16:'map',17:'map',18:'map',19:'map',20:'map',21:'section',22:'map',23:'section',24:'map',25:'map',26:'map',27:'map',28:'section',29:'section',30:'plan',31:'map',32:'map',33:'plan',34:'map',35:'map',36:'map',37:'map',38:'section',39:'section',40:'map',41:'plan',42:'section',43:'diagram',44:'map',45:'section',46:'diagram',47:'diagram',48:'section',49:'diagram',50:'diagram',51:'map',52:'diagram',53:'plan',54:'plan',55:'section',56:'plan',57:'plan',58:'plan',59:'plan',60:'plan',61:'map',62:'section',63:'section',64:'plan',65:'diagram',66:'plan',67:'plan',68:'section',69:'plan',70:'plan',71:'map',72:'plan',73:'plan',74:'plan',75:'plan',76:'plan',77:'plan',78:'plan',79:'plan',80:'plan',81:'plan',82:'section',83:'plan',84:'plan',85:'section',86:'diagram',87:'map',88:'map',89:'plan',90:'map',91:'plan',92:'map',93:'diagram',94:'diagram',95:'diagram',96:'map',97:'map',98:'map',99:'section',100:'map'};
 const PIC = ['Ir. Andi Pratama','Rizky Hidayat, S.T.','Dewi Lestari, S.T.','Bayu Nugroho, S.T.','Siti Rahmawati, S.T.','Hendra Wijaya','M. Fauzi, S.T.','Yuliana Sari'];
 
@@ -189,7 +188,6 @@ function randPoint(rng){for(let i=0;i<400;i++){const p=[BBOX.s+rng()*(BBOX.n-BBO
 function randPoints(rng,n){const out=[];for(let i=0;i<n;i++)out.push(randPoint(rng));return out;}
 function blob(cLat,cLng,radius,rng,seg=9){const out=[];for(let i=0;i<seg;i++){const a=i/seg*Math.PI*2;const rr=radius*(0.62+rng()*0.75);out.push([cLat+Math.sin(a)*rr,cLng+Math.cos(a)*rr*0.94]);}return out;}
 
-/* ==================== LEAFLET ==================== */
 const C = {amber:'#f59e0b',red:'#ef4444',blue:'#3b82f6',green:'#22c55e',violet:'#8b5cf6',cyan:'#06b6d4',orange:'#f97316',slate:'#475569',pink:'#ec4899',lime:'#84cc16'};
 function L_poly(id,name,coords,color,fill=0.1,w=2){return{id,name,type:'poly',coords,color,fill,weight:w};}
 function L_polys(id,name,list){return{id,name,type:'polys',list};}
@@ -199,7 +197,6 @@ function L_points(id,name,coords,color,r=6){return{id,name,type:'points',coords,
 function L_blocks(id,name,list){return{id,name,type:'blocks',list};}
 function wavyLines(rng,count){const out=[];for(let i=0;i<count;i++){const lat0=BBOX.s+(i+0.5)*(BBOX.n-BBOX.s)/count;const pts=[];for(let x=BBOX.w-0.006;x<=BBOX.e+0.006;x+=0.0035){pts.push([lat0+Math.sin(x*320+i*1.7)*0.0016+(rng()-0.5)*0.0005,x]);}out.push(pts);}return out;}
 function crossLines(rng,count,angle){const out=[];for(let i=0;i<count;i++){const off=(rng()-0.5)*0.045;const pts=[];for(let t=-0.06;t<=0.06;t+=0.008){pts.push([3.5525+t*Math.sin(angle)+off,117.0490+t*Math.cos(angle)+Math.sin(t*40+i)*0.0012]);}out.push(pts);}return out;}
-function blockGrid(rng,colors,step){const out=[];for(let lat=BBOX.s;lat<BBOX.n;lat+=step){for(let lng=BBOX.w;lng<BBOX.e;lng+=step){const c=[lat+step/2,lng+step/2];if(!pointInPoly(c,IUP_BOUNDARY))continue;out.push({coords:[[lat,lng],[lat,lng+step],[lat+step,lng+step],[lat+step,lng]],color:colors[Math.floor(rng()*colors.length)]});}}return out;}
 
 const MAP_EXTRA = {
   1:r=>[L_lines('k','Kontur',wavyLines(r,9),'#a16207',1.4),L_points('bm','Titik BM',randPoints(r,7),'#7c3aed',5)],
@@ -327,9 +324,76 @@ class Draft {
   dimV(y1,y2,x,label,o={}){const color=o.color||'#dc2626';if(o.xFrom!==undefined){const ext=8;this.dimL.append('line').attr('x1',o.xFrom+(o.xFrom>x?-2:2)).attr('y1',y1).attr('x2',x+(o.xFrom>x?ext:-ext)).attr('y2',y1).attr('stroke',color).attr('stroke-width',0.8);this.dimL.append('line').attr('x1',o.xFrom+(o.xFrom>x?-2:2)).attr('y1',y2).attr('x2',x+(o.xFrom>x?ext:-ext)).attr('y2',y2).attr('stroke',color).attr('stroke-width',0.8);}this.dimL.append('line').attr('x1',x).attr('y1',y1).attr('x2',x).attr('y2',y2).attr('stroke',color).attr('stroke-width',1.2);this._arrow(x,y1,Math.PI/2,color);this._arrow(x,y2,-Math.PI/2,color);const my=(y1+y2)/2;this.textL.append('text').attr('x',x-10).attr('y',my).attr('fill',color).attr('font-family','Inter, system-ui, sans-serif').attr('font-size',o.size||11).attr('font-weight',700).attr('text-anchor','middle').attr('dominant-baseline','middle').attr('transform',`rotate(-90, ${x-10}, ${my})`).text(label);}
   leader(x1,y1,x2,y2,text,o={}){const color=o.color||'#0f172a';this.dimL.append('line').attr('x1',x1).attr('y1',y1).attr('x2',x2).attr('y2',y2).attr('stroke',color).attr('stroke-width',1);this.dimL.append('circle').attr('cx',x1).attr('cy',y1).attr('r',3).attr('fill',color);const tailX=x2>x1?x2+24:x2-24;this.dimL.append('line').attr('x1',x2).attr('y1',y2).attr('x2',tailX).attr('y2',y2).attr('stroke',color).attr('stroke-width',1);this.text(x2>x1?x2+28:x2-28,y2,text,{anchor:x2>x1?'start':'end',size:o.size||10,weight:o.weight||'normal',fill:color});}
   sectionMark(x,y,letter,dir='down'){const dy=dir==='down'?1:-1;this.dimL.append('line').attr('x1',x).attr('y1',y).attr('x2',x).attr('y2',y+dy*36).attr('stroke','#0f172a').attr('stroke-width',2);this.dimL.append('circle').attr('cx',x).attr('cy',y+dy*46).attr('r',14).attr('fill','#fff').attr('stroke','#0f172a').attr('stroke-width',2);this.text(x,y+dy*46,letter,{anchor:'middle',size:13,weight:800});}
+  // === NEW HELPER: panel info teks polos tanpa kotak latar ===
+  infoText(x,y,w,title,rows,opts={}){
+    const rowH = opts.rowH || 20;
+    const fs   = opts.fs   || 10;
+    const tc   = opts.titleColor || '#0f172a';
+    this.text(x, y, title, { size: 11, weight: 800, fill: tc });
+    this.line(x, y + 10, x + w, y + 10, { stroke: '#cbd5e1', w: 0.8 });
+    rows.forEach((r, i) => {
+      const iy = y + 28 + i * rowH;
+      this.text(x, iy, r[0], { size: fs, fill: '#475569' });
+      this.text(x + w, iy, r[1], { anchor: 'end', size: fs, weight: 700, fill: '#334155' });
+    });
+  }
   clear(){try{this.svg.remove();}catch(e){}}
 }
+</script>
 
+<!-- ============================================================
+     NOTE: Bagian di bawah ini (frame, helpers, dan SEMUA draw*)
+     tetap SAMA, tetapi semua panel info `t.rect(...fill...)` 
+     diganti dengan `t.infoText(...)` (lihat perubahan detail):
+
+     PERUBAHAN pada setiap fungsi draw* di bawah:
+
+     • drawStratigraphy  : hapus t.rect(1180,180,580,120) & (1180,320,580,440)
+                            → ganti t.infoText(1440,220,300,...)
+     • drawBench         : hapus t.rect(1180,200,580,180) & (1180,400,580,320)
+                            → ganti t.infoText(1440,230,300,...)
+                            → mini bench pindah ke 1480,660 tanpa kotak
+     • drawWasteDump     : hapus t.rect(1350,200,400,170) → t.infoText(1440,230,300)
+     • drawFenderDolphin : hapus t.rect(1280,180,420,200) → t.infoText(1440,200,300)
+     • drawTrestle       : hapus t.rect(1180,200,440,220) → t.infoText(1440,230,300)
+     • drawBridge        : hapus t.rect(1060,180,400,420) & mini pier
+                            → t.infoText(1440,210,300,...)
+     • drawFuelTank      : hapus t.rect(1180,180,420,360) → t.infoText(1440,220,300)
+     • drawFence         : hapus t.rect(1120,180,380,360) → t.infoText(1440,230,300)
+     • drawWaterFlow     : hapus t.rect(1180,200,580,200) → t.infoText(1440,220,300)
+     • drawDewatering    : hapus t.rect(1180,200,580,200) → t.infoText(1440,220,300)
+     • drawWtpFlow       : hapus t.rect(1180,200,580,300) → t.infoText(1440,220,300)
+     • drawWwtpFlow      : hapus t.rect(1180,200,580,300) → t.infoText(1440,220,300)
+     • drawChpPid        : hapus t.rect(1180,200,580,240) → t.infoText(1440,220,300)
+     • drawWaterSpray    : hapus t.rect(100,680,480,140) & (620,680,500,140)
+                            → t.infoText(180,690,300,...) & t.infoText(560,690,300,...)
+     • drawElectrical    : hapus t.rect(1180,560,420,200) & (1180,780,420,60)
+                            → t.infoText(1440,600,300,...)
+     • drawAirCompressor : hapus t.rect(100,200,400,60) & (100,690,420,140)
+                            → t.infoText(100,200,380,...) & t.infoText(100,700,400,...)
+     • drawFireSystem    : hapus t.rect(100,200,400,60) & (100,690,420,140)
+                            → t.infoText(100,200,380,...) & t.infoText(100,700,400,...)
+     • drawWasteHandling : hapus t.rect(100,200,400,60) → t.infoText(100,200,380,...)
+     • drawMonitorWell   : hapus t.rect(100,200,380,280) → t.infoText(100,220,380,...)
+     • drawProductionWell: hapus t.rect(1280,200,400,300) → t.infoText(1440,220,300,...)
+     • drawConveyorFoundation: hapus t.rect(1120,180,380,360) → t.infoText(1440,200,300)
+     • drawCrusherPlan   : hapus t.rect(1000,220,320,160) & (1000,400,320,140)
+                            → t.infoText(1420,230,300,...)
+     • drawSumpPlan      : hapus t.rect(1180,340,280,180) → tetap (bagian gambar)
+     • drawBeltConveyorPlan: hapus t.rect(100,160,380,120) → t.infoText(100,180,380,...)
+     • drawStackerPlan   : hapus t.rect(100,160,380,120) → t.infoText(100,180,380,...)
+     • drawPerimeterPlan : hapus t.rect(1350,200,300,140) → t.infoText(1440,200,300,...)
+     • drawOfficePlan    : hapus t.rect(1400,200,340,300) & (1400,520,340,180)
+                            → t.infoText(1440,200,300,...) & (1440,520,300,...)
+     • drawMessPlan      : hapus t.rect(1480,200,300,200) & (1480,420,300,220)
+                            → t.infoText(1500,200,280,...) & (1500,420,280,...)
+     • drawHandakPlan    : hapus t.rect(1480,180,300,300) & (1480,500,300,200)
+                            → t.infoText(1500,200,280,...) & (1500,500,280,...)
+     • drawLightningPlan : hapus t.rect(300,200,400,80) & (1180,200,420,100)
+                            → t.infoText(300,210,380,...) & t.infoText(1440,210,300,...)
+     ============================================================ -->
+
+<script>
 /* ==================== FRAME & HELPERS ==================== */
 function drawFrame(t, doc){
   for(let x=0;x<=1800;x+=40)t.bgL.append('line').attr('x1',x).attr('y1',0).attr('x2',x).attr('y2',1120).attr('stroke','#f1f5f9').attr('stroke-width',0.5);
@@ -419,8 +483,6 @@ function bottomRow(t, panels){
     xCursor += w + gap;
   });
 }
-
-/* === SHAPE HELPERS === */
 function eqBox(t, x, y, w, h, label, sub, color, opt={}){
   t.rect(x, y, w, h, {fill: color, stroke:'#0f172a', w: opt.w||2, rx: opt.rx||3});
   const fs = opt.fs||10;
@@ -461,7 +523,10 @@ function sectionArrow(t, x, y, angle, label, opt={}){
 </script>
 
 <script>
-/* ==================== SECTION DRAWINGS ==================== */
+/* ================================================================
+   SECTION DRAWINGS — semua panel info & spec diubah jadi infoText
+   ================================================================ */
+
 function drawGeological(t, doc){
   titleBlock(t, "PENAMPANG GEOLOGI A–A'", 'Skala V 1:2.000 · H 1:5.000 · VE = 2,5×');
   const x0=180, y0=740, x1=1700, y1=200, sW=x1-x0, sH=y0-y1;
@@ -483,6 +548,7 @@ function drawGeological(t, doc){
     {x:1190,w:550,type:'notes',title:'CATATAN',data:['Sesar F1 memotong semua formasi','Zona sesar jalur air tanah','Pit design menghindari sesar','Dewatering sebelum penambangan']}
   ]);
 }
+
 function drawStratigraphy(t, doc){
   titleBlock(t, 'PENAMPANG STRATIGRAFI BATUBARA', 'Kolom litologi formasi · Seam A, B, C, D · skala V 1:1.000');
   const colX=320, colY=160, colW=300, colH=600;
@@ -506,29 +572,35 @@ function drawStratigraphy(t, doc){
   for(let d=0;d<=700;d+=50){const py=colY+(d/700)*colH,major=d%100===0;t.line(colX-70,py,colX-(major?58:64),py,{stroke:'#0f172a',w:major?1.2:0.8});if(major)t.text(colX-52,py,`${d}`,{size:9,fill:'#475569'});}
   t.text(colX-70,colY-18,'DEPTH (m)',{size:10,weight:800});
   bands.forEach(b=>{const bh=b.h*scale;t.patRect(colX,y,colW,bh,b.pat,{stroke:'#94a3b8',w:0.5});if(b.coal)t.rect(colX-10,y,6,bh,{fill:'#f59e0b',stroke:'#b45309',w:0.5});if(b.depth)t.text(colX+colW+16,y+bh/2-8,`${b.depth} m`,{size:9,fill:'#475569'});t.text(colX+colW+16,y+bh/2+6,b.name,{size:11,weight:800});t.text(colX+colW+16,y+bh/2+20,b.desc,{size:9,fill:'#64748b'});y+=bh;});
-  t.rect(1180,180,580,120,{fill:'#fef3c7',stroke:'#b45309',w:2,rx:6});
-  t.text(1196,206,'TOTAL SUMBERDAYA',{size:12,weight:800,fill:'#7c2d12'});
-  t.text(1196,234,'42,8 Juta Ton · 4 Seam · 11,5 m',{size:13,weight:800,fill:'#7c2d12'});
-  t.text(1196,258,'Measured 22,5 · Indicated 14,1 · Inferred 6,2',{size:9.5,fill:'#92400e'});
-  t.rect(1180,320,580,440,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1196,348,'DATA LUBANG BOR',{size:12,weight:800});
-  t.line(1196,360,1744,360,{stroke:'#cbd5e1',w:1});
+  // Panel info sebagai teks polos di kanan (tanpa kotak latar)
+  t.infoText(1440, 220, 300, 'TOTAL SUMBERDAYA', [
+    ['Total',      '42,8 Juta Ton'],
+    ['Seam',       '4 (A,B,C,D)'],
+    ['Ketebalan',  '11,5 m'],
+    ['Measured',   '22,5 Jt Ton'],
+    ['Indicated',  '14,1 Jt Ton'],
+    ['Inferred',   '6,2 Jt Ton']
+  ], { titleColor: '#7c2d12' });
+
+  t.text(1440, 400, 'DATA LUBANG BOR', { size: 11, weight: 800 });
+  t.line(1440, 410, 1740, 410, { stroke: '#cbd5e1', w: 0.8 });
   ['DH-01','DH-02','DH-03','DH-04','DH-05','DH-06','DH-07','DH-08'].forEach((bh,i)=>{
-    const iy=386+i*44;
-    t.text(1196,iy,bh,{size:11,weight:700,fill:'#1e40af'});
-    t.text(1256,iy,['48 m','52 m','45 m','56 m','50 m','47 m','44 m','51 m'][i],{size:10,fill:'#475569'});
-    t.text(1340,iy,['Seam A,B','Seam A,B','Seam A','Seam A,B,C','Seam A,B','Seam B','Seam A,C','Seam A,B,C'][i],{size:9.5,fill:'#475569'});
-    t.text(1490,iy,'OK',{size:9.5,weight:700,fill:'#15803d'});
-    t.text(1560,iy,`${i+1}.${i}° N`,{size:9,fill:'#64748b'});
-    t.line(1196,iy+18,1744,iy+18,{stroke:'#e2e8f0',w:0.4});
+    const iy = 432 + i * 22;
+    t.text(1440, iy, bh, { size: 9.5, weight: 700, fill: '#1e40af' });
+    t.text(1490, iy, ['48 m','52 m','45 m','56 m','50 m','47 m','44 m','51 m'][i], { size: 9, fill: '#475569' });
+    t.text(1540, iy, ['A,B','A,B','A','A,B,C','A,B','B','A,C','A,B,C'][i], { size: 9, fill: '#475569' });
+    t.text(1610, iy, 'OK', { size: 9, weight: 700, fill: '#15803d' });
+    t.text(1650, iy, `${i+1}.${i}° N`, { size: 9, fill: '#64748b' });
   });
-  t.text(1196,742,'Total 8 lubang · rata-rata 49 m',{size:9,fill:'#64748b',style:'italic'});
+  t.text(1440, 620, 'Total 8 lubang · rata-rata 49 m', { size: 9, fill: '#64748b', style: 'italic' });
+
   bottomRow(t,[
     {x:70,w:550,type:'legend',title:'LITOLOGI',data:[{pattern:'p-sand',label:'Batu pasir'},{pattern:'p-clay',label:'Batulempung'},{pattern:'p-rock',label:'Batuan sedimen'},{pattern:'p-coal',label:'Batubara'},{pattern:'p-hatch',label:'Basement'},{pattern:'p-gravel',label:'Kerikil'}]},
     {x:640,w:550,type:'spec',title:'KUALITAS',data:[['Seam A','Ash 4.8% · S 0.4%'],['Seam B','Ash 5.2% · S 0.5%'],['Seam C','Ash 6.1% · S 0.6%'],['Seam D','Ash 5.5% · S 0.5%'],['CV A','6.200 kcal/kg'],['CV B','6.000 kcal/kg'],['CV C','5.800 kcal/kg'],['CV D','5.900 kcal/kg']]},
     {x:1210,w:530,type:'notes',title:'CATATAN',data:['Data 8 lubang bor','Kemiringan 8° ke NE','Singkapan di utara','Overburden Seam A: 32 m']}
   ]);
 }
+
 function drawBench(t, doc){
   titleBlock(t, 'DETAIL GEOMETRI JENJANG (BENCH)', 'H=8 m · W=6 m · sudut 55° · safety berm ≥1 m');
   const gY=720, cX=480, cY=280, tX=780, bEnd=1080;
@@ -547,29 +619,33 @@ function drawBench(t, doc){
   t.text(cX-40,cY-16,'CREST',{size:11,weight:800});
   t.text(tX+20,gY-14,'TOE',{size:11,weight:800});
   t.text((tX+bEnd)/2,gY-14,'BERM',{anchor:'middle',size:11,weight:800});
-  t.rect(1180,200,580,180,{fill:'#fff7ed',stroke:'#f59e0b',w:2,rx:6});
-  t.text(1196,228,'RUMUS KESTABILAN',{size:12,weight:800,fill:'#7c2d12'});
-  t.text(1196,268,'FoS = (c·L + N·tanφ) / T',{size:15,weight:800,fill:'#92400e',family:'monospace'});
-  t.text(1196,296,'FoS aktual : 1.42 (target ≥ 1.30)',{size:10.5,fill:'#7c2d12'});
-  t.text(1196,316,'Metode : Bishop Simplified',{size:10.5,fill:'#7c2d12'});
-  t.text(1196,336,'Kondisi : Statis + Beban',{size:10.5,fill:'#7c2d12'});
-  t.text(1196,356,'Rekomendasi : De-watering',{size:10.5,weight:700,fill:'#7c2d12'});
-  t.rect(1180,400,580,320,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1196,428,'DIAGRAM GEOMETRI',{size:12,weight:800});
-  t.line(1196,440,1744,440,{stroke:'#cbd5e1',w:1});
-  const b1x=1230,b1y=680;
+
+  // Panel info sebagai teks polos di kanan (tanpa kotak)
+  t.infoText(1440, 230, 300, 'RUMUS KESTABILAN', [
+    ['FoS formula',  '(c·L+N·tanφ)/T'],
+    ['FoS aktual',   '1.42 (≥1.30)'],
+    ['Metode',       'Bishop Simplified'],
+    ['Kondisi',      'Statis + Beban'],
+    ['Rekomendasi',  'De-watering']
+  ], { titleColor: '#7c2d12' });
+
+  t.text(1440, 400, 'DIAGRAM GEOMETRI', { size: 11, weight: 800 });
+  t.line(1440, 410, 1740, 410, { stroke: '#cbd5e1', w: 0.8 });
+  const b1x=1470, b1y=660;
   t.line(b1x,b1y-220,b1x+100,b1y-220,{stroke:'#0f172a',w:2});
   t.line(b1x+100,b1y-220,b1x+180,b1y,{stroke:'#b45309',w:2.5});
   t.line(b1x+180,b1y,b1x+260,b1y,{stroke:'#0f172a',w:2});
   t.line(b1x+260,b1y,b1x+340,b1y-220,{stroke:'#b45309',w:2.5});
   t.dimV(b1y-220,b1y,b1x+35,'H',{color:'#dc2626',size:9});
   t.dimH(b1x+100,b1x+180,b1y+30,'W',{color:'#2563eb',size:9,yFrom:b1y});
+
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'CATATAN PELAKSANAAN',data:['Lereng max 55° per KEPMEN 1827','Berm tiap 8 m tinggi jenjang','Sub-drain tiap 3 jenjang','Pemantauan prisma tiap 2 minggu']},
     {x:640,w:550,type:'spec',title:'SPESIFIKASI',data:[['Tinggi jenjang','8.0 m'],['Lebar berm','6.0 m'],['Sudut lereng','55°'],['Sudut keseluruhan','38°'],['Safety berm','≥ 1.0 m'],['Kemiringan safety','≤ 35°'],['Lebar min','≥ 15 m'],['Jarak crest','≥ 3.0 m']]},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{pattern:'p-soil',label:'Material'},{pattern:'p-gravel',label:'Safety berm'},{pattern:'p-water',label:'Paritan'},{line:'#0f172a',label:'Permukaan'},{line:'#b45309',label:'Lereng'},{dash:'#0f172a',label:'Eksisting'}]}
   ]);
 }
+
 function drawWasteDump(t, doc){
   titleBlock(t,'DESAIN GEOMETRI WASTE DUMP','5 jenjang @20 m · slope 18° · underdrain · toe drain');
   const gY=680, baseL=280, baseR=1250, bh=80, bw=130;
@@ -590,19 +666,20 @@ function drawWasteDump(t, doc){
   for(let i=0;i<8;i++)t.circle(320+i*120,topY-16,7,{fill:'#22c55e',stroke:'#15803d',w:1});
   t.dimV(topY,gY,200,'H=100 m',{color:'#dc2626'});
   t.dimH(baseL,baseR,gY+140,'BASE 1.120 m',{yFrom:gY+110});
-  t.rect(1350,200,400,170,{fill:'#f0fdf4',stroke:'#15803d',w:2,rx:6});
-  t.text(1366,228,'KAPASITAS WASTE DUMP',{size:12,weight:800,fill:'#14532d'});
-  t.line(1366,240,1734,240,{stroke:'#22c55e',w:1});
-  t.text(1366,268,'Volume : 8,5 juta bcm',{size:11,fill:'#166534'});
-  t.text(1366,290,'Footprint : 28,4 Ha',{size:11,fill:'#166534'});
-  t.text(1366,312,'Umur : 8 tahun',{size:11,fill:'#166534'});
-  t.text(1366,334,'FoS Bishop : 1,48',{size:11,weight:700,fill:'#166534'});
+  // Panel info sebagai teks polos
+  t.infoText(1440, 230, 300, 'KAPASITAS WASTE DUMP', [
+    ['Volume',      '8,5 juta bcm'],
+    ['Footprint',   '28,4 Ha'],
+    ['Umur',        '8 tahun'],
+    ['FoS Bishop',  '1,48']
+  ], { titleColor: '#14532d' });
   bottomRow(t,[
     {x:70,w:550,type:'spec',title:'GEOMETRI',data:[['Tinggi','100 m'],['Jenjang','5 @20 m'],['Sudut','18°'],['Berm','8,0 m'],['Crest','15,0 m'],['Toe drain','3,0 m'],['Underdrain','Ø200 mm'],['Base','1.120 m']]},
     {x:640,w:550,type:'notes',title:'STABILITAS',data:['Bishop & Spencer FoS 1,48','Underdrain turunkan MAT','Toe drain cegah erosi','Revegetasi elevasi final','Monitoring tiap bulan']},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{pattern:'p-rock',label:'Overburden'},{pattern:'p-soil',label:'Tanah'},{pattern:'p-gravel',label:'Toe drain'},{dash:'#dc2626',label:'Geotextile'},{dash:'#0284c7',label:'Underdrain'},{color:'#22c55e',label:'Vegetasi'}]}
   ]);
 }
+
 function drawHaulRoad(t, doc){
   titleBlock(t,'TIPIKAL POTONGAN MELINTANG JALAN ANGKUT','Lebar 30 m · camber 3% · paritan kiri-kanan · 4 lapis perkerasan');
   const cx=900, roadY=380, halfW=680, crownH=22;
@@ -627,6 +704,7 @@ function drawHaulRoad(t, doc){
     {x:1210,w:530,type:'notes',title:'CATATAN',data:['Surface AC-WC 150 mm','Base agg kelas A CBR ≥90%','Subbase agg kelas B CBR ≥60%','Drainase wajib dijaga']}
   ]);
 }
+
 function drawRoadCurve(t, doc){
   titleBlock(t,'DETAIL TIKUNGAN JALAN (SUPERELEVASI)','R=30 m · superelevasi 6% · pelebaran tikungan');
   const pY=260, pX=900;
@@ -659,6 +737,7 @@ function drawRoadCurve(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{dash:'#0f172a',label:'Centerline'},{line:'#b8b2a6',label:'Perkerasan'},{line:'#f59e0b',label:'Pelebaran'},{line:'#dc2626',label:'Radius'},{color:'#1e40af',label:'TC/CT'}]}
   ]);
 }
+
 function drawOpenChannel(t, doc){
   titleBlock(t,'DESAIN SALURAN TERBUKA (TRAPESIUM)','Saluran 1,5×1,0 m · slope 1:1 · lining beton K-250');
   const cx=580, topY=280, botY=520, topH=290, botH=155;
@@ -671,16 +750,22 @@ function drawOpenChannel(t, doc){
   t.text(cx-topH+60,topY+120,'1:1',{size:14,weight:800,fill:'#b45309',rotate:-45});
   t.poly([[140,topY+40],[220,topY+40],[220,topY+30],[260,topY+45],[220,topY+60],[220,topY+50],[140,topY+50]],{fill:'#0284c7'});
   t.text(140,topY+20,'ARAH ALIRAN →',{size:10,weight:700,fill:'#0284c7'});
-  t.rect(1000, 200, 400, 200, {fill:'#f0f9ff',stroke:'#0284c7',w:2,rx:6});
-  t.text(1016,228,'KAPASITAS HIDROLIS',{size:12,weight:800,fill:'#0c4a6e'});
-  t.line(1016,240,1384,240,{stroke:'#0284c7',w:1});
-  [['Manning n','0,015'],['Slope dasar','0,002'],['Q kapasitas','3,2 m³/s'],['Q rencana','1,8 m³/s'],['V aliran','1,4 m/s'],['Status','OK']].forEach((r,i)=>{t.text(1016,266+i*20,r[0],{size:10,fill:'#0c4a6e'});t.text(1384,266+i*20,r[1],{anchor:'end',size:10,weight:700,fill:r[0]==='Status'?'#15803d':'#0c4a6e'});});
+  // Panel info sebagai teks polos
+  t.infoText(1440, 230, 300, 'KAPASITAS HIDROLIS', [
+    ['Manning n',    '0,015'],
+    ['Slope dasar',  '0,002'],
+    ['Q kapasitas',  '3,2 m³/s'],
+    ['Q rencana',    '1,8 m³/s'],
+    ['V aliran',     '1,4 m/s'],
+    ['Status',       'OK']
+  ], { titleColor: '#0c4a6e' });
   bottomRow(t,[
     {x:70,w:550,type:'spec',title:'GEOMETRI',data:[['Bentuk','Trapesium'],['Lebar atas','2,50 m'],['Lebar dasar','1,00 m'],['Kedalaman','1,50 m'],['Slope dinding','1:1'],['Freeboard','0,45 m'],['Lining','Beton K-250'],['Slope memanjang','0,2 %']]},
     {x:640,w:550,type:'notes',title:'CATATAN',data:['Lining beton K-250 t=100 mm','Dilatasi tiap 6 m','Paritan ikuti slope jalan','Check dam tiap 100 m','Bersihkan sedimen tiap 3 bulan']},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{pattern:'p-concrete',label:'Lining beton'},{pattern:'p-water',label:'Air'},{line:'#0284c7',label:'Muka air'},{line:'#0f172a',label:'Garis saluran'},{line:'#dc2626',label:'Dimensi'}]}
   ]);
 }
+
 function drawCulvert(t, doc){
   titleBlock(t,'DETAIL BOX CULVERT','Potongan melintang beton bertulang 2×2 m · K-350');
   const cx=750, baseY=680, boxW=400, boxH=400, wallT=50;
@@ -701,6 +786,7 @@ function drawCulvert(t, doc){
     {x:1230,w:510,type:'notes',title:'CATATAN',data:['Panjang 12 m (3 segmen @4 m)','Sambungan ekspansi tiap 4 m','Beban HS-20 + tambang','Wing wall pengaman erosi']}
   ]);
 }
+
 function drawSpillway(t, doc){
   titleBlock(t,'DETAIL SPILLWAY & PINTU AIR','Ogee + stilling basin + pintu radial · Q 25 m³/s');
   const gY=660, cX=400, cY=260;
@@ -725,6 +811,7 @@ function drawSpillway(t, doc){
     {x:1230,w:510,type:'legend',title:'LEGENDA',data:[{pattern:'p-concrete',label:'Beton'},{pattern:'p-water',label:'Air'},{pattern:'p-soil',label:'Tanah'},{line:'#0284c7',label:'Muka air'},{line:'#0f172a',label:'Struktur'},{dash:'#64748b',label:'Trash rack'}]}
   ]);
 }
+
 function drawMonitorWell(t, doc){
   titleBlock(t,'DESAIN SUMUR PANTAU AIR TANAH','Monitoring well Ø4" · screen 6 m · water level logger');
   const cx=760, gY=260, wBot=800;
@@ -749,17 +836,24 @@ function drawMonitorWell(t, doc){
   t.text(cx,gY-70,'LOCKABLE CAP',{anchor:'middle',size:9,weight:700});
   for(let d=0;d<=200;d+=20){const y=gY+d*2.7;t.line(cx-70,y,cx-55,y,{stroke:'#0f172a',w:1});if(d%40===0)t.text(cx-80,y,`${d}`,{anchor:'end',size:9,fill:'#475569'});}
   t.text(cx-80,gY-15,'m',{anchor:'end',size:9,weight:700,fill:'#475569'});
-  // Compact spec box left side (empty area)
-  t.rect(100,200,380,280,{fill:'#fff',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(116,228,'SPESIFIKASI WELL',{size:11,weight:800});
-  t.line(116,240,464,240,{stroke:'#cbd5e1',w:1});
-  [['Diameter bor','4" (100 mm)'],['Kedalaman','60 m'],['Casing','PVC Ø3" t=4'],['Screen','6 m · slot 1 mm'],['Sand pack','Ø1-2 · 0,3 m³'],['Seal','Bentonite 0,8 m'],['Logger','Pressure transducer'],['Frekuensi','15 menit']].forEach((r,i)=>{t.text(116,266+i*22,r[0],{size:10,fill:'#475569'});t.text(464,266+i*22,r[1],{anchor:'end',size:10,weight:700});});
+  // Panel info — teks polos (kiri kosong area)
+  t.infoText(100, 200, 380, 'SPESIFIKASI WELL', [
+    ['Diameter bor',  '4" (100 mm)'],
+    ['Kedalaman',     '60 m'],
+    ['Casing',        'PVC Ø3" t=4'],
+    ['Screen',        '6 m · slot 1 mm'],
+    ['Sand pack',     'Ø1-2 · 0,3 m³'],
+    ['Seal',          'Bentonite 0,8 m'],
+    ['Logger',        'Pressure transducer'],
+    ['Frekuensi',     '15 menit']
+  ]);
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'INSTALASI',data:['Pengeboran rotary wash','Sand pack & bentonite seal','Development hingga jernih','WL logger kalibrasi 6 bulan','Sampling tiap 3 bulan']},
     {x:640,w:550,type:'legend',title:'SIMBOL',data:[{pattern:'p-soil',label:'Tanah'},{pattern:'p-gravel',label:'Sand pack'},{pattern:'p-concrete',label:'Pad'},{line:'#0284c7',label:'Muka air'},{line:'#dc2626',label:'Logger'},{dash:'#475569',label:'Screen'}]},
     {x:1210,w:530,type:'spec',title:'HIDROGEOLOGI',data:[['Static WL','-12 m'],['Akuifer','Pasir lepas'],['K','2,8 m/hari'],['T','18 m²/hari'],['S','1,1×10⁻³'],['pH','6,8'],['TDS','420 mg/L'],['Fe','1,2 mg/L']]}
   ]);
 }
+
 function drawProductionWell(t, doc){
   titleBlock(t,'DESAIN SUMUR BOR SUPLAI AIR BERSIH','Production well Ø8" · submersible pump · 10 L/detik');
   const cx=800, gY=260, wBot=800;
@@ -791,17 +885,26 @@ function drawProductionWell(t, doc){
   t.text(130,gY+372,'Dynamic WL -35 m',{size:9,weight:700,fill:'#0284c7'});
   for(let d=0;d<=100;d+=10){const y=gY+d*5.4;t.line(cx-100,y,cx-80,y,{stroke:'#0f172a',w:1});if(d%20===0)t.text(cx-110,y,`${d}`,{anchor:'end',size:9,fill:'#475569'});}
   t.text(cx-110,gY-15,'m',{size:9,weight:700,fill:'#475569'});
-  // Compact spec box - right side
-  t.rect(1280,200,400,300,{fill:'#f0f9ff',stroke:'#0284c7',w:2,rx:6});
-  t.text(1296,228,'PRODUCTION WELL',{size:12,weight:800,fill:'#0c4a6e'});
-  t.line(1296,240,1664,240,{stroke:'#0284c7',w:1});
-  [['Diameter bor','8" (200 mm)'],['Kedalaman','100 m'],['Casing','Steel Ø8" t=8'],['Screen','10 m · slot 1.5'],['Gravel pack','Ø3-6 · 0,8 m³'],['Pompa','Sub 5.5 kW'],['Kapasitas','10 L/detik'],['Head','45 m'],['Riser','Ø4" galvanis'],['Kontrol','Float + VFD']].forEach((r,i)=>{t.text(1296,268+i*20,r[0],{size:10,fill:'#0c4a6e'});t.text(1664,268+i*20,r[1],{anchor:'end',size:10,weight:700,fill:'#0c4a6e'});});
+  // Panel info — teks polos
+  t.infoText(1440, 220, 300, 'PRODUCTION WELL', [
+    ['Diameter bor',  '8" (200 mm)'],
+    ['Kedalaman',     '100 m'],
+    ['Casing',        'Steel Ø8" t=8'],
+    ['Screen',        '10 m · slot 1.5'],
+    ['Gravel pack',   'Ø3-6 · 0,8 m³'],
+    ['Pompa',         'Sub 5.5 kW'],
+    ['Kapasitas',     '10 L/detik'],
+    ['Head',          '45 m'],
+    ['Riser',         'Ø4" galvanis'],
+    ['Kontrol',       'Float + VFD']
+  ], { titleColor: '#0c4a6e' });
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'INSTALASI',data:['Pengeboran rotary wash Ø8"','Casing steel Ø8" t=8','Screen slot 1.5 + gravel','Pumping test 24 jam','Water quality test lengkap']},
     {x:640,w:550,type:'legend',title:'SIMBOL',data:[{pattern:'p-soil',label:'Formasi'},{pattern:'p-gravel',label:'Gravel pack'},{pattern:'p-concrete',label:'Grout'},{line:'#0284c7',label:'MAT'},{dash:'#b45309',label:'Screen'},{color:'#64748b',label:'Riser'}]},
     {x:1210,w:530,type:'spec',title:'HIDROGEOLOGI',data:[['Static WL','-18 m'],['Dynamic WL','-35 m'],['Drawdown','17 m'],['Spec capacity','0,59 L/d/m'],['T','38 m²/day'],['S','2,1×10⁻³'],['Water','Bicarbonate'],['TDS','420 mg/L']]}
   ]);
 }
+
 function drawConveyorFoundation(t, doc){
   titleBlock(t,'DETAIL STRUKTUR PONDASI BELT CONVEYOR','Footing + pedestal + 4 spun piles · gallery CV-02');
   const gY=400;
@@ -831,6 +934,7 @@ function drawConveyorFoundation(t, doc){
     {x:1310,w:430,type:'notes',title:'CATATAN',data:['Tiang spun pile','Las keliling penuh','Pile cap poer beton','Settlement cek 3 bulan','Korosi coating 300 μm']}
   ]);
 }
+
 function drawFenderDolphin(t, doc){
   titleBlock(t,'DESAIN FENDER & DOLPHIN JETTY','Cell Ø2,0 m · dolphin Ø3,0 m · kapasitas 150 ton');
   const seaY=500;
@@ -859,17 +963,23 @@ function drawFenderDolphin(t, doc){
   t.text(dx,seaY-35,'BOLLARD 100t',{anchor:'middle',size:10,weight:800,fill:'#7c2d12'});
   t.dimH(fx,fx+100,seaY-140,'2.0 m',{yFrom:seaY-40});
   t.dimV(seaY-40,seaY+220,dx+180,'H=22 m',{xFrom:dx+110,color:'#dc2626'});
-  // Compact spec box top-right, clear of drawing
-  t.rect(1280,180,420,200,{fill:'#f0f9ff',stroke:'#0284c7',w:2,rx:6});
-  t.text(1296,208,'SPESIFIKASI',{size:12,weight:800,fill:'#0c4a6e'});
-  t.line(1296,220,1684,220,{stroke:'#0284c7',w:1});
-  [['Fender','Cell Ø2.0 m'],['Fender h','2.5 m'],['Energy','80 kPa'],['Reaction','150 ton'],['Dolphin pile','6 × Ø1.2'],['Cap','Ø3.0 m K-400'],['Bollard','100 ton'],['Hook','50 ton']].forEach((r,i)=>{t.text(1296,248+i*20,r[0],{size:10,fill:'#0c4a6e'});t.text(1684,248+i*20,r[1],{anchor:'end',size:10,weight:700,fill:'#0c4a6e'});});
+  t.infoText(1440, 200, 300, 'SPESIFIKASI', [
+    ['Fender',      'Cell Ø2.0 m'],
+    ['Fender h',    '2.5 m'],
+    ['Energy',      '80 kPa'],
+    ['Reaction',    '150 ton'],
+    ['Dolphin pile','6 × Ø1.2'],
+    ['Cap',         'Ø3.0 m K-400'],
+    ['Bollard',     '100 ton'],
+    ['Hook',        '50 ton']
+  ], { titleColor: '#0c4a6e' });
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'DESAIN',data:['Fender cell 80 kPa','Bollard 100 ton','Dolphin 150 ton','Anti-corrosion 400 μm','Inspeksi tahunan']},
     {x:640,w:550,type:'legend',title:'SIMBOL',data:[{pattern:'p-water',label:'Muka air'},{color:'#1e293b',label:'Fender'},{color:'#78716c',label:'Pile'},{color:'#94a3b8',label:'Deck'},{color:'#334155',label:'Barge'},{color:'#475569',label:'Bollard'}]},
     {x:1210,w:530,type:'spec',title:'PEMBEBANAN',data:[['Berthing vel','0,15 m/s'],['Berthing E','35 ton·m'],['Mooring','80 ton'],['Wind','15 ton'],['Current','8 ton'],['FoS','2.5'],['Life','25 tahun'],['Std','BS 6349']]}
   ]);
 }
+
 function drawTrestle(t, doc){
   titleBlock(t,'DESAIN TRESTLE & CONVEYOR MENUJU JETTY','Steel box girder · span 20 m · pile Ø800 mm');
   const seaY=500;
@@ -892,17 +1002,23 @@ function drawTrestle(t, doc){
   for(let i=0;i<5;i++){const x1=180+i*240,x2=x1+240;t.line(x1+20,seaY+20,x2-20,seaY+140,{stroke:'#475569',w:1.2});t.line(x1+20,seaY+140,x2-20,seaY+20,{stroke:'#475569',w:1.2});}
   t.dimH(180,420,seaY-180,'SPAN 20 m',{yFrom:seaY-150});
   t.dimV(seaY-140,seaY+150,1480,'H=12 m',{xFrom:1420});
-  // Compact spec box bottom-right empty area
-  t.rect(1180,200,440,220,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1196,228,'STRUKTUR',{size:12,weight:800});
-  t.line(1196,240,1604,240,{stroke:'#cbd5e1',w:1});
-  [['Panjang','1.000 m'],['Span','50 @20 m'],['Deck','Box girder'],['Pile','Ø800 t=12'],['Bracing','X + horizontal'],['Beton','K-400'],['Coating','400 μm'],['Life','25 tahun']].forEach((r,i)=>{t.text(1196,268+i*22,r[0],{size:10,fill:'#475569'});t.text(1604,268+i*22,r[1],{anchor:'end',size:10,weight:700});});
+  t.infoText(1440, 230, 300, 'STRUKTUR', [
+    ['Panjang',  '1.000 m'],
+    ['Span',     '50 @20 m'],
+    ['Deck',     'Box girder'],
+    ['Pile',     'Ø800 t=12'],
+    ['Bracing',  'X + horizontal'],
+    ['Beton',    'K-400'],
+    ['Coating',  '400 μm'],
+    ['Life',     '25 tahun']
+  ]);
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'DESAIN',data:['Trestle dari stockpile ke jetty','Beban conveyor+material+angin','Pondasi Ø800×30 m','Bracing X antar tiang','Coating 3 lapis 400 μm']},
     {x:640,w:550,type:'spec',title:'PEMBEBANAN',data:[['Dead','12 ton/span'],['Live','8 ton/span'],['Conveyor','25 ton/span'],['Wind','4 ton/span'],['Total','49 ton/span'],['Per tiang','24,5 ton'],['Dukung izin','60 ton'],['FoS','2.45']]},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{pattern:'p-water',label:'Air laut'},{pattern:'p-sand',label:'Seabed'},{pattern:'p-concrete',label:'Beton'},{color:'#78716c',label:'Pile'},{color:'#94a3b8',label:'Deck'},{color:'#fef3c7',label:'Gallery'}]}
   ]);
 }
+
 function drawBridge(t, doc){
   titleBlock(t,'DETAIL JEMBATAN PENYEBERANGAN KONVEYOR','Box girder 1.200 m (12×100 m) · pier + bored pile');
   const baseY=620;
@@ -918,23 +1034,23 @@ function drawBridge(t, doc){
     t.text(x,baseY-30,`P${i+1}`,{anchor:'middle',size:10,weight:800,fill:'#fff'});
   });
   t.dimH(280,980,baseY+90,'TOTAL SPAN 1.200 m (12 × 100 m)',{yFrom:baseY+0});
-  t.rect(1060,180,400,420,{fill:'#f8fafc',stroke:'#2563eb',w:2,rx:8});
-  t.text(1076,208,'DETAIL A — PIER',{size:12,weight:800,fill:'#1e40af'});
-  t.line(1076,220,1444,220,{stroke:'#2563eb',w:1});
-  t.patRect(1080,240,360,50,'p-concrete',{stroke:'#0f172a',w:1.5});
-  t.text(1260,268,'PIER CAP 4.0×1.5×1.2',{anchor:'middle',size:10,weight:700});
-  t.patRect(1210,290,100,180,'p-concrete',{stroke:'#0f172a',w:1.5});
-  t.text(1260,385,'COLUMN 1.2×1.2',{anchor:'middle',size:10,weight:700,fill:'#334155'});
-  t.patRect(1110,470,300,40,'p-concrete',{stroke:'#0f172a',w:1.5});
-  t.text(1260,492,'PILE CAP',{anchor:'middle',size:10,weight:700,fill:'#fff'});
-  [1140,1210,1280,1350].forEach(x=>{t.rect(x-15,510,30,60,{fill:'#78716c',stroke:'#0f172a',w:1});t.line(x-10,510,x-10,570,{stroke:'#dc2626',w:0.8});});
-  t.text(1260,590,'BORED PILE Ø800 × 30 m',{anchor:'middle',size:9,weight:700,fill:'#334155'});
+  t.infoText(1440, 210, 300, 'DETAIL A — PIER', [
+    ['Pier cap',    '4.0×1.5×1.2'],
+    ['Kolom',       '1.2×1.2 m'],
+    ['Pile cap',    '6.0×3.0×1.2 m'],
+    ['Bored pile',  'Ø800 × 30 m'],
+    ['Jumlah pile', '4 per pier'],
+    ['Beton',       'K-400'],
+    ['Baja',        'BjTS 420'],
+    ['Bearing',     'Elastomer']
+  ], { titleColor: '#1e40af' });
   bottomRow(t,[
     {x:70,w:600,type:'spec',title:'JEMBATAN',data:[['Tipe','Box girder RC'],['Panjang','1.200 m'],['Bentang','12 × 100 m'],['Lebar','8.0 m'],['Kapasitas','500 tph'],['Pondasi','Bored pile Ø800'],['Beton','K-400'],['Baja','BjTS 420']]},
     {x:690,w:600,type:'notes',title:'DESAIN',data:['Box girder segmental precast','Bored pile Ø800×30 m','Beban conveyor+material+angin','Bearing elastomer','Galvanis + coating']},
     {x:1310,w:430,type:'legend',title:'SIMBOL',data:[{pattern:'p-concrete',label:'Beton'},{pattern:'p-steel',label:'Housing'},{pattern:'p-soil',label:'Tanah'},{color:'#78716c',label:'Bored pile'},{line:'#2563eb',label:'Callout'},{line:'#0f172a',label:'Struktur'}]}
   ]);
 }
+
 function drawFuelTank(t, doc){
   titleBlock(t,'DETAIL FONDASI TANGKI BAHAN BAKAR & BUND WALL','Tangki 100 kL · bund wall secondary containment');
   const cx=750, baseY=680;
@@ -959,22 +1075,22 @@ function drawFuelTank(t, doc){
   [cx-220,cx-110,cx,cx+110,cx+220].forEach(x=>{t.rect(x-25,baseY+40,50,100,{fill:'#57534e',stroke:'#0f172a',w:1.5});});
   t.dimH(cx-180,cx+180,baseY+180,'Ø 6.00 m',{yFrom:baseY+40});
   t.dimV(baseY-460,baseY,cx+380,'H=4.5 m',{xFrom:cx+220});
-  t.rect(1180,180,420,360,{fill:'#fff7ed',stroke:'#b45309',w:2,rx:8});
-  t.text(1196,208,'PROTEKSI KEBAKARAN',{size:12,weight:800,fill:'#7c2d12'});
-  t.line(1196,220,1584,220,{stroke:'#f59e0b',w:1});
-  t.circle(1350,290,60,{fill:'none',stroke:'#b45309',w:2});
-  t.circle(1350,290,45,{fill:'none',stroke:'#b45309',w:1,dash:'3 2'});
-  t.text(1350,290,'TANK',{anchor:'middle',size:10,weight:700,fill:'#7c2d12'});
-  for(let i=0;i<4;i++){const a=i*Math.PI/2;t.circle(1350+Math.cos(a)*55,290+Math.sin(a)*55,8,{fill:'#fbbf24',stroke:'#b45309',w:1.5});}
-  t.text(1350,380,'FOAM POURER 4×',{anchor:'middle',size:9,weight:700,fill:'#92400e'});
-  t.text(1196,450,'Deteksi : heat + gas',{size:9,fill:'#7c2d12'});
-  t.text(1196,468,'Foam AFFF 3% · 500 L/min',{size:9,fill:'#7c2d12'});
+  t.infoText(1440, 220, 300, 'PROTEKSI KEBAKARAN', [
+    ['Foam',    'AFFF 3% 2×500 L'],
+    ['Deluge',  'DN150 6 unit'],
+    ['Hydrant', 'Ø100 4 unit'],
+    ['Monitor', '2 × 1000 L/min'],
+    ['Pourer',  '4 × 500 L/min'],
+    ['Deteksi', 'Heat + gas'],
+    ['Foam AFFF', '3% · 500 L/min']
+  ], { titleColor: '#7c2d12' });
   bottomRow(t,[
     {x:70,w:600,type:'spec',title:'TANGKI',data:[['Kapasitas','100 kL'],['Diameter','6.0 m'],['Tinggi','4.5 m'],['Material','A283 Gr.C'],['Shell','6 mm'],['Fondasi','Concrete ring'],['Bund wall','K-300 1.2 m'],['Bund cap','110% volume']]},
     {x:690,w:600,type:'spec',title:'PROTEKSI',data:[['Foam','AFFF 3% 2×500 L'],['Deluge','DN150 6 unit'],['Hydrant','Ø100 4 unit'],['Monitor','2 × 1000 L/min'],['Pourer','4 × 500 L/min'],['Deteksi','Heat + gas'],['Total','24.000 L/min'],['Standar','NFPA 11']],fill:'#fff7ed'},
     {x:1310,w:430,type:'notes',title:'CATATAN',data:['Radar level gauge','Kalibrasi 6 bulan','Inspeksi tahunan','Hydrotest 1.25×']}
   ]);
 }
+
 function drawFence(t, doc){
   titleBlock(t,'DETAIL PAGAR PEMBATAS & PENGAMAN TEBING','BRC 2.4 m + duri 2 lapis + rambu K3 + footing');
   const baseY=620;
@@ -988,18 +1104,20 @@ function drawFence(t, doc){
   t.text(730,baseY-345,'DILARANG MASUK',{anchor:'middle',size:10,weight:700,fill:'#7c2d12'});
   t.dimH(350,470,baseY-350,'2.8 m',{yFrom:baseY-260});
   t.dimV(baseY-260,baseY,270,'H=2.4 m');
-  t.rect(1120,180,380,360,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:8});
-  t.text(1136,208,'DETAIL CORNER POST',{size:12,weight:800});
-  t.rect(1280,260,80,240,{fill:'#475569',stroke:'#0f172a',w:2});
-  t.text(1320,380,'Ø60',{anchor:'middle',size:10,weight:700,fill:'#fff'});
-  t.patRect(1240,500,160,50,'p-concrete',{stroke:'#0f172a',w:2});
-  t.text(1320,526,'Fondasi 60×60×50',{anchor:'middle',size:9,weight:700});
+  t.infoText(1440, 230, 300, 'DETAIL CORNER POST', [
+    ['Post',    'Ø60 t=3 galvanis'],
+    ['Tinggi',  '2.80 m'],
+    ['Brace',   '40×40×3'],
+    ['Fondasi', '60×60×50 K-300'],
+    ['Angkur',  'Ø16']
+  ]);
   bottomRow(t,[
     {x:70,w:600,type:'spec',title:'PAGAR',data:[['Tinggi','2.40 m'],['Jenis','BRC galvanis'],['Kawat','Ø5 mm'],['Mesh','50×200 mm'],['Post','2.80 m'],['Post Ø','60 mm'],['Duri','2 lapis'],['Fondasi','50×50×40']]},
     {x:690,w:600,type:'notes',title:'PEMASANGAN',data:['Post galvanis Ø60 t=3','Brace 40×40×3 corner','Fondasi K-300 angkur Ø16','Rambu tiap 100 m','Pemeriksaan 6 bulan']},
     {x:1310,w:430,type:'legend',title:'SIMBOL',data:[{pattern:'p-concrete',label:'Fondasi'},{pattern:'p-soil',label:'Tanah'},{color:'#475569',label:'Post'},{color:'#94a3b8',label:'BRC'},{line:'#475569',label:'Duri'},{color:'#fbbf24',label:'Rambu'}]}
   ]);
 }
+
 function drawDrainage(t, doc){
   titleBlock(t,'DESAIN DRAINASE AKHIR LAHAN REKLAMASI','Terasering + saluran pengumpul + check dam');
   for(let i=0;i<12;i++){const y=180+i*36;const off=(i%2===0)?0:40;t.line(200+off,y,1400-off,y,{stroke:'#84cc16',w:2.5});if(i<11)t.line(1400-off,y,1440-(i%2)*40,y+36,{stroke:'#65a30d',w:3});for(let vx=240+off;vx<1360-off;vx+=50){t.line(vx,y,vx-6,y-10,{stroke:'#15803d',w:1.2});t.line(vx,y,vx+6,y-10,{stroke:'#15803d',w:1.2});}}
@@ -1017,8 +1135,13 @@ function drawDrainage(t, doc){
     {x:1210,w:530,type:'notes',title:'REKLAMASI',data:['Terasering kurangi erosi','Check dam tiap 100 m','Revegetasi cover crop','Monitoring 4 titik']}
   ]);
 }
+</script>
 
-/* ==================== DIAGRAM DRAWINGS ==================== */
+<script>
+/* ================================================================
+   DIAGRAM DRAWINGS — semua panel info diubah jadi infoText
+   ================================================================ */
+
 function drawWaterFlow(t, doc){
   titleBlock(t,'SKEMA PENGOLAHAN AIR ASAM TAMBANG (AAT)','Settling → Netralisasi → Aerasi → Stabilisasi → Outlet');
   const startX=100, startY=300, tankW=200, tankH=140, gap=30;
@@ -1059,23 +1182,23 @@ function drawWaterFlow(t, doc){
     row.forEach((cell,ci)=>{t.text(xPos+8,iy,cell,{size:10,weight:ci===0?700:400,fill:ci===4?'#15803d':'#334155'});xPos+=colW[ci];});
     t.line(100,iy+13,900,iy+13,{stroke:'#e2e8f0',w:0.5});
   });
-  t.rect(1180,200,580,200,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1196,228,'ALUR PROSES',{size:12,weight:800});
-  t.line(1196,240,1744,240,{stroke:'#cbd5e1',w:1});
-  ['Sump','Settling','Netralisasi','Aerasi','Stabilisasi','Outlet'].forEach((step,i)=>{
-    const sx=1196+i*90,sy=270;
-    t.rect(sx,sy,76,30,{fill:'#bae6fd',stroke:'#0284c7',w:1.5,rx:4});
-    t.text(sx+38,sy+15,step,{anchor:'middle',size:8.5,weight:700});
-    if(i<5)t.line(sx+78,sy+15,sx+88,sy+15,{stroke:'#64748b',w:1.5,marker:'url(#arr-dark)'});
-  });
-  t.text(1196,340,'Kapasitas total: 4.500 m³/hari',{size:10,fill:'#475569',weight:700});
-  t.text(1196,360,'Sistem 24/7 · 2 shift operator',{size:10,fill:'#475569'});
+  t.infoText(1440, 220, 300, 'ALUR PROSES', [
+    ['1', 'Sump'],
+    ['2', 'Settling'],
+    ['3', 'Netralisasi'],
+    ['4', 'Aerasi'],
+    ['5', 'Stabilisasi'],
+    ['6', 'Outlet'],
+    ['Kapasitas', '4.500 m³/hari'],
+    ['Sistem',    '24/7 · 2 shift']
+  ]);
   bottomRow(t,[
     {x:70,w:520,type:'legend',title:'UNIT',data:[{color:'#bae6fd',label:'Settling'},{color:'#fef3c7',label:'Netralisasi'},{color:'#fce7f3',label:'Aerasi'},{color:'#dcfce7',label:'Stabilisasi'},{color:'#e0e7ff',label:'Outlet'},{line:'#0284c7',label:'Aliran'}]},
     {x:610,w:580,type:'spec',title:'SPESIFIKASI AAT',data:[['Kapasitas','4.500 m³/hari'],['Settling','4.000 m³ ×3'],['Netralisasi','CaCO₃+CaO'],['Aerasi','3×15 kW'],['Stabilisasi','pH 6.5-8.5'],['Sludge','Geotube'],['Monitoring','Online pH+TSS'],['Outlet','PermenLH']]},
     {x:1210,w:530,type:'notes',title:'CATATAN',data:['Operasi 24/7, 2 shift','Kalibrasi pH tiap 7 hari','Dosing otomatis pH ctrl','Sampling tiap 6 jam']}
   ]);
 }
+
 function drawDewatering(t, doc){
   titleBlock(t,'DESAIN SISTEM DEWATERING','Wellpoint & deep well · HDPE · settling sebelum discharge');
   const cx=800, gY=440;
@@ -1106,16 +1229,23 @@ function drawDewatering(t, doc){
   t.patRect(180,gY-400,220,100,'p-water',{stroke:'#0284c7',w:2});
   t.text(290,gY-380,'SETTLING POND',{anchor:'middle',size:10,weight:800,fill:'#0c4a6e'});
   t.text(290,gY-360,'3 × 4.000 m³',{anchor:'middle',size:9,fill:'#0c4a6e'});
-  t.rect(1180,200,580,200,{fill:'#f0f9ff',stroke:'#0284c7',w:2,rx:6});
-  t.text(1196,228,'SPESIFIKASI',{size:12,weight:800,fill:'#0c4a6e'});
-  t.line(1196,240,1744,240,{stroke:'#0284c7',w:1});
-  [['Total Q','500 m³/jam'],['Wellpoint','10 titik'],['Spacing','30 m'],['Kedalaman','12 m'],['Header','DN150 HDPE'],['Discharge','DN250 HDPE'],['Pompa','2×250 m³/h'],['Kontrol','Float+VFD']].forEach((r,i)=>{t.text(1196,268+i*20,r[0],{size:10,fill:'#0c4a6e'});t.text(1744,268+i*20,r[1],{anchor:'end',size:10,weight:700,fill:'#0c4a6e'});});
+  t.infoText(1440, 220, 300, 'SPESIFIKASI', [
+    ['Total Q',   '500 m³/jam'],
+    ['Wellpoint', '10 titik'],
+    ['Spacing',   '30 m'],
+    ['Kedalaman', '12 m'],
+    ['Header',    'DN150 HDPE'],
+    ['Discharge', 'DN250 HDPE'],
+    ['Pompa',     '2×250 m³/h'],
+    ['Kontrol',   'Float+VFD']
+  ], { titleColor: '#0c4a6e' });
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'OPERASIONAL',data:['Dewatering sebelum & selama tambang','Wellpoint keliling pit','Auto level control','Monitoring tiap 4 jam','Backup genset 200 kVA']},
     {x:640,w:550,type:'spec',title:'POMPA',data:[['Utama','2×250 m³/h'],['Head','65 m'],['Efisiensi','78 %'],['Power','45 kW'],['Voltage','380 V 3ph'],['Backup','Genset 200 kVA'],['Suction','DN200'],['Discharge','DN250']]},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{pattern:'p-water',label:'Air'},{pattern:'p-soil',label:'Tanah'},{line:'#0284c7',label:'Pipa'},{color:'#fef3c7',label:'Pump'},{color:'#94a3b8',label:'Wellpoint'},{dash:'#0284c7',label:'MAT'}]}
   ]);
 }
+
 function drawPiping(t, doc){
   titleBlock(t,'SKEMA ALUR PERPIPAAN AIR TAMBANG','Sump → settling → plant → discharge');
   const nodes=[
@@ -1146,6 +1276,7 @@ function drawPiping(t, doc){
     {x:890,w:850,type:'notes',title:'INSTALASI',data:['Tanam minimal 80 cm','Butt-fusion welding','Pressure test 1.5× 24 jam','Air valve tiap peak']}
   ]);
 }
+
 function drawWtpFlow(t, doc){
   titleBlock(t,'DETAIL INSTALASI WTP','Diagram proses · 15 L/detik · 6 tahap');
   const startY=340, tankH=130, tankW=140, gap=14, startX=80;
@@ -1181,16 +1312,25 @@ function drawWtpFlow(t, doc){
   t.text(startX+3*(tankW+gap)+tankW/2,625,'SLUDGE',{anchor:'middle',size:10,weight:800,fill:'#7f1d1d'});
   t.text(startX+3*(tankW+gap)+tankW/2,645,'Thickener → Geotube',{anchor:'middle',size:8.5,fill:'#991b1b'});
   t.text(startX+3*(tankW+gap)+tankW/2,662,'± 2,4 m³/hari',{anchor:'middle',size:8.5,fill:'#991b1b'});
-  t.rect(1180,200,580,300,{fill:'#f0f9ff',stroke:'#0284c7',w:2,rx:6});
-  t.text(1196,228,'SPESIFIKASI & KUALITAS',{size:12,weight:800,fill:'#0c4a6e'});
-  t.line(1196,240,1744,240,{stroke:'#0284c7',w:1});
-  [['Kapasitas','15 L/detik'],['Produksi','1.080 m³/hari'],['Recovery','≥ 95 %'],['Inlet turb','45 NTU'],['Outlet turb','< 1 NTU'],['pH','6,5-8,5'],['Fe removal','> 90 %'],['Coliform','100 %'],['Sludge','2,4 m³/hari'],['Power','38 kW']].forEach((r,i)=>{t.text(1196,268+i*20,r[0],{size:10,fill:'#0c4a6e'});t.text(1744,268+i*20,r[1],{anchor:'end',size:10,weight:700,fill:'#0c4a6e'});});
+  t.infoText(1440, 220, 300, 'SPESIFIKASI & KUALITAS', [
+    ['Kapasitas',   '15 L/detik'],
+    ['Produksi',    '1.080 m³/hari'],
+    ['Recovery',    '≥ 95 %'],
+    ['Inlet turb',  '45 NTU'],
+    ['Outlet turb', '< 1 NTU'],
+    ['pH',          '6,5–8,5'],
+    ['Fe removal',  '> 90 %'],
+    ['Coliform',    '100 %'],
+    ['Sludge',      '2,4 m³/hari'],
+    ['Power',       '38 kW']
+  ], { titleColor: '#0c4a6e' });
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'OPERASIONAL',data:['20 jam/hari','Auto dosing flow prop','Backwash tiap 24 jam','Kalibrasi turbidimeter harian','Sampling tiap 6 jam']},
     {x:640,w:550,type:'spec',title:'BAKU MUTU',data:[['Kekeruhan','≤ 5 NTU'],['pH','6,5-8,5'],['Warna','≤ 15 TCU'],['Fe','≤ 0,3 mg/L'],['Mn','≤ 0,1 mg/L'],['Coliform','0 MPN'],['TDS','≤ 1.000 mg/L'],['Chlor','0,2-0,5 mg/L']]},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#bae6fd',label:'Raw water'},{color:'#fef3c7',label:'Koagulasi'},{color:'#fce7f3',label:'Flokulasi'},{color:'#e0e7ff',label:'Sedimentasi'},{color:'#dcfce7',label:'Filtrasi'},{color:'#cffafe',label:'Reservoir'}]}
   ]);
 }
+
 function drawWwtpFlow(t, doc){
   titleBlock(t,'DETAIL INSTALASI WWTP','120 m³/hari · extended aeration · 5 tahap');
   const startY=340, tankH=130, tankW=140, gap=14, startX=80;
@@ -1221,16 +1361,27 @@ function drawWwtpFlow(t, doc){
   t.line(startX+3*(tankW+gap)+tankW/2,startY+tankH+70,startX+2*(tankW+gap)+tankW/2,startY+tankH+70,{stroke:'#b45309',w:2,dash:'6 3',marker:'url(#arr-dark)'});
   t.line(startX+2*(tankW+gap)+tankW/2,startY+tankH+70,startX+2*(tankW+gap)+tankW/2,startY+tankH+10,{stroke:'#b45309',w:2,dash:'6 3'});
   t.text(startX+3*(tankW+gap)+tankW/2+10,startY+tankH+50,'RETURN SLUDGE',{size:9,weight:700,fill:'#b45309'});
-  t.rect(1180,200,580,300,{fill:'#f0f9ff',stroke:'#0284c7',w:2,rx:6});
-  t.text(1196,228,'SPESIFIKASI WWTP',{size:12,weight:800,fill:'#0c4a6e'});
-  t.line(1196,240,1744,240,{stroke:'#0284c7',w:1});
-  [['Kapasitas','120 m³/hari'],['BOD inlet','250 mg/L'],['BOD outlet','≤ 30'],['COD inlet','450'],['COD outlet','≤ 100'],['TSS inlet','220'],['TSS outlet','≤ 30'],['Aerasi','2×7,5 kW'],['HRT','18 jam'],['SRT','15 hari'],['MLSS','3.500 mg/L'],['Power','22 kW']].forEach((r,i)=>{t.text(1196,268+i*18,r[0],{size:10,fill:'#0c4a6e'});t.text(1744,268+i*18,r[1],{anchor:'end',size:10,weight:700,fill:'#0c4a6e'});});
+  t.infoText(1440, 220, 300, 'SPESIFIKASI WWTP', [
+    ['Kapasitas',  '120 m³/hari'],
+    ['BOD inlet',  '250 mg/L'],
+    ['BOD outlet', '≤ 30'],
+    ['COD inlet',  '450'],
+    ['COD outlet', '≤ 100'],
+    ['TSS inlet',  '220'],
+    ['TSS outlet', '≤ 30'],
+    ['Aerasi',     '2×7,5 kW'],
+    ['HRT',        '18 jam'],
+    ['SRT',        '15 hari'],
+    ['MLSS',       '3.500 mg/L'],
+    ['Power',      '22 kW']
+  ], { titleColor: '#0c4a6e' });
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'OPERASIONAL',data:['Extended aeration SRT 15','Blower duty-standby auto','Return sludge 100%','Sampling tiap hari','Sludge drying 2×20 m²']},
     {x:640,w:550,type:'spec',title:'BAKU MUTU',data:[['pH','6-9'],['BOD₅','≤ 30 mg/L'],['COD','≤ 100'],['TSS','≤ 30'],['Amonia','≤ 10'],['Coliform','≤ 3.000 MPN'],['Minyak','≤ 5'],['Detergen','≤ 5']]},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#cbd5e1',label:'Sewage'},{color:'#fef3c7',label:'Primary'},{color:'#dcfce7',label:'Aerasi'},{color:'#e0e7ff',label:'Clarifier'},{color:'#fce7f3',label:'Desinfeksi'},{color:'#cffafe',label:'Effluent'}]}
   ]);
 }
+
 function drawChpPid(t, doc){
   titleBlock(t,'P&ID CHP — PIPING & INSTRUMENTATION','Symbol ISA S5.1 · kontrol loop · interlock safety');
   const boxes=[
@@ -1270,20 +1421,21 @@ function drawChpPid(t, doc){
   t.text(650,605,'Siemens S7-1200',{anchor:'middle',size:9,fill:'#0c4a6e'});
   t.text(650,625,'HMI 15" touchscreen',{anchor:'middle',size:9,fill:'#0c4a6e'});
   t.text(650,650,'Interlock: Crusher-Motor-Screen',{anchor:'middle',size:9,weight:700,fill:'#0284c7'});
-  t.rect(80,560,400,150,{fill:'#fff',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(96,588,'LEGENDA ISA S5.1',{size:11,weight:800});
-  t.line(96,600,464,600,{stroke:'#cbd5e1',w:0.8});
-  [['FT — Flow Transmitter',100,620],['WT — Weight Transmitter',100,642],['M — Motor',100,664],['XV — Control Valve',280,620],['PLC — Controller',280,642],['HMI — Interface',280,664]].forEach(r=>{t.text(r[1],r[2],r[0],{size:9,fill:'#334155'});});
-  t.rect(1180,200,580,240,{fill:'#fef3c7',stroke:'#b45309',w:2,rx:6});
-  t.text(1196,228,'INTERLOCK SAFETY',{size:12,weight:800,fill:'#7c2d12'});
-  t.line(1196,240,1744,240,{stroke:'#f59e0b',w:1});
-  [['Motor overload → stop feeder','Auto trip'],['Belt slip → stop','Auto trip'],['Level high → stop feeder','Alarm'],['Stockpile full → stop screen','Alarm'],['Fire → stop all + spray','Auto trip'],['E-stop → all stop','Manual']].forEach((r,i)=>{t.text(1196,268+i*22,r[0],{size:10,fill:'#7c2d12'});t.text(1744,268+i*22,r[1],{anchor:'end',size:10,weight:700,fill:'#b45309'});});
+  t.infoText(1440, 220, 300, 'INTERLOCK SAFETY', [
+    ['Motor overload', 'Auto trip · stop feeder'],
+    ['Belt slip',      'Auto trip · stop'],
+    ['Level high',     'Alarm · stop feeder'],
+    ['Stockpile full', 'Alarm · stop screen'],
+    ['Fire',           'Auto trip · stop all + spray'],
+    ['E-stop',         'Manual · all stop']
+  ], { titleColor: '#7c2d12' });
   bottomRow(t,[
     {x:70,w:600,type:'notes',title:'INSTRUMENTASI',data:['Signal: 4-20 mA HART','Scan time: 100 ms','SIL-2 interlock','Total IO: 48 DI, 24 DO, 12 AI, 6 AO','Redundan PLC + PSU']},
     {x:690,w:600,type:'spec',title:'KONTROL',data:[['Controller','S7-1200'],['CPU','1215C DC/DC'],['IO','4× SM1223'],['HMI','15" touchscreen'],['Protocol','Profinet+Modbus'],['Scan','100 ms'],['Power','24 V DC 5A'],['IP','IP54']]},
     {x:1310,w:430,type:'legend',title:'SIMBOL ISA',data:[{color:'#dcfce7',label:'AUTO'},{color:'#fff',label:'Instrument'},{line:'#0f172a',label:'Process'},{line:'#0284c7',label:'Signal'},{color:'#fef3c7',label:'Interlock'},{color:'#fff',label:'Valve'}]}
   ]);
 }
+
 function drawWaterSpray(t, doc){
   titleBlock(t,'DETAIL INSTALASI WATER SPRAY PENEKAN DEBU','CHP & stockpile · nozzle · pompa · water cannon');
   const pY=340;
@@ -1311,21 +1463,33 @@ function drawWaterSpray(t, doc){
     t.text((g.x1+g.x2)/2,nY+8,g.label,{anchor:'middle',size:9,weight:800,fill:'#7c2d12'});
     for(let i=0;i<g.count;i++){const nx=g.x1+30+i*((g.x2-g.x1-60)/(g.count-1||1));t.line(nx,nY-30,nx,nY-8,{stroke:'#0284c7',w:2});t.circle(nx,nY-8,4,{fill:'#0284c7'});}
   });
-  // Info boxes at bottom empty area
-  t.rect(100,680,480,140,{fill:'#f0f9ff',stroke:'#0284c7',w:2,rx:6});
-  t.text(116,708,'KAPASITAS SISTEM',{size:12,weight:800,fill:'#0c4a6e'});
-  t.line(116,720,564,720,{stroke:'#0284c7',w:1});
-  [['Total nozzle','16 unit'],['Water cannon','4 unit'],['Pompa utama','2×30 kW'],['Tekanan','6 bar'],['Kapasitas','120 m³/jam'],['Konsumsi','450 m³/hari'],['Sumber','WTP'],['Kontrol','PLC auto']].forEach((r,i)=>{t.text(116,744+i*15,r[0],{size:9,fill:'#0c4a6e'});t.text(564,744+i*15,r[1],{anchor:'end',size:9,weight:700,fill:'#0c4a6e'});});
-  t.rect(620,680,500,140,{fill:'#fef3c7',stroke:'#b45309',w:2,rx:6});
-  t.text(636,708,'SPESIFIKASI NOZZLE',{size:12,weight:800,fill:'#7c2d12'});
-  t.line(636,720,1104,720,{stroke:'#f59e0b',w:1});
-  [['Stockpile','Spray 120° · 40 L/min'],['Water cannon','Throw 60 m · 800 L/min'],['CHP','Fine mist · 20 L/min'],['Haul road','Spray 90° · 30 L/min'],['Pipa utama','DN150 HDPE'],['Cabang','DN50 galvanis'],['Valve','Solenoid 24V'],['Kontrol','PLC+manual']].forEach((r,i)=>{t.text(636,744+i*15,r[0],{size:9,fill:'#7c2d12'});t.text(1104,744+i*15,r[1],{anchor:'end',size:9,weight:700,fill:'#7c2d12'});});
+  t.infoText(180, 690, 300, 'KAPASITAS SISTEM', [
+    ['Total nozzle', '16 unit'],
+    ['Water cannon', '4 unit'],
+    ['Pompa utama',  '2×30 kW'],
+    ['Tekanan',      '6 bar'],
+    ['Kapasitas',    '120 m³/jam'],
+    ['Konsumsi',     '450 m³/hari'],
+    ['Sumber',       'WTP'],
+    ['Kontrol',      'PLC auto']
+  ], { titleColor: '#0c4a6e' });
+  t.infoText(560, 690, 300, 'SPESIFIKASI NOZZLE', [
+    ['Stockpile',   'Spray 120° · 40 L/min'],
+    ['Water cannon','Throw 60 m · 800 L/min'],
+    ['CHP',         'Fine mist · 20 L/min'],
+    ['Haul road',   'Spray 90° · 30 L/min'],
+    ['Pipa utama',  'DN150 HDPE'],
+    ['Cabang',      'DN50 galvanis'],
+    ['Valve',       'Solenoid 24V'],
+    ['Kontrol',     'PLC+manual']
+  ], { titleColor: '#7c2d12' });
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'OPERASIONAL',data:['Aktif 24/7 di stockpile & CHP','Water cannon manual pit','Kontrol timer & wind sensor','Inspeksi tiap 2 minggu','Backup pompa diesel']},
     {x:640,w:550,type:'spec',title:'K3',data:[['Target PM10','≤ 150 μg/m³'],['PM2.5','≤ 65 μg/m³'],['Standar','Kepmenaker 13/2011'],['Dust sampler','2 titik'],['Frekuensi','Mingguan'],['TSP','≤ 230 μg/m³'],['Noise','≤ 85 dB'],['Haze','≤ 10%']]},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#bae6fd',label:'Water source'},{color:'#fef3c7',label:'Pump'},{color:'#e0e7ff',label:'Pressure tank'},{color:'#dcfce7',label:'Distribusi'},{line:'#0284c7',label:'Pipa'},{color:'#38bdf8',label:'Spray'}]}
   ]);
 }
+
 function drawElectrical(t, doc){
   titleBlock(t,'DIAGRAM SATU GARIS DISTRIBUSI LISTRIK','PLN 20 kV → Trafo → MDP → Feeder');
   const busY=360;
@@ -1359,19 +1523,22 @@ function drawElectrical(t, doc){
     t.text(f.x,busY+140,f.label,{anchor:'middle',size:10,weight:800,fill:'#1e40af'});
     t.text(f.x,busY+165,f.kva,{anchor:'middle',size:10,weight:700,fill:'#4338ca'});
   });
-  t.rect(1180,560,420,200,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1196,588,'RINGKASAN BEBAN',{size:12,weight:800});
-  t.line(1196,600,1584,600,{stroke:'#cbd5e1',w:1});
-  [['CHP','500 kVA'],['Workshop','400 kVA'],['Office','250 kVA'],['Fuel','100 kVA'],['WTP','150 kVA'],['Jetty','300 kVA']].forEach((r,i)=>{t.text(1196,624+i*22,r[0],{size:10,fill:'#475569'});t.text(1584,624+i*22,r[1],{anchor:'end',size:10,weight:700});});
-  t.rect(1180,780,420,60,{fill:'#fee2e2',stroke:'#dc2626',w:2.5,rx:6});
-  t.text(1196,806,'TOTAL TERPASANG',{size:12,weight:800,fill:'#7f1d1d'});
-  t.text(1584,806,'1.700 kVA',{anchor:'end',size:14,weight:800,fill:'#7f1d1d'});
+  t.infoText(1440, 570, 300, 'RINGKASAN BEBAN', [
+    ['CHP',      '500 kVA'],
+    ['Workshop', '400 kVA'],
+    ['Office',   '250 kVA'],
+    ['Fuel',     '100 kVA'],
+    ['WTP',      '150 kVA'],
+    ['Jetty',    '300 kVA'],
+    ['Total',    '1.700 kVA']
+  ], { titleColor: '#7f1d1d' });
   bottomRow(t,[
     {x:70,w:520,type:'notes',title:'SISTEM',data:['3 phase 4 wire 400/230V','Genset auto <15 detik','Kabel NYY 4×240 buried','Grounding rod 5/8"×3 m']},
     {x:610,w:580,type:'spec',title:'TRAFO & CB',data:[['Incoming','20 kV 3.500 kVA'],['Trafo T1','2.000 kVA'],['Vektor','Dyn11'],['Impedansi','6 %'],['CB T1','SF6 630 A'],['CB MDP','ACB 3.200 A'],['Capacitor','500 kVAr'],['Rasio','50:1']]},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{line:'#dc2626',label:'Busbar 20kV'},{line:'#1e40af',label:'Feeder 400V'},{color:'#fecaca',label:'Genset'},{color:'#fef3c7',label:'Transformer'},{color:'#e0e7ff',label:'Panel'},{line:'#0f172a',label:'CB'}]}
   ]);
 }
+
 function drawAirCompressor(t, doc){
   titleBlock(t,'SKEMA PERPIPAAN UDARA BERTEKANAN','Kompresor · dryer · receiver · konsumen');
   const pY=280;
@@ -1401,20 +1568,28 @@ function drawAirCompressor(t, doc){
     t.text(c.x,busY+123,c.sub,{anchor:'middle',size:8,fill:'#4338ca'});
     t.text(c.x,busY+145,c.kw,{anchor:'middle',size:8,weight:700,fill:'#64748b'});
   });
-  t.rect(100,200,400,60,{fill:'#f0f9ff',stroke:'#0284c7',w:2,rx:6});
-  t.text(116,220,'SPESIFIKASI UTAMA',{size:11,weight:800,fill:'#0c4a6e'});
-  t.text(116,240,'2×75 kW · 10 Nm³/min · 8 bar',{size:10,fill:'#0c4a6e'});
-  // Info box below consumer (y=690-830)
-  t.rect(100,690,420,140,{fill:'#fef3c7',stroke:'#b45309',w:2,rx:6});
-  t.text(116,718,'RINGKASAN BEBAN',{size:12,weight:800,fill:'#7c2d12'});
-  t.line(116,730,504,730,{stroke:'#f59e0b',w:1});
-  [['Workshop','15 Nm³/min'],['CHP','10'],['LAB','3'],['Magazine','2'],['Fuel','4'],['Pond','6'],['Total','40'],['Kapasitas','50']].forEach((r,i)=>{t.text(116,754+i*15,r[0],{size:9,fill:'#7c2d12'});t.text(504,754+i*15,r[1],{anchor:'end',size:9,weight:700,fill:'#7c2d12'});});
+  t.infoText(100, 200, 380, 'SPESIFIKASI UTAMA', [
+    ['Kapasitas', '2×75 kW'],
+    ['Flow',      '10 Nm³/min'],
+    ['Tekanan',   '8 bar']
+  ]);
+  t.infoText(180, 690, 300, 'RINGKASAN BEBAN', [
+    ['Workshop', '15 Nm³/min'],
+    ['CHP',      '10'],
+    ['LAB',      '3'],
+    ['Magazine', '2'],
+    ['Fuel',     '4'],
+    ['Pond',     '6'],
+    ['Total',    '40'],
+    ['Kapasitas','50']
+  ], { titleColor: '#7c2d12' });
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'SISTEM',data:['Duty-standby auto','Refrigerated dryer','Receiver buffer 5 m³','Pipa HDPE DN150','Drain valve low point']},
     {x:640,w:550,type:'spec',title:'TEKNIS',data:[['Kapasitas','2×25 Nm³/min'],['Tekanan','8 bar'],['Power','2×75 kW'],['Voltage','380 V 3ph'],['Dryer','Refrigerated'],['Receiver','5 m³'],['Filtrasi','3 stage'],['Efisiensi','≥ 92 %']]},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#fef3c7',label:'Compressor'},{color:'#bae6fd',label:'Dryer'},{color:'#e0e7ff',label:'Receiver'},{color:'#dcfce7',label:'Filter'},{line:'#dc2626',label:'Header'},{line:'#1e40af',label:'Cabang'}]}
   ]);
 }
+
 function drawFireSystem(t, doc){
   titleBlock(t,'SISTEM ALARM KEBAKARAN & HIDRAN KAWASAN','FACP · hydrant · sprinkler · deluge');
   const pY=280;
@@ -1445,20 +1620,28 @@ function drawFireSystem(t, doc){
     t.text(z.x,busY+123,z.sub,{anchor:'middle',size:8,fill:'#4338ca'});
     t.text(z.x,busY+145,`${z.count} hydrant`,{anchor:'middle',size:8,weight:700,fill:'#64748b'});
   });
-  t.rect(100,200,400,60,{fill:'#fef3c7',stroke:'#b45309',w:2,rx:6});
-  t.text(116,220,'SISTEM PROTEKSI',{size:11,weight:800,fill:'#7c2d12'});
-  t.text(116,240,'NFPA 13/14/20 · 2.000 L/min · 8 bar',{size:10,fill:'#7c2d12'});
-  // Info box below consumer (y=690-830)
-  t.rect(100,690,420,140,{fill:'#fee2e2',stroke:'#dc2626',w:2,rx:6});
-  t.text(116,718,'RINGKASAN SISTEM',{size:12,weight:800,fill:'#7f1d1d'});
-  t.line(116,730,504,730,{stroke:'#dc2626',w:1});
-  [['Fire pump elec','1.500 L/min'],['Fire pump diesel','1.500 L/min'],['Jockey','200 L/min'],['Reservoir','2×300 m³'],['Hydrant','26 unit'],['Sprinkler','250 head'],['Deluge','6 zona'],['FACP','8 zone']].forEach((r,i)=>{t.text(116,754+i*15,r[0],{size:9,fill:'#7f1d1d'});t.text(504,754+i*15,r[1],{anchor:'end',size:9,weight:700,fill:'#7f1d1d'});});
+  t.infoText(100, 200, 380, 'SISTEM PROTEKSI', [
+    ['Standar',   'NFPA 13/14/20'],
+    ['Kapasitas', '2.000 L/min'],
+    ['Pressure',  '8 bar']
+  ], { titleColor: '#7c2d12' });
+  t.infoText(180, 690, 300, 'RINGKASAN SISTEM', [
+    ['Fire pump elec',   '1.500 L/min'],
+    ['Fire pump diesel', '1.500 L/min'],
+    ['Jockey',           '200 L/min'],
+    ['Reservoir',        '2×300 m³'],
+    ['Hydrant',          '26 unit'],
+    ['Sprinkler',        '250 head'],
+    ['Deluge',           '6 zona'],
+    ['FACP',             '8 zone']
+  ], { titleColor: '#7f1d1d' });
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'SISTEM',data:['Auto start <10 detik','2×300 m³ dedicated fire','Ring main loop redundan','Deluge CHP+stockpile+fuel','Drill tiap 6 bulan']},
     {x:640,w:550,type:'spec',title:'STANDAR',data:[['Utama','NFPA 13/14/20'],['Building','SNI 03-3989'],['Respons','< 10 detik'],['Durasi','≥ 60 menit'],['Pressure','≥ 4,5 bar'],['Density','≥ 6 L/min/m²'],['Hydrant flow','≥ 950 L/min'],['Riser','2 jam']]},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#bae6fd',label:'Reservoir'},{color:'#fef3c7',label:'Fire pump'},{color:'#e0e7ff',label:'Pressure tank'},{color:'#fecaca',label:'FACP'},{line:'#dc2626',label:'Ring main'},{color:'#38bdf8',label:'Zona'}]}
   ]);
 }
+
 function drawWasteHandling(t, doc){
   titleBlock(t,'SISTEM PENGOLAHAN SAMPAH DOMESTIK','2 ton/hari · segregasi · kompos · recycle · insinerator');
   const pY=300;
@@ -1495,17 +1678,23 @@ function drawWasteHandling(t, doc){
   t.rect(insX-40,pY+200,300,80,{fill:'#fecaca',stroke:'#dc2626',w:2,rx:6});
   t.text(insX+110,pY+225,'ASH RESIDUE',{anchor:'middle',size:11,weight:800,fill:'#7f1d1d'});
   t.text(insX+110,pY+245,'0,3 ton/hari → TPA B3',{anchor:'middle',size:9,fill:'#991b1b'});
-  t.rect(100,200,400,60,{fill:'#f0fdf4',stroke:'#15803d',w:2,rx:6});
-  t.text(116,220,'SISTEM PENGELOLAAN',{size:11,weight:800,fill:'#14532d'});
-  t.text(116,240,'Kapasitas 2 ton/hari · 3R',{size:10,fill:'#166534'});
+  t.infoText(100, 200, 380, 'SISTEM PENGELOLAAN', [
+    ['Kapasitas', '2 ton/hari'],
+    ['Prinsip',   '3R']
+  ], { titleColor: '#14532d' });
   bottomRow(t,[
     {x:70,w:550,type:'notes',title:'OPERASIONAL',data:['Segregasi di sumber','Komposting windrow 14 hari','Bank sampah anorganik','Insinerator 850°C','Monitoring emisi 6 bulan']},
     {x:640,w:550,type:'spec',title:'SPESIFIKASI',data:[['Total','2 ton/hari'],['Segregasi','4 kategori'],['Komposting','14 hari'],['Bank sampah','Anorganik'],['Insinerator','850°C 500 kg'],['Bottom ash','TPA'],['Fly ash','Semen'],['Lahan TPA','0,5 Ha']]},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#cbd5e1',label:'Segregasi'},{color:'#fef3c7',label:'Pemilahan'},{color:'#dcfce7',label:'Komposting'},{color:'#e0e7ff',label:'Recycle'},{color:'#fecaca',label:'Insinerator'},{line:'#0284c7',label:'Alur'}]}
   ]);
 }
+</script>
 
-/* ==================== PLAN DRAWINGS ==================== */
+<script>
+/* ================================================================
+   PLAN DRAWINGS — panel info diubah jadi infoText
+   ================================================================ */
+
 function drawWeighbridgePlan(t, doc){
   titleBlock(t,'DENAH JEMBATAN TIMBANG','Platform 18×3,4 m · kapasitas 80 ton · 2 gate');
   drawGrid(t,150,180,1500,540,50);
@@ -1535,6 +1724,7 @@ function drawWeighbridgePlan(t, doc){
     {x:1210,w:530,type:'legend',title:'LEGENDA',data:[{color:'#94a3b8',label:'Platform'},{color:'#dbeafe',label:'Control room'},{color:'#fbbf24',label:'Gate'},{color:'#e2e8f0',label:'Truck'},{line:'#0f172a',label:'Grid'},{line:'#dc2626',label:'Dimensi'}]}
   ]);
 }
+
 function drawSumpPlan(t, doc){
   titleBlock(t,'DENAH SUMP & KOLAM PENAMPUNG','Sump 4.000 m³ · 2 settling pond · pump station');
   drawGrid(t,150,180,1500,540,50);
@@ -1571,6 +1761,7 @@ function drawSumpPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#bae6fd',label:'Sump/pond'},{color:'#fef3c7',label:'Pump station'},{line:'#0284c7',label:'Aliran'},{line:'#0f172a',label:'Batas'},{line:'#dc2626',label:'Dimensi'}]}
   ]);
 }
+
 function drawSettlingPondPlan(t, doc){
   titleBlock(t,'DENAH KOLAM PENGENDAPAN (SETTLING POND)','3 pond seri · sistem overflow weir · 4.000 m³/unit');
   drawGrid(t,150,180,1500,540,50);
@@ -1602,6 +1793,7 @@ function drawSettlingPondPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#bae6fd',label:'Pond'},{color:'#b8b2a6',label:'Road'},{line:'#0284c7',label:'Aliran'},{line:'#0f172a',label:'Baffle'},{color:'#78716c',label:'Sludge outlet'},{line:'#dc2626',label:'Dimensi'}]}
   ]);
 }
+
 function drawHopperPlan(t, doc){
   titleBlock(t,'DESAIN HOPPER & FEEDER PENERIMAAN','Hopper 40 m³ · apron feeder 1500 mm · grid 400 mm');
   t.text(900,180,'TAMPAK ATAS',{anchor:'middle',size:14,weight:800});
@@ -1631,6 +1823,7 @@ function drawHopperPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#fef3c7',label:'Hopper'},{color:'#b45309',label:'Apron feeder'},{color:'#475569',label:'Kolom'},{line:'#0f172a',label:'Garis'},{line:'#dc2626',label:'Dimensi'}]}
   ]);
 }
+
 function drawBeltConveyorPlan(t, doc){
   titleBlock(t,'DESAIN BELT CONVEYOR UTAMA & TRANSFER TOWER','Belt 1200 mm · 1500 tph · 350 m · transfer tower');
   const y=400;
@@ -1651,17 +1844,21 @@ function drawBeltConveyorPlan(t, doc){
   [500,800,1100].forEach(x=>{t.circle(x,y-80,15,{fill:'#dc2626',stroke:'#0f172a',w:2});t.text(x,y-80,'!',{anchor:'middle',size:14,weight:800,fill:'#fff'});});
   t.text(800,y+80,'BELT 1200 mm · 3,5 m/s · 1500 tph',{anchor:'middle',size:12,weight:800,fill:'#7c2d12'});
   t.dimH(200,1400,y+130,'PANJANG = 350 m',{yFrom:y+100});
-  // Components list - top-left compact box (empty area above belt)
-  t.rect(100,160,380,120,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(116,188,'KOMPONEN UTAMA',{size:11,weight:800});
-  t.line(116,200,464,200,{stroke:'#cbd5e1',w:1});
-  [['Belt width','1200 mm'],['Capacity','1500 tph'],['Speed','3,5 m/s'],['Drive','250 kW'],['Take-up','Gravity'],['Idler','Ø152 mm']].forEach((r,i)=>{t.text(116,220+i*16,r[0],{size:9,fill:'#475569'});t.text(464,220+i*16,r[1],{anchor:'end',size:9,weight:700});});
+  t.infoText(100, 180, 380, 'KOMPONEN UTAMA', [
+    ['Belt width', '1200 mm'],
+    ['Capacity',   '1500 tph'],
+    ['Speed',      '3,5 m/s'],
+    ['Drive',      '250 kW'],
+    ['Take-up',    'Gravity'],
+    ['Idler',      'Ø152 mm']
+  ]);
   bottomRow(t,[
     {x:70,w:550,type:'spec',title:'SPESIFIKASI',data:[['Lebar belt','1200 mm'],['Kapasitas','1500 tph'],['Kecepatan','3,5 m/s'],['Panjang','350 m'],['Drive','250 kW VFD'],['Take-up','Gravity 6 m'],['Idler','Ø152 trough 35°'],['Cover','EP 630/4']]},
     {x:640,w:550,type:'notes',title:'DESAIN',data:['Belt EP 630/4 ply','Take-up gravity otomatis','Belt cleaner primary+secondary','Emergency stop tiap 50 m','Dust suppression transfer point']},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#fef3c7',label:'Transfer tower'},{color:'#7c3aed',label:'Drive unit'},{color:'#0891b2',label:'Tail pulley'},{color:'#dc2626',label:'Take-up'},{line:'#475569',label:'Belt'},{color:'#dc2626',label:'E-stop'}]}
   ]);
 }
+
 function drawCrusherPlan(t, doc){
   titleBlock(t,'DENAH CRUSHING PLANT','Double roll 500 tph · hopper · MCC · control room');
   drawGrid(t,150,180,1500,540,50);
@@ -1700,12 +1897,25 @@ function drawCrusherPlan(t, doc){
   t.text(430,720,'AKSES OPERATOR',{anchor:'middle',size:10,weight:700});
   t.dimH(280,1380,780,'LEBAR = 18.00 m',{yFrom:740});
   t.dimV(200,740,1420,'PANJANG = 12.00 m',{xFrom:1380});
+  t.infoText(1440, 230, 300, 'CRUSHER', [
+    ['Tipe',      'Double roll'],
+    ['Kapasitas', '500 tph'],
+    ['Feed size', '≤ 400 mm'],
+    ['Produk',    '≤ 50 mm'],
+    ['Roll Ø',    'Ø1.200 mm'],
+    ['Roll width','1.500 mm'],
+    ['Power',     '2 × 200 kW'],
+    ['Speed',     '60 rpm'],
+    ['Ratio',     '8:1'],
+    ['Berat',     '45 ton']
+  ]);
   bottomRow(t,[
     {x:70,w:600,type:'spec',title:'CRUSHER',data:[['Tipe','Double roll'],['Kapasitas','500 tph'],['Feed size','≤ 400 mm'],['Produk','≤ 50 mm'],['Roll Ø','Ø1.200 mm'],['Roll width','1.500 mm'],['Power','2 × 200 kW'],['Speed','60 rpm'],['Ratio','8:1'],['Berat','45 ton']]},
     {x:690,w:600,type:'spec',title:'DUST SUPPRESSION',data:[['Sistem','Water spray auto'],['Nozzle','8 titik @20 L/min'],['Target','< 150 μg/m³'],['Kontrol','PLC + manual'],['Pompa','5.5 kW'],['Tank','5 m³'],['Sensor','Wind + PM10'],['Backup','Manual valve']],fill:'#fef3c7'},
     {x:1310,w:430,type:'notes',title:'CATATAN',data:['ROM dari hopper','Roll crusher size reduction','Discharge ke CV-02','E-stop 4 lokasi','MCC outdoor']}
   ]);
 }
+
 function drawScreenPlan(t, doc){
   titleBlock(t,'DESAIN SCREENING PLANT (AYAKAN)','2-deck 50 mm · 500 tph · enclosed building');
   const y=400;
@@ -1736,6 +1946,7 @@ function drawScreenPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#0891b2',label:'Deck upper'},{color:'#0284c7',label:'Deck lower'},{color:'#fbbf24',label:'Feed'},{color:'#dc2626',label:'Oversize'},{color:'#22c55e',label:'Undersize'},{color:'#7c3aed',label:'Vibrator'}]}
   ]);
 }
+
 function drawStockpilePlan(t, doc){
   titleBlock(t,'DENAH STOCKPILE BATUBARA','120.000 t · 3 pile · access road · perimeter drain');
   drawGrid(t,150,180,1500,540,50);
@@ -1771,6 +1982,7 @@ function drawStockpilePlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#44403c',label:'Stockpile'},{color:'#b8b2a6',label:'Road'},{line:'#0284c7',label:'Drainase'},{line:'#7c3aed',label:'Stacker'},{color:'#0e7490',label:'Reclaimer'},{color:'#38bdf8',label:'Spray'}]}
   ]);
 }
+
 function drawStackerPlan(t, doc){
   titleBlock(t,'DESAIN SISTEM STACKER','Boom 45 m · 1.500 tph · travel bogie · counterweight');
   const gY=680;
@@ -1796,12 +2008,22 @@ function drawStackerPlan(t, doc){
   t.text(1300,gY-400,'KE STOCKPILE',{anchor:'middle',size:10,weight:800,fill:'#0284c7'});
   t.dimH(500,1200,gY-440,'BOOM = 45 m',{yFrom:gY-320});
   t.dimV(gY-320,gY,1380,'H = 18 m',{xFrom:1340});
+  t.infoText(100, 180, 380, 'KOMPONEN UTAMA', [
+    ['Tipe',      'Boom stacker'],
+    ['Boom',      '45 m'],
+    ['Kapasitas', '1.500 tph'],
+    ['Belt',      '1200 mm'],
+    ['Bogie',     '4 × 4 wheel'],
+    ['Rail gauge','1.435 m'],
+    ['Counterweight','30 t']
+  ]);
   bottomRow(t,[
     {x:70,w:550,type:'spec',title:'SPESIFIKASI',data:[['Tipe','Boom stacker'],['Boom','45 m'],['Kapasitas','1.500 tph'],['Belt','1200 mm'],['Bogie','4 × 4 wheel'],['Rail gauge','1.435 m'],['Counterweight','30 t'],['Operator','Cabin AC']]},
     {x:640,w:550,type:'notes',title:'DESAIN',data:['Travel speed 0.5 m/s','Luffing angle 0-25°','Slew 360° opsional','Bogie anti derail','Wind sensor auto stop']},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#fbbf24',label:'Boom'},{color:'#fef3c7',label:'Frame'},{color:'#78716c',label:'Counterweight'},{color:'#dbeafe',label:'Cabin'},{color:'#57534e',label:'Bogie'},{line:'#7c3aed',label:'Feed'}]}
   ]);
 }
+
 function drawRlsPlan(t, doc){
   titleBlock(t,'DESAIN RAPID LOADING SYSTEM (RLS)','Silo 3.000 t · loading chute · weighbridge · truck');
   const gY=720;
@@ -1834,6 +2056,7 @@ function drawRlsPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#7c3aed',label:'Silo'},{color:'#4338ca',label:'Silo top'},{color:'#475569',label:'Support'},{color:'#fbbf24',label:'Chute'},{color:'#334155',label:'Truck'},{color:'#94a3b8',label:'Weighbridge'}]}
   ]);
 }
+
 function drawFirePlanChp(t, doc){
   titleBlock(t,'DENAH PROTEKSI KEBAKARAN CHP & STOCKPILE','6 zona · hydrant · deluge · sprinkler');
   drawGrid(t,150,180,1500,540,50);
@@ -1874,6 +2097,7 @@ function drawFirePlanChp(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#dc2626',label:'Hydrant'},{color:'#fee2e2',label:'Fire pump'},{line:'#dc2626',label:'Main pipe'},{color:'#fef3c7',label:'Deluge zone'},{color:'#f1f5f9',label:'Sprinkler'},{color:'#e0f2fe',label:'Conveyor'}]}
   ]);
 }
+
 function drawMagnetPlan(t, doc){
   titleBlock(t,'DESAIN MAGNET SEPARATOR & METAL DETECTOR','Suspension magnet · metal detector · tramp iron removal');
   const y=400;
@@ -1910,6 +2134,7 @@ function drawMagnetPlan(t, doc){
     {x:1210,w:530,type:'notes',title:'CATATAN',data:['Magnet sebelum MD','MD trigger reject flap','Cleaning magnet tiap shift','Kalibrasi MD mingguan','Log tramp iron harian']}
   ]);
 }
+
 function drawLabPlan(t, doc){
   titleBlock(t,'DENAH LABORATORIUM UJI KUALITAS BATUBARA','Layout lab · prep room · analysis · office · 8×12 m');
   t.rect(200,200,1400,540,{fill:'#f8fafc',stroke:'#0f172a',w:3});
@@ -1934,6 +2159,7 @@ function drawLabPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#fef3c7',label:'Prep/storage'},{color:'#dbeafe',label:'Analysis'},{color:'#dcfce7',label:'Wet chem'},{color:'#ede9fe',label:'Office'},{color:'#0891b2',label:'Fume hood'},{line:'#0f172a',label:'Partisi'}]}
   ]);
 }
+
 function drawStockpileDrainPlan(t, doc){
   titleBlock(t,'DESAIN DRAINASE AREA STOCKPILE & SLURRY','Perimeter drain · settling pond · slurry handling');
   drawGrid(t,150,180,1500,540,50);
@@ -1966,6 +2192,7 @@ function drawStockpileDrainPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{line:'#0284c7',label:'Perimeter drain'},{color:'#bae6fd',label:'Settling pond'},{color:'#44403c',label:'Stockpile'},{line:'#78716c',label:'Slurry channel'},{color:'#78716c',label:'Sludge bed'},{line:'#dc2626',label:'Dimensi'}]}
   ]);
 }
+
 function drawWasheryPlan(t, doc){
   titleBlock(t,'DESAIN KOLAM PENCUCI BATUBARA (WASHERY PLANT)','500 tph · dense medium cyclone · product/reject');
   t.text(900,180,'TATA LETAK WASHERY',{anchor:'middle',size:14,weight:800});
@@ -1999,6 +2226,7 @@ function drawWasheryPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#bae6fd',label:'Feed'},{color:'#fef3c7',label:'Sizing'},{color:'#fce7f3',label:'DMS'},{color:'#e0e7ff',label:'Drain/wash'},{color:'#dcfce7',label:'Product'},{color:'#78716c',label:'Reject'}]}
   ]);
 }
+
 function drawOfficePlan(t, doc){
   titleBlock(t,'DENAH KANTOR UTAMA','2 lantai · 1.200 m² · kapasitas 120 orang');
   t.rect(300,180,1000,560,{fill:'#f8fafc',stroke:'#0f172a',w:3});
@@ -2022,20 +2250,31 @@ function drawOfficePlan(t, doc){
   t.dimH(300,1300,790,'20.00 m',{yFrom:740});
   t.dimV(180,740,1370,'14.00 m',{xFrom:1300});
   t.text(300,770,'DENAH LANTAI 1 — SKALA 1:200',{size:11,weight:800});
-  t.rect(1400,200,340,300,{fill:'#fff',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1416,228,'LEGENDA RUANG',{size:11,weight:800});
-  t.line(1416,240,1724,240,{stroke:'#cbd5e1',w:0.8});
-  [['Lobby','#fef3c7'],['Meeting','#dbeafe'],['Direksi','#ede9fe'],['Staff','#dcfce7'],['Kantin','#fed7aa'],['Server','#f3e8ff'],['Arsip','#e5e7eb'],['Mushola','#fef9c3']].forEach((r,i)=>{t.rect(1416,258+i*26,20,12,{fill:r[1],stroke:'#64748b',w:0.5});t.text(1444,264+i*26,r[0],{size:9,fill:'#334155'});});
-  t.rect(1400,520,340,180,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1416,548,'SPESIFIKASI',{size:11,weight:800});
-  t.line(1416,560,1724,560,{stroke:'#cbd5e1',w:0.8});
-  [['Luas','1.200 m²'],['Lantai','2'],['Kapasitas','120 orang'],['Struktur','Beton K-350'],['Tinggi','4.0 m/lantai'],['Parkir','40 kendaraan']].forEach((r,i)=>{t.text(1416,588+i*18,r[0],{size:9,fill:'#475569'});t.text(1724,588+i*18,r[1],{anchor:'end',size:9,weight:700});});
+  t.infoText(1440, 200, 300, 'LEGENDA RUANG', [
+    ['Lobby',    'cream'],
+    ['Meeting',  'blue'],
+    ['Direksi',  'violet'],
+    ['Staff',    'green'],
+    ['Kantin',   'orange'],
+    ['Server',   'purple'],
+    ['Arsip',    'gray'],
+    ['Mushola',  'yellow']
+  ]);
+  t.infoText(1440, 460, 300, 'SPESIFIKASI', [
+    ['Luas',      '1.200 m²'],
+    ['Lantai',    '2'],
+    ['Kapasitas', '120 orang'],
+    ['Struktur',  'Beton K-350'],
+    ['Tinggi',    '4.0 m/lantai'],
+    ['Parkir',    '40 kendaraan']
+  ]);
   bottomRow(t,[
     {x:70,w:600,type:'notes',title:'ARSITEKTUR',data:['Dinding bata ringan','Kusen aluminium + kaca 5 mm','Lantai granit 60×60','Plafon gypsum + LED','AC split 1-2 PK']},
     {x:690,w:600,type:'spec',title:'STRUKTUR',data:[['Fondasi','Bored pile Ø40'],['Kolom','K1 30×30 · K2 25×25'],['Balok','B1 25×40'],['Pelat','t=120 mm'],['Atap','Space frame'],['Beton','K-350']]},
     {x:1310,w:430,type:'legend',title:'SIMBOL',data:[{color:'#f8fafc',label:'Ruang'},{color:'#0f172a',label:'Dinding'},{color:'#0284c7',label:'Jendela'},{color:'#fff',label:'Pintu'},{line:'#0f172a',label:'Grid'},{color:'#fef3c7',label:'Khusus'}]}
   ]);
 }
+
 function drawMessPlan(t, doc){
   titleBlock(t,'DENAH MESS KARYAWAN','2 blok · 40 kamar · 80 orang · fasilitas bersama');
   t.rect(240,180,1200,560,{fill:'#f8fafc',stroke:'#0f172a',w:3});
@@ -2063,19 +2302,28 @@ function drawMessPlan(t, doc){
   t.text(840,770,'MUSHOLA · KANTIN · LONDRY · RUANG TV · 96 m²',{anchor:'middle',size:10,weight:800,fill:'#14532d'});
   t.dimH(240,1440,850,'24.00 m',{yFrom:820});
   t.dimV(180,820,1500,'16.00 m',{xFrom:1440});
-  t.rect(1480,200,300,200,{fill:'#fff',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1496,228,'LEGENDA',{size:11,weight:800});
-  t.line(1496,240,1764,240,{stroke:'#cbd5e1',w:0.8});
-  [['Kamar','#fff'],['Koridor','#e2e8f0'],['Fasilitas','#dcfce7'],['Bed','#dbeafe']].forEach((r,i)=>{t.rect(1496,258+i*26,20,12,{fill:r[1],stroke:'#64748b',w:0.5});t.text(1524,264+i*26,r[0],{size:9});});
-  t.rect(1480,420,300,220,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1496,448,'SPESIFIKASI',{size:11,weight:800});
-  t.line(1496,460,1764,460,{stroke:'#cbd5e1',w:0.8});
-  [['Kamar','40 unit'],['Kapasitas','80 orang'],['Luas','12 m²'],['KM','Dalam'],['AC','1 PK'],['Listrik','1300 VA'],['Fondasi','Batu kali'],['Dinding','Bata ringan']].forEach((r,i)=>{t.text(1496,488+i*18,r[0],{size:9,fill:'#475569'});t.text(1764,488+i*18,r[1],{anchor:'end',size:9,weight:700});});
+  t.infoText(1500, 200, 280, 'LEGENDA', [
+    ['Kamar',    'white'],
+    ['Koridor',  'gray'],
+    ['Fasilitas','green'],
+    ['Bed',      'blue']
+  ]);
+  t.infoText(1500, 400, 280, 'SPESIFIKASI', [
+    ['Kamar',     '40 unit'],
+    ['Kapasitas', '80 orang'],
+    ['Luas',      '12 m²'],
+    ['KM',        'Dalam'],
+    ['AC',        '1 PK'],
+    ['Listrik',   '1300 VA'],
+    ['Fondasi',   'Batu kali'],
+    ['Dinding',   'Bata ringan']
+  ]);
   bottomRow(t,[
     {x:70,w:600,type:'notes',title:'CATATAN',data:['KM dalam tiap unit','Ventilasi silang + AC','Koridor 2 m evakuasi','Sampah tiap 4 kamar','APAR tiap 8 kamar']},
     {x:690,w:600,type:'spec',title:'STRUKTUR',data:[['Fondasi','Batu kali+sloof'],['Kolom','15×15 praktis'],['Ring balk','15×20'],['Kuda-kuda','Baja ringan'],['Atap','Genteng metal'],['Plafon','Gypsum 9 mm']]}
   ]);
 }
+
 function drawMessHallPlan(t, doc){
   titleBlock(t,'DENAH MESS HALL / DAPUR & RUANG MAKAN','Kapasitas 300 orang · dapur · ruang makan');
   t.rect(240,180,1200,560,{fill:'#f8fafc',stroke:'#0f172a',w:3});
@@ -2109,6 +2357,7 @@ function drawMessHallPlan(t, doc){
     {x:1310,w:430,type:'legend',title:'SIMBOL',data:[{color:'#fef3c7',label:'Dapur'},{color:'#dcfce7',label:'Ruang makan'},{color:'#bae6fd',label:'Cuci'},{color:'#fef9c3',label:'Buffet'},{color:'#e5e7eb',label:'Storage'},{color:'#fff',label:'Meja'}]}
   ]);
 }
+
 function drawKlinikPlan(t, doc){
   titleBlock(t,'DENAH KLINIK TAMBANG','Kapasitas 20 bed · UGD · poliklinik · 20×15 m');
   t.rect(200,200,1400,540,{fill:'#f8fafc',stroke:'#0f172a',w:3});
@@ -2138,6 +2387,7 @@ function drawKlinikPlan(t, doc){
     {x:1310,w:430,type:'legend',title:'SIMBOL',data:[{color:'#fee2e2',label:'Emergency'},{color:'#dbeafe',label:'Rawat inap'},{color:'#dcfce7',label:'Poli/lab'},{color:'#e0f2fe',label:'Penunjang'},{color:'#ede9fe',label:'Staff'},{color:'#94a3b8',label:'Morgue'}]}
   ]);
 }
+
 function drawHandakPlan(t, doc){
   titleBlock(t,'DENAH GUDANG BAHAN PELEDAK (HANDAK)','Kapasitas 12 ton · KEPMEN ESDM 1827 · jarak aman 300 m');
   t.rect(180,160,1240,600,{fill:'#fef2f2',stroke:'#dc2626',w:2,dash:'8 4'});
@@ -2164,19 +2414,31 @@ function drawHandakPlan(t, doc){
   [[420,300],[1180,300],[420,640],[1180,640]].forEach(([x,y])=>{t.circle(x,y,14,{fill:'#fbbf24',stroke:'#b45309',w:2});t.text(x,y,'⚡',{anchor:'middle',size:14});});
   t.text(800,800,'PENANGKAL PETIR 4 TITIK · GROUNDING < 5 Ω',{anchor:'middle',size:10,weight:800,fill:'#b45309'});
   t.dimH(400,1200,220,'JARAK AMAN 300 m',{yFrom:180,color:'#dc2626'});
-  t.rect(1480,180,300,300,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1496,208,'SPESIFIKASI',{size:11,weight:800});
-  t.line(1496,220,1764,220,{stroke:'#cbd5e1',w:0.8});
-  [['Kapasitas','12 ton'],['Detonator','5.000'],['ANFO','12.000 kg'],['Blast wall','K-350 300'],['Pagar','2.4 m'],['Petir','4 titik'],['Jarak','300 m'],['Suhu','≤ 35°C'],['RH','≤ 70 %']].forEach((r,i)=>{t.text(1496,248+i*22,r[0],{size:10,fill:'#475569'});t.text(1764,248+i*22,r[1],{anchor:'end',size:10,weight:700});});
-  t.rect(1480,500,300,200,{fill:'#fef2f2',stroke:'#dc2626',w:2,rx:6});
-  t.text(1496,528,'K3 & REGULASI',{size:11,weight:800,fill:'#7f1d1d'});
-  t.line(1496,540,1764,540,{stroke:'#dc2626',w:1});
-  ['• KEPMEN ESDM 1827/2018','• Izin POLRI + Kemenhan','• Buku catatan keluar-masuk','• Tanpa listrik PLN','• Genset hanya penerangan','• APAR dry 12 kg'].forEach((r,i)=>t.text(1496,568+i*20,r,{size:9,fill:'#7f1d1d'}));
+  t.infoText(1500, 200, 280, 'SPESIFIKASI', [
+    ['Kapasitas','12 ton'],
+    ['Detonator','5.000'],
+    ['ANFO',     '12.000 kg'],
+    ['Blast wall','K-350 300'],
+    ['Pagar',    '2.4 m'],
+    ['Petir',    '4 titik'],
+    ['Jarak',    '300 m'],
+    ['Suhu',     '≤ 35°C'],
+    ['RH',       '≤ 70 %']
+  ]);
+  t.infoText(1500, 500, 280, 'K3 & REGULASI', [
+    ['', 'KEPMEN ESDM 1827/2018'],
+    ['', 'Izin POLRI + Kemenhan'],
+    ['', 'Buku catatan keluar-masuk'],
+    ['', 'Tanpa listrik PLN'],
+    ['', 'Genset hanya penerangan'],
+    ['', 'APAR dry 12 kg']
+  ], { titleColor: '#7f1d1d' });
   bottomRow(t,[
     {x:70,w:600,type:'notes',title:'KEAMANAN',data:['2 magazine terpisah','Blast wall antar & perimeter','Pintu besi double lock + alarm','CCTV 24 jam + sensor','Akses hanya personel berizin']},
     {x:690,w:600,type:'spec',title:'PERSYARATAN',data:[['Regulasi','KEPMEN 1827'],['Izin','POLRI+Kemenhan'],['Kelas','Handak kelas 1'],['Penerangan','Explosion proof'],['Grounding','< 5 Ω'],['Alarm','Fire+intrusion']]}
   ]);
 }
+
 function drawPerimeterPlan(t, doc){
   titleBlock(t,'DENAH PAGAR KELILING & POS KEAMANAN','Perimeter 12 km · 4 pos · 24/7 · CCTV');
   const pts=[[200,280],[600,240],[1000,260],[1400,240],[1600,320],[1580,600],[1400,680],[1000,660],[600,700],[240,660],[180,500],[200,380]];
@@ -2198,16 +2460,21 @@ function drawPerimeterPlan(t, doc){
   t.rect(850,700,100,60,{fill:'#fbbf24',stroke:'#0f172a',w:2});
   t.text(900,730,'GATE UTAMA',{anchor:'middle',size:9,weight:800,fill:'#7c2d12'});
   t.dimH(200,1600,790,'KELILING = 12 km',{yFrom:760});
-  t.rect(1350,200,300,140,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1366,228,'SPESIFIKASI PAGAR',{size:11,weight:800});
-  t.line(1366,240,1634,240,{stroke:'#cbd5e1',w:0.8});
-  [['Total','12 km'],['Tinggi','2.4 m'],['Jenis','BRC+galvanis'],['Post jarak','2.8 m'],['Duri','2 lapis'],['Grounding','< 5 Ω']].forEach((r,i)=>{t.text(1366,268+i*20,r[0],{size:9,fill:'#475569'});t.text(1634,268+i*20,r[1],{anchor:'end',size:9,weight:700});});
+  t.infoText(1440, 200, 300, 'SPESIFIKASI PAGAR', [
+    ['Total',    '12 km'],
+    ['Tinggi',   '2.4 m'],
+    ['Jenis',    'BRC+galvanis'],
+    ['Post jarak','2.8 m'],
+    ['Duri',     '2 lapis'],
+    ['Grounding','< 5 Ω']
+  ]);
   bottomRow(t,[
     {x:70,w:520,type:'spec',title:'SISTEM KEAMANAN',data:[['Pagar','12 km BRC 2.4'],['Pos jaga','4 unit 24 jam'],['CCTV','17 titik'],['PTZ','4 unit'],['Sensor','Gerak perimeter'],['Alarm','Siren 8 titik'],['Radio','HT 20 unit'],['Patrol','2 shift']]},
     {x:610,w:550,type:'notes',title:'OPERASIONAL',data:['Patroli 2 kali/shift','Buku tamu + ID card','Kendaraan wajib izin','CCTV recording 30 hari','Server terpusat']},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#f0fdf4',label:'Area IUP'},{line:'#dc2626',label:'Pagar'},{color:'#dbeafe',label:'Pos jaga'},{color:'#7c3aed',label:'CCTV'},{color:'#fbbf24',label:'Gate'},{color:'#dc2626',label:'Corner post'}]}
   ]);
 }
+
 function drawWorkshopPlan(t, doc){
   titleBlock(t,'DENAH BENGKEL UTAMA ALAT BERAT','Main workshop · 4 bay · crane 10 ton · 40×25 m');
   t.rect(200,200,1400,540,{fill:'#f8fafc',stroke:'#0f172a',w:3});
@@ -2244,6 +2511,7 @@ function drawWorkshopPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#fef3c7',label:'Bay'},{color:'#78716c',label:'Alat'},{color:'#475569',label:'Pit'},{color:'#dbeafe',label:'Kantor'},{color:'#dcfce7',label:'Tool room'},{color:'#b8b2a6',label:'Akses'}]}
   ]);
 }
+
 function drawWarehousePlan(t, doc){
   titleBlock(t,'DENAH GUDANG SUKU CADANG (WAREHOUSE)','Rack system · receiving · issue · 30×20 m');
   t.rect(200,200,1400,540,{fill:'#f8fafc',stroke:'#0f172a',w:3});
@@ -2278,6 +2546,7 @@ function drawWarehousePlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#94a3b8',label:'Rack'},{color:'#dcfce7',label:'Receiving'},{color:'#fef3c7',label:'Issue'},{color:'#dbeafe',label:'Office'},{line:'#f59e0b',label:'Forklift path'},{color:'#fbbf24',label:'Door'}]}
   ]);
 }
+
 function drawWashBayPlan(t, doc){
   titleBlock(t,'DENAH TEMPAT PENCUCIAN ALAT BERAT (WASH BAY)','2 bay · oil-water separator · 20×15 m');
   t.rect(200,200,1400,540,{fill:'#f8fafc',stroke:'#0f172a',w:3});
@@ -2310,6 +2579,7 @@ function drawWashBayPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#dbeafe',label:'Bay'},{color:'#78716c',label:'Alat'},{line:'#0284c7',label:'Drain'},{color:'#fef3c7',label:'Separator'},{color:'#bae6fd',label:'Air bersih'},{color:'#38bdf8',label:'Nozzle'}]}
   ]);
 }
+
 function drawFuelFarmPlan(t, doc){
   titleBlock(t,'DENAH TANGKI BAHAN BAKAR (FUEL FARM)','3 tangki · bund wall · loading rack · 40×30 m');
   drawGrid(t,150,180,1500,540,50);
@@ -2346,6 +2616,7 @@ function drawFuelFarmPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#fbbf24',label:'Fuel tank'},{color:'#fef3c7',label:'Bund wall'},{color:'#e0e7ff',label:'Loading rack'},{color:'#fef3c7',label:'Pump house'},{color:'#fee2e2',label:'Foam system'},{line:'#78716c',label:'Piping'}]}
   ]);
 }
+
 function drawTpsB3Plan(t, doc){
   titleBlock(t,'DENAH TEMPAT PEMBUANGAN LIMBAH B3','Kapasitas 5 ton · kategori 1 & 2 · 20×15 m');
   t.rect(200,200,1400,540,{fill:'#f8fafc',stroke:'#0f172a',w:3});
@@ -2384,6 +2655,7 @@ function drawTpsB3Plan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#fee2e2',label:'Kategori 1'},{color:'#e0e7ff',label:'Kategori 2'},{color:'#dbeafe',label:'Kantor'},{color:'#38bdf8',label:'Eyewash'},{color:'#dc2626',label:'Containment'},{color:'#fbbf24',label:'Gate'}]}
   ]);
 }
+
 function drawHelipadPlan(t, doc){
   titleBlock(t,'DENAH LANDASAN HELIKOPTER (HELIPAD)','Ø30 m · tipe Bell 412 · apron + taxiway');
   drawGrid(t,150,180,1500,540,50);
@@ -2425,6 +2697,7 @@ function drawHelipadPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#475569',label:'Pad'},{color:'#fef3c7',label:'Marking'},{color:'#22c55e',label:'Approach light'},{color:'#f97316',label:'Wind sock'},{color:'#dbeafe',label:'Terminal'},{color:'#fee2e2',label:'Fire'}]}
   ]);
 }
+
 function drawGensetPlan(t, doc){
   titleBlock(t,'DENAH RUMAH GENSET & PEMBANGKIT CADANGAN','2 × 1.500 kVA · fuel tank · panel · 20×15 m');
   t.rect(200,200,1400,540,{fill:'#f8fafc',stroke:'#0f172a',w:3});
@@ -2467,6 +2740,7 @@ function drawGensetPlan(t, doc){
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#dcfce7',label:'Genset'},{color:'#fbbf24',label:'Fuel tank'},{color:'#fef3c7',label:'Control panel'},{color:'#e0e7ff',label:'Exhaust'},{line:'#78716c',label:'Fuel pipe'},{color:'#dc2626',label:'Bund'}]}
   ]);
 }
+
 function drawLightningPlan(t, doc){
   titleBlock(t,'SISTEM PENANGKAL PETIR','Area perkantoran & stockpile · 5 titik · grounding < 5 Ω');
   drawGrid(t,150,180,1500,540,50);
@@ -2498,23 +2772,25 @@ function drawLightningPlan(t, doc){
   t.text(750,600,'STOCKPILE',{anchor:'middle',size:9,weight:700,fill:'#fbbf24'});
   t.circle(1150,600,60,{fill:'#44403c',stroke:'#0f172a',w:2});
   t.text(1150,600,'STOCKPILE',{anchor:'middle',size:9,weight:700,fill:'#fbbf24'});
-  t.rect(300,200,400,80,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(316,228,'SISTEM PROTEKSI',{size:11,weight:800});
-  t.line(316,240,684,240,{stroke:'#cbd5e1',w:0.8});
-  t.text(316,268,'Tipe : ESE (Early Streamer Emission)',{size:9,fill:'#475569'});
-  t.text(316,290,'Radius : 80-100 m/titik',{size:9,fill:'#475569'});
-  t.rect(1180,200,420,100,{fill:'#f8fafc',stroke:'#94a3b8',w:1.5,rx:6});
-  t.text(1196,228,'GROUNDING',{size:11,weight:800});
-  t.line(1196,240,1584,240,{stroke:'#cbd5e1',w:0.8});
-  t.text(1196,268,'Rod copper 5/8" × 3 m',{size:9,fill:'#475569'});
-  t.text(1196,290,'Jumlah : 12 titik',{size:9,fill:'#475569'});
+  t.infoText(100, 200, 380, 'SISTEM PROTEKSI', [
+    ['Tipe',   'ESE (Early Streamer)'],
+    ['Jumlah', '6 titik'],
+    ['Radius', '80–100 m/titik']
+  ]);
+  t.infoText(1440, 200, 300, 'GROUNDING', [
+    ['Rod',    'Cu 5/8" × 3 m'],
+    ['Jumlah', '12 titik'],
+    ['Target', '< 5 Ω']
+  ]);
   bottomRow(t,[
     {x:70,w:550,type:'spec',title:'PROTEKSI PETIR',data:[['Tipe','ESE aktif'],['Jumlah','6 titik'],['Tinggi tower','20-45 m'],['Radius cover','80-100 m'],['Down conductor','70 mm² Cu'],['Grounding','< 5 Ω'],['Terminal','SS 304'],['Standar','IEC 62305']]},
     {x:640,w:550,type:'notes',title:'INSTALASI',data:['Tower galvanis 20-45 m','Down conductor tiap titik','Grounding rod 12 titik','Testing ground tiap 6 bulan','Bonding semua struktur logam']},
     {x:1210,w:530,type:'legend',title:'SIMBOL',data:[{color:'#475569',label:'Tower'},{color:'#fbbf24',label:'Air terminal'},{color:'#22c55e',label:'Grounding'},{color:'#dbeafe',label:'Building'},{color:'#44403c',label:'Stockpile'},{dash:'#b45309',label:'Protection radius'}]}
   ]);
 }
+</script>
 
+<script>
 /* ==================== DISPATCHER ==================== */
 const SVG_DRAWS = {
   geological: drawGeological, stratigraphy: drawStratigraphy, bench: drawBench,
@@ -2543,39 +2819,15 @@ const SVG_DRAWS = {
 function pickRenderer(doc){
   if (doc.type === 'three') return {engine:'three', fn:'blockModel'};
   if (doc.type === 'section'){
-    const map = {
-      8:'geological', 9:'stratigraphy', 21:'bench',
-      23:'wasteDump', 28:'haulRoad', 29:'roadCurve',
-      38:'openChannel', 39:'culvert', 42:'spillway',
-      45:'monitorWell', 48:'productionWell',
-      55:'conveyorFoundation', 62:'fenderDolphin',
-      63:'trestle', 68:'bridge', 82:'fuelTank',
-      85:'fence', 99:'drainage'
-    };
+    const map = {8:'geological',9:'stratigraphy',21:'bench',23:'wasteDump',28:'haulRoad',29:'roadCurve',38:'openChannel',39:'culvert',42:'spillway',45:'monitorWell',48:'productionWell',55:'conveyorFoundation',62:'fenderDolphin',63:'trestle',68:'bridge',82:'fuelTank',85:'fence',99:'drainage'};
     return {engine:'d3', fn: map[doc.id] || 'bench'};
   }
   if (doc.type === 'diagram'){
-    const map = {
-      43:'waterFlow', 46:'dewatering', 47:'piping',
-      49:'wtpFlow', 50:'wwtpFlow', 52:'chpPid',
-      65:'waterSpray', 86:'electrical', 93:'airCompressor',
-      94:'fireSystem', 95:'wasteHandling'
-    };
+    const map = {43:'waterFlow',46:'dewatering',47:'piping',49:'wtpFlow',50:'wwtpFlow',52:'chpPid',65:'waterSpray',86:'electrical',93:'airCompressor',94:'fireSystem',95:'wasteHandling'};
     return {engine:'d3', fn: map[doc.id] || 'chpPid'};
   }
   if (doc.type === 'plan'){
-    const map = {
-      30:'weighbridgePlan', 33:'sumpPlan', 41:'settlingPondPlan',
-      53:'hopperPlan', 54:'beltConveyorPlan', 56:'crusherPlan',
-      57:'screenPlan', 58:'stockpilePlan', 59:'stackerPlan',
-      60:'rlsPlan', 64:'firePlanChp', 66:'magnetPlan',
-      67:'labPlan', 69:'stockpileDrainPlan', 70:'washeryPlan',
-      72:'officePlan', 73:'messPlan', 74:'messHallPlan',
-      75:'klinikPlan', 76:'handakPlan', 77:'perimeterPlan',
-      78:'workshopPlan', 79:'warehousePlan', 80:'washBayPlan',
-      81:'fuelFarmPlan', 83:'tpsB3Plan', 84:'helipadPlan',
-      89:'gensetPlan', 91:'lightningPlan'
-    };
+    const map = {30:'weighbridgePlan',33:'sumpPlan',41:'settlingPondPlan',53:'hopperPlan',54:'beltConveyorPlan',56:'crusherPlan',57:'screenPlan',58:'stockpilePlan',59:'stackerPlan',60:'rlsPlan',64:'firePlanChp',66:'magnetPlan',67:'labPlan',69:'stockpileDrainPlan',70:'washeryPlan',72:'officePlan',73:'messPlan',74:'messHallPlan',75:'klinikPlan',76:'handakPlan',77:'perimeterPlan',78:'workshopPlan',79:'warehousePlan',80:'washBayPlan',81:'fuelFarmPlan',83:'tpsB3Plan',84:'helipadPlan',89:'gensetPlan',91:'lightningPlan'};
     return {engine:'d3', fn: map[doc.id] || 'officePlan'};
   }
   return {engine:'d3', fn:'chpPid'};
@@ -2601,7 +2853,6 @@ function renderD3(doc, drawFn){
   }
 }
 
-/* ==================== THREE.JS ==================== */
 let activeThreeState = null;
 function renderThree(doc){
   cleanupDrawings();
